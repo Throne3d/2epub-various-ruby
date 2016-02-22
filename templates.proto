@@ -1,0 +1,51 @@
+syntax = "proto3";
+package epubconv;
+
+message Chapters {
+    repeated Chapter chapters = 1;
+}
+
+message Chapter {
+    string url = 1;
+    string smallURL = 2;
+    string path = 3;
+    string name = 4;
+    string nameExtras = 5;
+    string sectionType = 6;
+    string thread = 7;
+    string section = 8;
+    string sectionExtras = 9;
+    int32 pageCount = 10;
+    string entryTitle = 12;
+    Post entry = 13;
+    repeated Post comments = 14;
+    int32 fullyLoaded = 15;
+}
+
+message Face {
+    string user = 1;
+    string imageURL = 2;
+    string moiety = 3;
+    string imagePath = 4;
+    string face = 5;
+    string userDisplay = 6;
+}
+
+message Post {
+    string author = 1;
+    string content = 2;
+    string time = 3;
+    string id = 4;
+    string chapter = 5;
+    int32 depth = 6;
+    string parent = 7;
+    string postTitle = 8;
+    
+    enum PostType {
+        ENTRY = 0;
+        COMMENT = 1;
+    }
+    PostType postType = 9;
+    
+    repeated string childrenIDs = 11;
+}

@@ -1,0 +1,216 @@
+﻿@namespace epub "http://www.idpf.org/2007/ops";
+@font-face {
+    font-family: "Symbola";
+    src: local("Symbola"), url("../fonts/Symbola.ttf");
+}
+@font-face {
+  font-family: "FreeSans";
+  src: local("FreeSans"), url("../fonts/FreeSans.woff");
+}
+@font-face {
+  font-family: "Lohit Telugu";
+  src: local("Lohit Telugu"), url("../fonts/Lohit-Telugu.woff");
+}
+@font-face {
+  font-family: "Droid Sans Fallback Full";
+  src: local("Droid Sans Fallback Full"), url("../fonts/DroidSansFallbackFull.ttf");
+}
+h3.entry-title {
+    border-bottom: solid 1px #aaa;
+    padding-bottom: 5px;
+}
+body {
+    font-family: sans-serif, "Symbola", "FreeSans", "Lohit Telugu", "Droid Sans Fallback Full";
+}
+div[data-type] {
+    padding-top: 10px;
+}
+.user {
+    border: solid 1px #aaa;
+    padding: 10px;
+    background-color: #eee;
+    color: #111111;
+
+    break-inside: avoid-column;
+    -webkit-column-break-inside: avoid;
+    column-break-inside: avoid;
+    page-break-inside: avoid;
+
+    break-after: avoid-column;
+    -webkit-column-break-after: avoid;
+    column-break-after: avoid;
+    page-break-after: avoid;
+
+    display: inline-block;
+    width: 95%;
+}
+.usericon {
+    padding: 0;
+    margin: 0;
+    display: table-cell;
+    vertical-align: middle;
+    max-height: 102px;
+    max-width: 102px;
+    width: 4em;
+}
+.usericon img, .usericon div {
+    display: table-cell;
+    border: solid 1px #aaa;
+    max-height: 102px;
+    max-width: 102px;
+    height: 4em;
+    width: 4em;
+}
+.username {
+    display: table-cell;
+    padding: 10px 10px 10px 15px;
+    vertical-align: bottom;
+    font-size: 90%;
+    font-weight: 600;
+}
+.alicorn .user {
+    background-color: #bfffc8; /*hsl(128, 100%, 87%)*/
+    background-color: rgba(0, 191, 128, 0.3);
+    color: inherit;
+}
+.aestrix .user {
+    background-color: #bfdfff; /*hsl(210, 100%, 87%)*/
+    background-color: rgba(0, 128, 255, 0.3);
+    color: inherit;
+}
+.kappa .user {
+    background-color: #dfcfef; /*hsl(270, 50%, 87%)*/
+    background-color: rgba(128, 64, 191, 0.3);
+    color: inherit;
+}
+.adelene .user {
+    background-color: #f0dace; /*hsl(21, 53%, 87%)*/
+    background-color: rgba(98, 55, 31, 0.3);
+    color: inherit;
+}
+.andaisq .user {
+    background-color: #ffbfd5; /*hsl(339, 100%, 87%)*/
+    background-color: rgba(255, 64, 128, 0.3);
+    color: inherit;
+}
+.anthusiasm .user {
+    background-color: #ffdfbf; /*hsl(30, 100%, 87%)*/
+    background-color: rgba(255, 128, 0, 0.3);
+    color: inherit;
+}
+.anya .user {
+    background-color: #f4eaff; /*hsl(269, 100%, 96%)*/
+    background-color: rgba(192, 128, 255, 0.3);
+    color: inherit;
+}
+.benedict .user {
+    background-color: #696969; /*hsl(0, 0%, 41%)*/
+    background-color: rgba(105, 105, 105, 0.7);
+    color: #dddddd;
+}
+.curiousdiscoverer .user {
+    background-color: #a0a0a0; /*hsl(0, 0%, 63%)*/
+    background-color: rgba(160, 160, 160, 0.7);
+    color: #111111;
+}
+.erinflight .user {
+    background-color: #e9b996; /*hsl(26, 66%, 87%)*/
+    background-color: rgba(213, 115, 42, 0.3);
+    color: inherit;
+}
+.eva .user {
+    background-color: #bfbfff; /*hsl(240, 100%, 87%)*/
+    background-color: rgba(0, 0, 128, 0.3);
+    color: inherit;
+}
+.kel .user {
+    background-color: #eaffff; /*hsl(180, 100%, 96%)*/
+    background-color: rgba(0, 207, 207, 0.3);
+    color: inherit;
+}
+.kuuskytkolme .user {
+    background-color: #e7f1cd; /*hsl(77, 56%, 87%)*/
+    background-color: rgba(153, 197, 52, 0.3);
+    color: inherit;
+}
+.lambda .user {
+    background-color: #bfffff; /*hsl(180, 100%, 87%)*/
+    background-color: rgba(0, 128, 128, 0.3);
+    color: inherit;
+}
+.link .user {
+    background-color: #d5aaff; /*hsl(270, 100%, 83%)*/
+    background-color: rgba(127, 0, 255, 0.3);
+    color: inherit;
+}
+.maggie .user {
+    background-color: #ffffff; /*hsl(0, 0%, 100%)*/
+    background-color: rgba(255, 255, 255, 0.7);
+    color: #111111;
+}
+.marrinikari .user {
+    background-color: #efcfcf; /*hsl(0, 50%, 87%)*/
+    background-color: rgba(191, 64, 64, 0.3);
+    color: inherit;
+}
+.nemo .user {
+    background-color: #ffefbf; /*hsl(45, 100%, 87%)*/
+    background-color: rgba(255, 191, 0, 0.3);
+    color: inherit;
+}
+.pdv .user {
+    background-color: #efdfcf; /*hsl(30, 50%, 87%)*/
+    background-color: rgba(191, 128, 64, 0.3);
+    color: inherit;
+}
+.pedro .user {
+    background-color: #ffbfbf; /*hsl(0, 100%, 87%)*/
+    background-color: rgba(255, 92, 92, 0.3);
+    color: inherit;
+}
+.rockeye .user {
+    background-color: #000000; /*hsl(0, 0%, 0%)*/
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #dddddd;
+}
+.content {
+    padding-top: 5px;
+    page-break-before: avoid;
+}
+.branchNote {
+    color: #c50;
+    font-weight: bold;
+    border-top: solid 1px #ddd;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+.section-subtitle {
+    padding-bottom: 5px;
+}
+.entry-subtitle {
+    padding-bottom: 5px;
+}
+.contMsg {
+    color: #c50;
+    font-weight: bold;
+    border-top: solid 1px #ddd;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin-top: 20px;
+
+    break-inside: avoid-column;
+    -webkit-column-break-inside: avoid;
+    column-break-inside: avoid;
+    page-break-inside: avoid;
+
+    break-after: avoid-column;
+    -webkit-column-break-after: avoid;
+    column-break-after: avoid;
+    page-break-after: avoid;
+}
+.edittime {
+    font-size: 80%;
+}
+.timestamp {
+    font-size: 80%;
+}
