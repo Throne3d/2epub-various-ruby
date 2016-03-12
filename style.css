@@ -173,6 +173,10 @@ div[data-type] {
     background-color: rgba(0, 0, 0, 0.7);
     color: #dddddd;
 }
+.throne3d .user {
+    background-color: #ffbfc9; /*hsl(351, 100%, 87%)*/
+    background-color: rgba(150, 0, 24, 0.3);
+}
 .content {
     padding-top: 5px;
     page-break-before: avoid;
