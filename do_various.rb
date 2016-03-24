@@ -1,73 +1,128 @@
+#!/usr/bin/env ruby
 require 'fileutils'
 require 'pathname'
 require 'logger'
+require 'nokogiri'
+require 'json'
+require 'uri'
+require 'open-uri'
+require 'cgi'
+$LOAD_PATH << '.'
+require 'models'
+require 'model_methods'
+require 'handlers'
+include GlowficEpubMethods
 
-LOG = Logger.new
+FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
+FileUtils.mkdir "logs" unless File.directory?("logs")
+
+FIC_NAME_MAPPING = {
+  effulgence: [:effulgence],
+  incandescence: [:incandescence],
+  sandbox: [:sandbox],
+  pixiethreads: [:pixiethreads],
+  glowfic: [:othersandbox, :sandbox2, :glowfic],
+  marri: [:marri, :marrinikari],
+  radon: [:radon, :absinthe],
+  peterverse: [:peter, :pedro, :peterverse],
+  maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"]
+}
+GROUP_HANDLERS = {glowfic: GlowficEpubHandlers::CommunityHandler, effulgence: GlowficEpubHandlers::OrderedListHandler, pixiethreads: GlowficEpubHandlers::OrderedListHandler, incandescence: GlowficEpubHandlers::OrderedListHandler, radon: GlowficEpubHandlers::OrderedListHandler}
+FIC_SHOW_AUTHORS = [:sandbox, :glowfic, :marri, :peterverse, :maggie]
+FIC_TOCS = {
+  #Sandboxes
+  sandbox: "http://alicornutopia.dreamwidth.org/1640.html?style=site",
+  glowfic: "http://glowfic.dreamwidth.org/2015/06/",
+  
+  #Continuities
+  effulgence: "http://edgeofyourseat.dreamwidth.org/2121.html?style=site",
+  incandescence: "http://alicornutopia.dreamwidth.org/7441.html?style=site",
+  pixiethreads: "http://pixiethreads.dreamwidth.org/613.html?style=site",
+  radon: "http://radon-absinthe.dreamwidth.org/295.html?style=site",
+  
+  #Authors
+  marri: "http://marrinikari.dreamwidth.org/1634.html?style=site",
+  peterverse: "http://peterverse.dreamwidth.org/1643.html?style=site",
+  maggie: "http://maggie-of-the-owls.dreamwidth.org/454.html?style=site"
+}
+class Object
+  def try(*params, &block)
+    if params.empty? && block_given?
+      yield self
+    else
+      public_send(*params, &block) if respond_to? params.first
+    end
+  end
+end
+
+def make_chapter(options={})
+  chapter = GlowficEpub::Chapter.new(options)
+  LOG.info chapter.to_s
+end
 
 def main(args)
-    abort "Please input an argument (e.g. 'tocs_sandbox', 'flats_sandbox', 'epub_sandbox', or 'remove alicorn*#1640' to remove all 1640.html within any alicorn* community)" unless args.size > 0
-    FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
-    
-    option = args.join(" ").downcase.strip
-    process = ""
-    group = ""
-    
-    if (option[0,4] == "tocs")
-        process = :tocs
-    elsif (option[0,5] == "flats")
-        process = :flats
-    elsif (option[0,4] == "epub")
-        process = :epub
-    elsif (option[0,3] == "det")
-        process = :details
-    elsif (option[0,5] == "clean")
-        process = :clean
-    elsif (option[0,3] == "rem")
-        process = :remove
-    elsif (option[0,4] == "stat")
-        process = :stats
-    else
-        abort "Unknown option. Please try with a valid option (call with no parameters to see some examples)."
+  abort "Please input an argument (e.g. 'tocs_sandbox', 'flats_sandbox', 'epub_sandbox', or 'remove alicorn*#1640' to remove all 1640.html within any alicorn* community)" unless args.size > 0
+  
+  option = args.join(" ").downcase.strip
+  process = :""
+  group = :""
+  
+  processes = {tocs: :tocs, toc: :tocs, flats: :flats, epub: :epub, det: :details, 
+    clean: :clean, rem: :remove, stat: :stats}
+  processes.each do |key, value|
+    if (option[0, key.length].to_sym == key)
+      process = value
     end
-    
-    showAuthors = false
-    if (process != "remove")
-        if (option[-10..-1] == "effulgence")
-            group = :effulgence
-        elsif (option[-13..-1] == "incandescence")
-            group = :incandescence
-        elsif (option[-7..-1] == "sandbox")
-            group = :sandbox
-            showAuthors = true
-        elsif (option[-12..-1] == "pixiethreads")
-            group = :pixiethreads
-        elsif (option[-12..-1] == "othersandbox" or option[-8..-1] == "sandbox2" or option[-7..-1] == "glowfic")
-            group = :glowfic
-            showAuthors = true
-        elsif (option[-5..-1] == "marri" or option[-11..-1] == "marrinikari")
-            group = :marri
-            showAuthors = true
-        elsif (option[-5..-1] == "radon" or option[-8..-1] == "absinthe")
-            group = :radon-absinthe
-        elsif (option[-5..-1] == "peter" or option[-10..-1] == "peterverse")
-            group = :peterverse
-        elsif (option[-6..-1] == "maggie" or option[-15..-1] == "maggieoftheowls")
-            group = :maggie
-        else
-            abort("Unknown thing to download. Please try with a valid option (call with no parameters to see some examples).")
+  end
+  
+  abort "Unknown option. Please try with a valid option (call with no parameters to see some examples)." if process.empty?
+  
+  showAuthors = false
+  unless process == :remove
+    group = nil
+    FIC_NAME_MAPPING.each do |key, findArr|
+      findArr.each do |findSym|
+        if option.length >= findSym.length and option[-findSym.length..-1] == findSym.to_s
+          group = key
         end
+      end
     end
+    abort "Unknown thing to download. Please try with a valid option (call with no parameters to see some examples)." unless group
     
-    set_output_settings(process: process, group: (group != "" ? group : "remove"))
+    showAuthors = FIC_SHOW_AUTHORS.include? group
+  end
+  
+  OUTFILE.set_output_params(process, (group.empty? ? nil : group))
+  
+  LOG.info "Option: #{option}"
+  LOG.info "Group: #{group}"
+  LOG.info "Process: #{process}"
+  
+  LOG.info "-" * 60
+  
+  if (process == :tocs)
+    chapter_list = []
     
-    puts "Option: #{option}"
-    puts "Group: #{group}"
-    puts "Process: #{process}"
+    abort "Group #{group} has no TOC" unless FIC_TOCS.has_key? group and not FIC_TOCS[group].empty?
+    fic_toc_url = FIC_TOCS[group]
     
-    puts "-" * 20
-    puts "Not yet implemented."
+    LOG.info "Parsing TOC (of #{group})"
+    LOG.info "TOC Page: #{fic_toc_url}" unless group == :glowfic
+    
+    prev_chapter_data = get_chapters_data(group)
+    set_chapters_data(prev_chapter_data, group, old: true) unless prev_chapter_data.empty?
+    
+    abort "Couldn't find a handler for group '#{group}'." unless GROUP_HANDLERS.key?(group)
+    group_handler = GROUP_HANDLERS[group].new(group: group)
+    chapter_list = group_handler.toc_to_chapterlist(fic_toc_url: fic_toc_url) do |chapter|
+      LOG.info chapter.to_s
+    end
+    set_chapters_data(chapter_list, group)
+  else
+    LOG.info "Not yet implemented."
+  end
 end
 
 if __FILE__ == $0
-    main(ARGV)
+  main(ARGV)
 end
