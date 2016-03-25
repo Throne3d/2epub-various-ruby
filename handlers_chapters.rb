@@ -177,9 +177,17 @@
       entry = fic_toc.at_css(".entry-content")
       return nil unless entry
       
+      previous_sections = []
       each_section(entry, []) do |section, section_list|
         get_chapters(section, section_list) do |chapter_details|
           chapter_list << chapter_details
+          sections = chapter_details.sections
+          sections.each_with_index do |section, i|
+            if previous_sections.length <= i or previous_sections[i] != section
+              puts "Section (depth #{i+1}): #{section}"
+            end
+          end
+          previous_sections = sections
           if block_given?
             yield chapter_details
           end
