@@ -10,7 +10,7 @@ The "2epub-various" script, converted to use the Ruby language. It hopefully dow
 * Install [Ruby](https://www.ruby-lang.org/en/)
 * Install [Nokogiri](http://www.nokogiri.org/tutorials/installing_nokogiri.html)
 * Install [Google Protocol Buffers](https://developers.google.com/protocol-buffers/?hl=en) (clone the Git repository and follow the instructions [here](https://github.com/google/protobuf/tree/master/ruby))
-* ~~~~Install [pyratemp](http://www.simple-is-better.org/template/pyratemp.html) (`pip3 install pyratemp`)~~~~
+* ~~Install [pyratemp](http://www.simple-is-better.org/template/pyratemp.html) (`pip3 install pyratemp`)~~
 * Compile and add to path as necessary (or use the commands given for Ubuntu)
 * Run do_various.rb and follow the instructions
 * Use the generated .epub file on an ebook reader
