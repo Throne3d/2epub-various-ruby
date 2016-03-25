@@ -97,56 +97,71 @@
   end
   
   BLOCK_LEVELS = [:address, :article, :aside, :blockquote, :canvas, :dd, :div, :dl, :fieldset, :figcaption, :figure, :footer, :form, :h1, :h2, :h3, :h4, :h5, :h6, :header, :hgroup, :hr, :li, :main, :nav, :noscript, :ol, :output, :p, :pre, :section, :table, :tfoot, :ul, :video, :br]
-  def get_text_on_line(node)
-    text = node.text
+  def get_text_on_line(node, options={})
+    stop_at = []
+    stop_at = options[:stop_at] if options and options.key?(:stop_at)
+    stop_at = [stop_at] if not stop_at.is_a?(Array)
+    
+    forward = true
+    forward = options[:forward] if options and options.key?(:forward)
+    
+    backward = true
+    backward = options[:backward] if options and options.key?(:backward)
+    
+    include_node = true
+    include_node = options[:include_node] if options and options.key?(:include_node)
+    
+    text = ""
+    text = node.text if include_node
     previous_element = node.previous
-    while previous_element and not BLOCK_LEVELS.include?(previous_element.name) and not BLOCK_LEVELS.include?(previous_element.name.to_sym)
+    while backward and previous_element and not BLOCK_LEVELS.include?(previous_element.name) and not BLOCK_LEVELS.include?(previous_element.name.to_sym) and not stop_at.include?(previous_element.name) and not stop_at.include?(previous_element.name.to_sym)
       text = previous_element.text + text
       previous_element = previous_element.previous
     end
     next_element = node.next
-    while next_element and not BLOCK_LEVELS.include?(next_element.name) and not BLOCK_LEVELS.include?(next_element.name.to_sym)
+    while forward and next_element and not BLOCK_LEVELS.include?(next_element.name) and not BLOCK_LEVELS.include?(next_element.name.to_sym) and not stop_at.include?(next_element.name) and not stop_at.include?(next_element.name.to_sym)
       text = text + next_element.text
       next_element = next_element.next
     end
     text
   end
   
+  def standardize_chapter_url(url)
+    uri = URI.parse(url)
+    if uri.host["dreamwidth.org"]
+      uri.fragment = nil
+      set_url_params(clear_url_params(uri.to_s), {style: :site})
+    else
+      url
+    end
+  end
+  
   def sort_query(query)
-    return query if query.nil?
-    return "" if query.empty?
+    return nil if query.nil?
+    return nil if query.empty?
     
     query_hash = CGI::parse(query)
     sorted_keys = query_hash.keys.sort
-    sorted_query = ""
+    
+    sorted_list = []
     sorted_keys.each do |key|
-      value = query_hash[key]
-      if value.is_a?(Array) and value.length == 1
-        sorted_query += "&" unless sorted_query == ""
-        sorted_query += "#{key}=#{value[0]}"
-      elsif not value.is_a?(Array)
-        sorted_query += "&" unless sorted_query == ""
-        sorted_query += "#{key}=#{value}"
-      else
-        value.sort.each do |val|
-          sorted_query += "&" unless sorted_query == ""
-          sorted_query += "#{key}=#{val}"
-        end
-      end
+      sorted_list << [key, query_hash[key]]
     end
+    sorted_query = URI.encode_www_form(sorted_list)
+    
+    return nil if sorted_query.empty?
     sorted_query
   end
 
   def set_url_params(chapter_url, params={})
     uri = URI(chapter_url)
     uri_query = (uri.query or "")
-    params.each do |key, value|
-      uri_query += "&" unless uri_query == ""
-      uri_query += "#{key}=#{value}"
-    end
+    paramstr = URI.encode_www_form(params)
+    uri_query += "&" unless uri_query.empty? or paramstr.empty?
+    uri_query += paramstr
+    
     uri_query = sort_query(uri_query)
     uri.query = uri_query
-    
     uri.to_s
   end
   

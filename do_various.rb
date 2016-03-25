@@ -10,7 +10,7 @@ require 'cgi'
 $LOAD_PATH << '.'
 require 'models'
 require 'model_methods'
-require 'handlers'
+require 'handlers_chapters'
 include GlowficEpubMethods
 
 FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
@@ -27,7 +27,7 @@ FIC_NAME_MAPPING = {
   peterverse: [:peter, :pedro, :peterverse],
   maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"]
 }
-GROUP_HANDLERS = {glowfic: GlowficEpubHandlers::CommunityHandler, effulgence: GlowficEpubHandlers::OrderedListHandler, pixiethreads: GlowficEpubHandlers::OrderedListHandler, incandescence: GlowficEpubHandlers::OrderedListHandler, radon: GlowficEpubHandlers::OrderedListHandler}
+GROUP_HANDLERS = {glowfic: GlowficChapterHandlers::CommunityHandler, effulgence: GlowficChapterHandlers::OrderedListHandler, pixiethreads: GlowficChapterHandlers::OrderedListHandler, incandescence: GlowficChapterHandlers::OrderedListHandler, radon: GlowficChapterHandlers::OrderedListHandler, sandbox: GlowficChapterHandlers::SandboxListHandler}
 FIC_SHOW_AUTHORS = [:sandbox, :glowfic, :marri, :peterverse, :maggie]
 FIC_TOCS = {
   #Sandboxes

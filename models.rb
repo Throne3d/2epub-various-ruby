@@ -59,7 +59,16 @@
       @smallURL=Chapter.shortenURL(@url)
     end
     def self.shortenURL(longURL)
-      longURL.sub("http://", "").sub("https://", "").sub(".html", "").sub("style=site", "").sub("view=flat", "").gsub(/\&$/, "").gsub(/\?$/, "").gsub(".dreamwidth.org/", ".dreamwidth/")
+      uri = URI.parse(longURL)
+      if uri.query and not uri.query.empty?
+        query = CGI.parse(uri.query)
+        query.delete("style")
+        query.delete("view")
+        query = URI.encode_www_form(query)
+        uri.query = (query.empty?) ? nil : query
+      end
+      uri.host = uri.host.sub(/\.dreamwidth\.org$/, ".dreamwidth")
+      uri.to_s.sub(/^https?\:\/\//, "").sub(/\.html$/, "")
     end
     def to_s
       str = "\"#{name}"
