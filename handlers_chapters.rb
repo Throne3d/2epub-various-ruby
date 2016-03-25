@@ -335,6 +335,175 @@
     end
   end
   
+  class NeatListHandler
+    def initialize(options = {})
+      @group = nil
+      @group = options[:group] if options.key?(:group)
+      
+      @heading1select = "b, strong"
+      @heading2select = "u"
+      @heading3select = "em, i"
+      if @group == :maggie
+        @heading1select = "u"
+        @heading2select = "b, strong"
+      end
+    end
+    def entry
+      @entry
+    end
+    def get_heading_encapsule(node)
+      text = get_text_on_line(node).strip
+      node_text = node.text.strip
+      return if not text or not node_text or text.empty? or node_text.empty? or text.index(node_text) > 0
+      
+      parenter = node
+      while parenter and parenter != @entry and parenter.name != "li"
+        parenter = parenter.parent
+      end
+      return unless parenter == @entry
+      
+      encapsule = node
+      while encapsule and encapsule.parent and encapsule.parent.text == encapsule.text and encapsule.parent != @entry
+        encapsule = encapsule.parent
+      end
+      return (encapsule or node)
+    end
+    def toc_to_chapterlist(options = {}, &block)
+      fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
+      
+      @prev_chapter_pages = get_prev_chapter_pages(@group)
+      @prev_chapter_loads = get_prev_chapter_loads(@group)
+      
+      chapter_list = GlowficEpub::Chapters.new
+      
+      LOG.info "TOC Page: #{fic_toc_url}"
+      fic_toc_data = get_page_data(fic_toc_url, replace: true)
+      fic_toc = Nokogiri::HTML(fic_toc_data)
+      
+      @entry = fic_toc.at_css(".entry-content")
+      return nil unless entry
+      
+      links = entry.css('a')
+      #Bold, underlined, italics
+      #Tiers of heading ^
+      potential_heading1s = entry.css(@heading1select)
+      potential_heading2s = entry.css(@heading2select)
+      potential_heading3s = entry.css(@heading3select)
+      
+      heading1s = []
+      heading2s = []
+      heading3s = []
+      
+      potential_heading1s.each do |node|
+        encapsule = get_heading_encapsule(node)
+        next unless encapsule
+        heading1s << encapsule
+      end
+      potential_heading2s.each do |node|
+        encapsule = get_heading_encapsule(node)
+        next unless encapsule
+        heading2s << encapsule
+      end
+      potential_heading3s.each do |node|
+        encapsule = get_heading_encapsule(node)
+        next unless encapsule
+        heading3s << encapsule
+      end
+      
+      heading3s = [] if (heading3s - heading1s).empty?
+      heading3s = [] if (heading3s - heading2s).empty?
+      heading2s = [] if (heading2s - heading1s).empty?
+      
+      
+      if heading2s.length < 1
+        heading2s = heading3s
+        heading3s = []
+      end
+      if heading1s.length < 1
+        heading1s = heading2s
+        heading2s = []
+      end
+      puts "Headings #1: #{heading1s.length}"
+      puts "#{heading1s * ', '}" unless heading1s.empty?
+      puts "Headings #2: #{heading2s.length}"
+      puts "#{heading2s * ', '}" unless heading2s.empty?
+      puts "Headings #3: #{heading3s.length}"
+      puts "#{heading3s * ', '}" unless heading3s.empty?
+      
+      prev_heading1 = nil
+      prev_heading2 = nil
+      prev_heading3 = nil
+      links.each do |link|
+        chapter_link = link
+        
+        
+        top_level = link
+        while top_level.parent != entry
+          top_level = top_level.parent
+        end
+        
+        heading1 = nil
+        heading2 = nil
+        heading3 = nil
+        heading1_text = nil
+        heading2_text = nil
+        heading3_text = nil
+        prev_element = top_level.previous
+        while prev_element and heading1.nil?
+          heading3 = prev_element if heading3s.include?(prev_element) and heading3.nil? and heading2.nil?
+          heading2 = prev_element if heading2s.include?(prev_element) and heading2.nil?
+          heading1 = prev_element if heading1s.include?(prev_element)
+          prev_element = prev_element.previous
+        end
+        
+        next if heading1.nil?
+        
+        heading1_text = get_text_on_line(heading1).strip
+        heading2_text = get_text_on_line(heading2).strip if heading2
+        heading3_text = get_text_on_line(heading3).strip if heading3
+        
+        if heading1_text != prev_heading1
+          prev_heading2 = nil
+          prev_heading3 = nil
+          prev_heading1 = heading1_text
+          puts "Heading #1: #{heading1_text}"
+        end
+        if heading2_text != prev_heading2
+          prev_heading3 = nil
+          prev_heading2 = heading2_text
+          puts "Heading #2: #{heading2_text}"
+        end
+        if heading3_text != prev_heading3
+          prev_heading3 = heading3_text
+          puts "Heading #3: #{heading3_text}"
+        end
+        
+        chapter_text = get_text_on_line(chapter_link, stop_at: :a).strip
+        chapter_url = chapter_link.try(:[], :href)
+        next unless chapter_url
+        
+        chapter_thread = get_url_param(chapter_url, "thread")
+        chapter_thread = nil unless chapter_thread
+        
+        chapter_url = standardize_chapter_url(chapter_url)
+        
+        prev_chapter_load = (@prev_chapter_loads[chapter_url] or 0)
+        prev_chapter_page = (@prev_chapter_pages[chapter_url] or 0)
+        
+        section_list = [heading1_text, heading2_text, heading3_text]
+        section_list.reject! {|thing| thing.nil? }
+        
+        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, name: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
+        if block_given?
+          yield chapter_details
+        end
+        
+        chapter_list << chapter_details
+      end
+      
+      chapter_list
+    end
+  end
   ##
   #class HandlerTemplate
   #  def initialize(options = {})
@@ -360,6 +529,7 @@
   #    return unless chapter_link
   #    chapter_text = get_text_on_line(chapter_link).strip
   #    chapter_url = chapter_link.try(:[], :href)
+  #    #next unless chapter_url
   #    chapter_thread = get_url_param(chapter_url, "thread")
   #    chapter_thread = nil unless chapter_thread
   #    

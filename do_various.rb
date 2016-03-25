@@ -27,7 +27,7 @@ FIC_NAME_MAPPING = {
   peterverse: [:peter, :pedro, :peterverse],
   maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"]
 }
-GROUP_HANDLERS = {glowfic: GlowficChapterHandlers::CommunityHandler, effulgence: GlowficChapterHandlers::OrderedListHandler, pixiethreads: GlowficChapterHandlers::OrderedListHandler, incandescence: GlowficChapterHandlers::OrderedListHandler, radon: GlowficChapterHandlers::OrderedListHandler, sandbox: GlowficChapterHandlers::SandboxListHandler}
+GROUP_HANDLERS = {glowfic: GlowficChapterHandlers::CommunityHandler, effulgence: GlowficChapterHandlers::OrderedListHandler, pixiethreads: GlowficChapterHandlers::OrderedListHandler, incandescence: GlowficChapterHandlers::OrderedListHandler, radon: GlowficChapterHandlers::OrderedListHandler, sandbox: GlowficChapterHandlers::SandboxListHandler, marri: GlowficChapterHandlers::NeatListHandler, peterverse: GlowficChapterHandlers::NeatListHandler, maggie: GlowficChapterHandlers::NeatListHandler}
 FIC_SHOW_AUTHORS = [:sandbox, :glowfic, :marri, :peterverse, :maggie]
 FIC_TOCS = {
   #Sandboxes
@@ -107,7 +107,6 @@ def main(args)
     fic_toc_url = FIC_TOCS[group]
     
     LOG.info "Parsing TOC (of #{group})"
-    LOG.info "TOC Page: #{fic_toc_url}" unless group == :glowfic
     
     prev_chapter_data = get_chapters_data(group)
     set_chapters_data(prev_chapter_data, group, old: true) unless prev_chapter_data.empty?
