@@ -36,6 +36,7 @@
           entry_link = entry.at_css('a')
           chapter_title = entry_link.try(:text)
           chapter_url = entry_link.try(:[], :href)
+          next unless chapter_url
           chapter_section = defaultCont
           if (chapter_url.nil? or chapter_url.empty?)
             next
@@ -124,6 +125,7 @@
         return unless chapter_link
         chapter_text = get_text_on_line(chapter_link).strip
         chapter_url = chapter_link.try(:[], :href)
+        return unless chapter_url
         chapter_thread = get_url_param(chapter_url, "thread")
         chapter_thread = nil unless chapter_thread
         
@@ -267,13 +269,15 @@
         superheading_text = nil
         prev_element = top_level.previous
         while prev_element and superheading.nil?
-          heading = prev_element if headings.include?(prev_element) and heading.nil? and superheading.nil?
-          superheading = prev_element if uber_headings.include?(prev_element) and superheading.nil?
+          heading = prev_element if headings.include?(prev_element) and heading.nil?
+          superheading = prev_element if uber_headings.include?(prev_element)
           prev_element = prev_element.previous
         end
         
+        in_li = false
         if link.parent.name == "li" and heading.nil?
           parent = link.parent
+          in_li = true
           while parent and parent != entry and parent.name != "ol" and parent.name != "ul"
             parent = parent.parent
           end
@@ -291,8 +295,8 @@
         
         next if superheading.nil?
         
-        heading_text = heading.text.strip if heading
-        superheading_text = superheading.text.strip if superheading
+        superheading_text = get_text_on_line(superheading).strip
+        heading_text = get_text_on_line(heading).strip if heading
         
         if superheading_text != prev_superheading
           prev_heading = nil
@@ -304,11 +308,9 @@
           puts "Heading: #{heading_text}"
         end
         
-        chapter_text = get_text_on_line(chapter_link, stop_at: :a, backward: false).strip
+        chapter_text = get_text_on_line(chapter_link, stop_at: :a, backward: in_li).strip
         chapter_url = chapter_link.try(:[], :href)
-        if chapter_url == "http://alicornutopia.dreamwidth.org/24871.html?style=site\""
-          chapter_url = "http://alicornutopia.dreamwidth.org/24871.html?style=site"
-        end
+        next unless chapter_url
         
         chapter_thread = get_url_param(chapter_url, "thread")
         chapter_thread = nil unless chapter_thread
