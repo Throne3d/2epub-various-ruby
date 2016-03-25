@@ -153,8 +153,8 @@
             subsection_text = curr_element.text + subsection_text
             curr_element = curr_element.previous
           end
-          subsection_text = i.to_s if subsection_text.empty?
           subsection_text.strip!
+          subsection_text = i.to_s if subsection_text.empty?
           each_section(section, section_list + [subsection_text], &block)
         else
           yield section, section_list
