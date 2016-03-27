@@ -27,8 +27,8 @@ module GlowficEpub
     def empty?
       @chapters.empty?
     end
-    def each
-      @chapters.each
+    def each(&block)
+      @chapters.each(&block)
     end
     def to_json(options={})
       hash = {:"@chapters" => @chapters}
