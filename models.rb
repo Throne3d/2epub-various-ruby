@@ -1,4 +1,14 @@
-﻿module GlowficEpub
+﻿class Object
+  def try(*params, &block)
+    if params.empty? && block_given?
+      yield self
+    else
+      public_send(*params, &block) if respond_to? params.first
+    end
+  end
+end
+
+module GlowficEpub
   require 'model_methods'
   require 'json'
   include GlowficEpubMethods

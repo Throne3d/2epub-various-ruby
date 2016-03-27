@@ -1,8 +1,23 @@
-﻿module GlowficChapterHandlers
+﻿module GlowficIndexHandlers
   require 'model_methods'
+  require 'models'
   include GlowficEpubMethods
   
-  class CommunityHandler
+  class IndexHandler
+    def self.handles(*args)
+      @handles = args
+    end
+    def self.handles?(thing)
+      return false unless @handles
+      return @handles.include?(thing)
+    end
+    def handles?(thing)
+      return self.handles? thing
+    end
+  end
+  
+  class CommunityHandler < IndexHandler
+    handles :glowfic
     def initialize(options = {})
       @group = nil
       @group = options[:group] if options.key?(:group)
@@ -104,7 +119,8 @@
     end
   end
   
-  class OrderedListHandler
+  class OrderedListHandler < IndexHandler
+    handles :effulgence, :pixiethreads, :incandescence, :radon
     def initialize(options = {})
       @group = nil
       @group = options[:group] if options.key?(:group)
@@ -198,7 +214,8 @@
     end
   end
   
-  class SandboxListHandler
+  class SandboxListHandler < IndexHandler
+    handles :sandbox
     def initialize(options = {})
       @group = nil
       @group = options[:group] if options.key?(:group)
@@ -343,7 +360,8 @@
     end
   end
   
-  class NeatListHandler
+  class NeatListHandler < IndexHandler
+    handles :marri, :peterverse, :maggie
     def initialize(options = {})
       @group = nil
       @group = options[:group] if options.key?(:group)

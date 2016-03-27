@@ -7,10 +7,11 @@ require 'json'
 require 'uri'
 require 'open-uri'
 require 'cgi'
+
 $LOAD_PATH << '.'
 require 'models'
 require 'model_methods'
-require 'handlers_chapters'
+require 'handlers_indexes'
 include GlowficEpubMethods
 
 FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
@@ -27,7 +28,6 @@ FIC_NAME_MAPPING = {
   peterverse: [:peter, :pedro, :peterverse],
   maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"]
 }
-GROUP_HANDLERS = {glowfic: GlowficChapterHandlers::CommunityHandler, effulgence: GlowficChapterHandlers::OrderedListHandler, pixiethreads: GlowficChapterHandlers::OrderedListHandler, incandescence: GlowficChapterHandlers::OrderedListHandler, radon: GlowficChapterHandlers::OrderedListHandler, sandbox: GlowficChapterHandlers::SandboxListHandler, marri: GlowficChapterHandlers::NeatListHandler, peterverse: GlowficChapterHandlers::NeatListHandler, maggie: GlowficChapterHandlers::NeatListHandler}
 FIC_SHOW_AUTHORS = [:sandbox, :glowfic, :marri, :peterverse, :maggie]
 FIC_TOCS = {
   #Sandboxes
@@ -45,20 +45,6 @@ FIC_TOCS = {
   peterverse: "http://peterverse.dreamwidth.org/1643.html?style=site",
   maggie: "http://maggie-of-the-owls.dreamwidth.org/454.html?style=site"
 }
-class Object
-  def try(*params, &block)
-    if params.empty? && block_given?
-      yield self
-    else
-      public_send(*params, &block) if respond_to? params.first
-    end
-  end
-end
-
-def make_chapter(options={})
-  chapter = GlowficEpub::Chapter.new(options)
-  LOG.info chapter.to_s
-end
 
 def main(args)
   abort "Please input an argument (e.g. 'tocs_sandbox', 'flats_sandbox', 'epub_sandbox', or 'remove alicorn*#1640' to remove all 1640.html within any alicorn* community)" unless args.size > 0
@@ -111,9 +97,17 @@ def main(args)
     prev_chapter_data = get_chapters_data(group)
     set_chapters_data(prev_chapter_data, group, old: true) unless prev_chapter_data.empty?
     
-    abort "Couldn't find a handler for group '#{group}'." unless GROUP_HANDLERS.key?(group)
-    group_handler = GROUP_HANDLERS[group].new(group: group)
-    chapter_list = group_handler.toc_to_chapterlist(fic_toc_url: fic_toc_url) do |chapter|
+    group_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
+    group_handlers = group_handlers.select {|c| c.is_a? Class and c < GlowficIndexHandlers::IndexHandler }
+    
+    group_handler = group_handlers.select {|c| c.handles? group }
+    abort "No handlers for #{group}!" if group_handler.nil? or group_handler.empty?
+    abort "Too many handlers for #{group}! [#{group_handler * ', '}]" if group_handler.length > 1
+    
+    group_handler = group_handler.first
+    
+    handler = group_handler.new(group: group)
+    chapter_list = handler.toc_to_chapterlist(fic_toc_url: fic_toc_url) do |chapter|
       LOG.info chapter.to_s
     end
     set_chapters_data(chapter_list, group)
