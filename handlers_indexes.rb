@@ -392,12 +392,10 @@
       @group = nil
       @group = options[:group] if options.key?(:group)
       
-      @heading1select = "b, strong"
-      @heading2select = "u"
-      @heading3select = "em, i"
+      @heading_selects = ["b, strong", "u", "em, i"]
       if @group == :maggie
-        @heading1select = "u"
-        @heading2select = "b, strong"
+        @heading_selects[0] = "u"
+        @heading_selects[1] = "b, strong"
       end
     end
     def entry
@@ -438,99 +436,77 @@
       links = entry.css('a')
       #Bold, underlined, italics
       #Tiers of heading ^
-      potential_heading1s = entry.css(@heading1select)
-      potential_heading2s = entry.css(@heading2select)
-      potential_heading3s = entry.css(@heading3select)
-      
-      heading1s = []
-      heading2s = []
-      heading3s = []
-      
-      potential_heading1s.each do |node|
-        encapsule = get_heading_encapsule(node)
-        next unless encapsule
-        heading1s << encapsule
-      end
-      potential_heading2s.each do |node|
-        encapsule = get_heading_encapsule(node)
-        next unless encapsule
-        heading2s << encapsule
-      end
-      potential_heading3s.each do |node|
-        encapsule = get_heading_encapsule(node)
-        next unless encapsule
-        heading3s << encapsule
+      potential_headings = []
+      @heading_selects.each_with_index do |heading_select, i|
+        potential_headings[i] = entry.css(heading_select)
       end
       
-      heading3s = [] if (heading3s - heading1s).empty?
-      heading3s = [] if (heading3s - heading2s).empty?
-      heading2s = [] if (heading2s - heading1s).empty?
+      headings = []
       
-      
-      if heading2s.length < 1
-        heading2s = heading3s
-        heading3s = []
+      potential_headings.each_with_index do |potential_heading, i|
+        headings[i] = []
+        potential_heading.each do |node|
+          encapsule = get_heading_encapsule(node)
+          next unless encapsule
+          headings[i] << encapsule
+        end
       end
-      if heading1s.length < 1
-        heading1s = heading2s
-        heading2s = []
-      end
-      puts "Headings #1: #{heading1s.length}"
-      puts "#{heading1s * ', '}" unless heading1s.empty?
-      puts "Headings #2: #{heading2s.length}"
-      puts "#{heading2s * ', '}" unless heading2s.empty?
-      puts "Headings #3: #{heading3s.length}"
-      puts "#{heading3s * ', '}" unless heading3s.empty?
       
-      prev_heading1 = nil
-      prev_heading2 = nil
-      prev_heading3 = nil
+      if (headings.length > 1)
+        (headings.length-1).downto(1).each do |i|
+          (i-1).downto(0).each do |y|
+            headings[i] = [] if (headings[i] - headings[y]).empty?
+          end
+        end
+      end
+      heading_levels = headings.reject {|item| item.empty?}
+      
+      prev_headings = [nil] * heading_levels.length
       links.each do |link|
         chapter_link = link
-        
         
         top_level = link
         while top_level.parent != entry
           top_level = top_level.parent
         end
         
-        heading1 = nil
-        heading2 = nil
-        heading3 = nil
-        heading1_text = nil
-        heading2_text = nil
-        heading3_text = nil
+        heading = []
+        heading_text = []
         prev_element = top_level.previous
-        while prev_element and heading1.nil?
-          heading3 = prev_element if heading3s.include?(prev_element) and heading3.nil? and heading2.nil?
-          heading2 = prev_element if heading2s.include?(prev_element) and heading2.nil?
-          heading1 = prev_element if heading1s.include?(prev_element)
-          prev_element = prev_element.previous
+        if (not heading_levels.empty?)
+          while prev_element and (heading.empty? or heading[0].nil?)
+            (heading_levels.length-1).downto(0).each do |i|
+              supers_nil = true
+              (i).downto(0).each do |y|
+                unless heading[y].nil?
+                  supers_nil = false
+                  break
+                end
+              end
+              heading[i] = prev_element if supers_nil and heading_levels[i].include?(prev_element)
+            end
+            prev_element = prev_element.previous
+          end
         end
         
-        next if heading1.nil?
+        next if (heading.empty? or heading[0].nil?) and not heading_levels.empty?
         
-        heading1_text = get_text_on_line(heading1).strip
-        heading2_text = get_text_on_line(heading2).strip if heading2
-        heading3_text = get_text_on_line(heading3).strip if heading3
-        
-        if heading1_text != prev_heading1
-          prev_heading2 = nil
-          prev_heading3 = nil
-          prev_heading1 = heading1_text
-          puts "Heading #1: #{heading1_text}"
-        end
-        if heading2_text != prev_heading2
-          prev_heading3 = nil
-          prev_heading2 = heading2_text
-          puts "Heading #2: #{heading2_text}"
-        end
-        if heading3_text != prev_heading3
-          prev_heading3 = heading3_text
-          puts "Heading #3: #{heading3_text}"
+        heading.each_with_index do |node, i|
+          heading_text[i] = get_text_on_line(node).strip if node
         end
         
-        chapter_text = get_text_on_line(chapter_link, stop_at: :a).strip
+        heading_text.each_with_index do |text, i|
+          if text != prev_headings[i]
+            (i).upto(heading_text.length-1).each do |y|
+              prev_headings[y] = nil
+            end
+            prev_headings[i] = text
+            puts "Heading ##{i}: #{text}"
+          end
+        end
+        
+        chapter_text, chapter_text_extras = get_chapter_titles(chapter_link)
+        
         chapter_url = chapter_link.try(:[], :href)
         next unless chapter_url
         
@@ -542,10 +518,10 @@
         prev_chapter_load = (@prev_chapter_loads[chapter_url] or 0)
         prev_chapter_page = (@prev_chapter_pages[chapter_url] or 0)
         
-        section_list = [heading1_text, heading2_text, heading3_text]
+        section_list = heading_text
         section_list.reject! {|thing| thing.nil? }
         
-        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
+        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
         if block_given?
           yield chapter_details
         end
