@@ -122,7 +122,7 @@ def main(args)
     LOG.info "Chapters: #{chapter_list.length}"
     
     site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
-    site_handlers.select! {|c| c.is_a? Class }
+    site_handlers.select! {|c| c.is_a? Class and c < GlowficSiteHandlers::SiteHandler }
     
     unhandled_chapters = []
     instance_handlers = {}

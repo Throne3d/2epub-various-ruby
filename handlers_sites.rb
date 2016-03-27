@@ -4,7 +4,13 @@
   require 'uri'
   include GlowficEpubMethods
   
-  class DreamwidthHandler
+  class SiteHandler
+    def self.handles?(chapter)
+      false
+    end
+  end
+  
+  class DreamwidthHandler < SiteHandler
     def self.handles?(chapter)
       return false if not chapter.url or chapter.url.empty?
       
