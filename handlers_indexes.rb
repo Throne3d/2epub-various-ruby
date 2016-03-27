@@ -86,7 +86,7 @@
           prev_chapter_page = (@prev_chapter_pages[chapter_url] or 0)
           
           chapter_sections = (chapter_section) ? [chapter_section] : []
-          chapter_details = GlowficEpub::Chapter.new(url: chapter_url, name: chapter_title, sections: chapter_sections, page_count: prev_chapter_page, loaded: prev_chapter_load)
+          chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_title, sections: chapter_sections, page_count: prev_chapter_page, loaded: prev_chapter_load)
           if block_given?
             yield chapter_details
           end
@@ -150,7 +150,7 @@
         prev_chapter_load = (@prev_chapter_loads[chapter_url] or 0)
         prev_chapter_page = (@prev_chapter_pages[chapter_url] or 0)
         
-        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, name: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
+        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
         if block_given?
           yield chapter_details
         end
@@ -348,7 +348,7 @@
         section_list = [superheading_text, heading_text]
         section_list.reject! {|thing| thing.nil? }
         
-        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, name: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
+        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
         if block_given?
           yield chapter_details
         end
@@ -519,7 +519,7 @@
         section_list = [heading1_text, heading2_text, heading3_text]
         section_list.reject! {|thing| thing.nil? }
         
-        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, name: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
+        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
         if block_given?
           yield chapter_details
         end
@@ -566,7 +566,7 @@
   #
   #    section_list = ["no section"]
   #    
-  #    chapter_details = GlowficEpub::Chapter.new(url: chapter_url, name: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load)
+  #    chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load)
   #    if block_given?
   #      yield chapter_details
   #    end

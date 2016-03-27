@@ -233,7 +233,7 @@
     chapters = get_chapters_data(group)
     prev_lengths = {}
     chapters.each do |chapter|
-      prev_lengths[chapter.url] = chapter.pageCount unless chapter.pageCount == 0
+      prev_lengths[chapter.url] = chapter.page_count unless chapter.page_count == 0
     end
     prev_lengths
   end
@@ -242,7 +242,7 @@
     chapters = get_chapters_data(group)
     prev_loads = {}
     chapters.each do |chapter|
-      prev_loads[chapter.url] = chapter.fullyLoaded unless chapter.pageCount == 0
+      prev_loads[chapter.url] = chapter.fully_loaded unless chapter.page_count == 0
     end
     prev_loads
   end

@@ -36,33 +36,67 @@ module GlowficEpub
     end
     def from_json! string
       JSON.parse(string).each do |var, val|
-        self.instance_variable_set var, val
+        self.instance_variable_set var, val unless var == "@chapters"
+        
+        @chapters = []
+        val.each do |chapter_hash|
+          chapter_hash.keys.each do |key|
+            next unless key and not key.empty?
+            next unless key.start_with?("@")
+            next if key.start_with?("@@")
+            next if key.length == 1
+            chapter_hash[key[1..-1]] = chapter_hash[key]
+            chapter_hash.delete(key)
+          end
+          chapter = Chapter.new(chapter_hash)
+          @chapters << chapter
+        end
       end
     end
   end
 
   class Chapter
-    attr_accessor :path, :name, :name_extras, :sections, :thread, :section, :section_extras, :page_count, :entry_title, :entry, :posts, :fully_loaded
+    attr_accessor :path, :title, :title_extras, :sections, :thread, :section, :section_extras, :page_count, :entry_title, :entry, :posts, :pages_loaded
     attr_reader :url, :smallURL
     
     def initialize(params={})
+      param_transform = {:name => :title, :loaded => :pages_loaded, :name_extras => :title_extras}
+      params.keys.each do |param|
+        if param.is_a? String
+          params[param.to_sym] = params[param]
+          params.delete param
+          param = param.to_sym
+        end
+        if param_transform.key?(param)
+          params[param_transform[param]] = params[param]
+          params.delete param
+          param = param_transform[param]
+        end
+      end
       @smallURL = nil
-      @name = nil
+      @title = nil
       @sections = []
       @thread = nil
       @page_count = 0
       @entry_title = nil
       @entry = nil
       @posts = []
-      @fully_loaded = 0
+      @pages_loaded = 0
+      
+      allowed_params = [:path, :title, :name_extras, :thread, :sections, :page_count, :entry_title, :entry, :posts, :pages_loaded, :url]
+      params.reject! do |param|
+        unless allowed_params.include?(param)
+          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
+          true
+        end
+      end
       
       raise(ArgumentError, "URL must be given") unless (params.key?(:url) and not params[:url].strip.empty?)
-      raise(ArgumentError, "Chapter Title must be given") unless (params.key?(:name) and not params[:name].strip.empty?)
-      [:path, :name, :name_extras, :thread, :sections, :page_count, :entry_title, :entry, :posts, :fully_loaded].each do |symbol|
+      raise(ArgumentError, "Chapter Title must be given") unless (params.key?(:title) and not params[:title].strip.empty?)
+      allowed_params.each do |symbol|
         public_send("#{symbol}=", params[symbol]) if params[symbol]
       end
-      self.url=params[:url]
-      self.path=get_page_location(url)
+      self.path=get_page_location(url) unless params.key?(:path)
     end
     def url=(newURL)
       @url=newURL
@@ -81,15 +115,30 @@ module GlowficEpub
       uri.to_s.sub(/^https?\:\/\//, "").sub(/\.html$/, "")
     end
     def to_s
-      str = "\"#{name}"
-      str += " #{name_extras}" unless name_extras.nil? or name_extras.empty?
+      str = "\"#{title}"
+      str += " #{title_extras}" unless title_extras.nil? or title_extras.empty?
       str += "\": #{smallURL}"
     end
     
+    def self.serialize_ignore?(thing)
+      return false if @serialize_ignore.nil?
+      @serialize_ignore.include?(thing) or (thing.is_a? String and @serialize_ignore.include?(thing.to_sym))
+    end
+    def self.serialize_ignore(*things)
+      
+      @serialize_ignore = things
+    end
+    def serialize_ignore?(thing)
+      self.class.serialize_ignore?(thing)
+    end
+    
+    serialize_ignore(:smallURL)
     def to_json(options={})
       hash = {}
       self.instance_variables.each do |var|
-        hash[var] = self.instance_variable_get var
+        var_str = (var.is_a? String) ? var : var.to_s
+        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       hash.to_json(options)
     end
