@@ -89,7 +89,7 @@ def main(args)
   if (process == :tocs)
     chapter_list = []
     
-    abort "Group #{group} has no TOC" unless FIC_TOCS.has_key? group and not FIC_TOCS[group].empty?
+    (LOG.fatal "Group #{group} has no TOC" and abort) unless FIC_TOCS.has_key? group and not FIC_TOCS[group].empty?
     fic_toc_url = FIC_TOCS[group]
     
     LOG.info "Parsing TOC (of #{group})"
@@ -101,8 +101,8 @@ def main(args)
     group_handlers = group_handlers.select {|c| c.is_a? Class and c < GlowficIndexHandlers::IndexHandler }
     
     group_handler = group_handlers.select {|c| c.handles? group }
-    abort "No handlers for #{group}!" if group_handler.nil? or group_handler.empty?
-    abort "Too many handlers for #{group}! [#{group_handler * ', '}]" if group_handler.length > 1
+    (LOG.fatal "No index handlers for #{group}!" and abort) if group_handler.nil? or group_handler.empty?
+    (LOG.fatal "Too many index handlers for #{group}! [#{group_handler * ', '}]" and abort) if group_handler.length > 1
     
     group_handler = group_handler.first
     
