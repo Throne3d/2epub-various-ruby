@@ -83,7 +83,7 @@ module GlowficEpub
       @posts = []
       @pages_loaded = 0
       
-      allowed_params = [:path, :title, :name_extras, :thread, :sections, :page_count, :entry_title, :entry, :posts, :pages_loaded, :url]
+      allowed_params = [:path, :title, :title_extras, :thread, :sections, :page_count, :entry_title, :entry, :posts, :pages_loaded, :url]
       params.reject! do |param|
         unless allowed_params.include?(param)
           raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
@@ -115,9 +115,9 @@ module GlowficEpub
       uri.to_s.sub(/^https?\:\/\//, "").sub(/\.html$/, "")
     end
     def to_s
-      str = "\"#{title}"
+      str = "\"#{title}\""
       str += " #{title_extras}" unless title_extras.nil? or title_extras.empty?
-      str += "\": #{smallURL}"
+      str += ": #{smallURL}"
     end
     
     def self.serialize_ignore?(thing)
