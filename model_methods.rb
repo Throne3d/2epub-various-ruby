@@ -10,8 +10,12 @@
       @file.sync = true
     end
     
+    def file
+      @file
+    end
+    
     def set_output_params(process, group=nil)
-      file="logs/" + Time.now.strftime("%Y-%m-%d %H %M ") + "#{process}" + (group.nil? ? "" : "_#{group}") + ".log"
+      self.file = "logs/" + Time.now.strftime("%Y-%m-%d %H %M ") + "#{process}" + (group.nil? ? "" : "_#{group}") + ".log"
     end
     
     def write(data)
