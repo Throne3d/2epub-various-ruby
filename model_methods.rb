@@ -102,18 +102,24 @@
   
   BLOCK_LEVELS = [:address, :article, :aside, :blockquote, :canvas, :dd, :div, :dl, :fieldset, :figcaption, :figure, :footer, :form, :h1, :h2, :h3, :h4, :h5, :h6, :header, :hgroup, :hr, :li, :main, :nav, :noscript, :ol, :output, :p, :pre, :section, :table, :tfoot, :ul, :video, :br]
   def get_text_on_line(node, options={})
+    raise(ArgumentError, "Invalid parameter combo: :after and :forward") if options.key?(:after) and options.key?(:forward)
+    raise(ArgumentError, "Invalid parameter combo: :before and :backward") if options.key?(:before) and options.key?(:backward)
+    options = {} unless options
+    
     stop_at = []
-    stop_at = options[:stop_at] if options and options.key?(:stop_at)
+    stop_at = options[:stop_at] if options.key?(:stop_at)
     stop_at = [stop_at] if not stop_at.is_a?(Array)
     
     forward = true
-    forward = options[:forward] if options and options.key?(:forward)
+    forward = options[:forward] if options.key?(:forward)
+    forward = options[:after] if options.key?(:after)
     
     backward = true
-    backward = options[:backward] if options and options.key?(:backward)
+    backward = options[:backward] if options.key?(:backward)
+    backward = options[:before] if options.key?(:before)
     
     include_node = true
-    include_node = options[:include_node] if options and options.key?(:include_node)
+    include_node = options[:include_node] if options.key?(:include_node)
     
     text = ""
     text = node.text if include_node
