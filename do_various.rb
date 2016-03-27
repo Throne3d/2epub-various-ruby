@@ -142,7 +142,9 @@ def main(args)
         instance_handlers[site_handler] = site_handler.new(group: group)
       end
       handler = instance_handlers[site_handler]
-      LOG.info "#{site_handler} handles #{chapter}"
+      
+      handler.get_updated(chapter)
+      LOG.info "#{site_handler} handled #{chapter}"
     end
   else
     LOG.info "Not yet implemented."

@@ -8,6 +8,9 @@
     def self.handles?(chapter)
       false
     end
+    def get_updated(chapter)
+      nil
+    end
   end
   
   class DreamwidthHandler < SiteHandler
@@ -20,6 +23,12 @@
     def initialize(options = {})
       @group = nil
       @group = options[:group] if options.key?(:group)
+    end
+    
+    def get_updated(chapter)
+      return nil unless self.handles?(chapter)
+      
+      
     end
   end
 end
