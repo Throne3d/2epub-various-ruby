@@ -98,7 +98,7 @@ def main(args)
     set_chapters_data(prev_chapter_data, group, old: true) unless prev_chapter_data.empty?
     
     group_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
-    group_handlers = group_handlers.select {|c| c.is_a? Class and c < GlowficIndexHandlers::IndexHandler }
+    group_handlers.select! {|c| c.is_a? Class and c < GlowficIndexHandlers::IndexHandler }
     
     group_handler = group_handlers.select {|c| c.handles? group }
     (LOG.fatal "No index handlers for #{group}!" and abort) if group_handler.nil? or group_handler.empty?
