@@ -14,6 +14,29 @@
     def handles?(thing)
       return self.handles? thing
     end
+    def get_chapter_titles(chapter_link, options = {})
+      backward = true
+      backward = options[:backward] if options.key?(:backward)
+      
+      chapter_text = get_text_on_line(chapter_link, stop_at: :a, backward: backward, forward: false).strip
+      chapter_text_extras = get_text_on_line(chapter_link, stop_at: :a, backward: false, include_node: false).strip
+      
+      if (chapter_text.index("(") and chapter_text_extras.index(")")) or (chapter_text.index("[") and chapter_text_extras.index("]"))
+        chapter_text = get_text_on_line(chapter_link, stop_at: :a, backward: backward).strip
+        chapter_text_extras = ""
+      end #If the thing's got brackets split between the text & extras, shove it together
+      
+      if (chapter_text_extras.index("(") == chapter_text_extras.length or chapter_text_extras.index("[") == chapter_text_extras.length)
+        chapter_text_extras = chapter_text_extras[0..-2].strip
+      end #If it ends in a start-bracket, remove it
+      if (chapter_text_extras.index(")") == chapter_text_extras.length and not chapter_text_extras.index("(")) or (chapter_text_extras.index("]") == chapter_text_extras.length and not chapter_text_extras.index("["))
+        chapter_text_extras = chapter_text_extras[0..-2].strip
+      end #If it ends in an end-bracket, and there's not corresponding start bracket, remove it
+      
+      chapter_text_extras = nil if chapter_text_extras.empty?
+      
+      [chapter_text, chapter_text_extras]
+    end
   end
   
   class CommunityHandler < IndexHandler
@@ -139,7 +162,9 @@
       else
         chapter_link = section.at_css('a')
         return unless chapter_link
-        chapter_text = get_text_on_line(chapter_link).strip
+        chapter_text = get_text_on_line(chapter_link, after: false).strip
+        chapter_text_extras = get_text_on_line(chapter_link, include_node: false, before: false).strip
+        chapter_text_extras = nil if chapter_text_extras.empty?
         chapter_url = chapter_link.try(:[], :href)
         return unless chapter_url
         chapter_thread = get_url_param(chapter_url, "thread")
@@ -150,7 +175,7 @@
         prev_chapter_load = (@prev_chapter_loads[chapter_url] or 0)
         prev_chapter_page = (@prev_chapter_pages[chapter_url] or 0)
         
-        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
+        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
         if block_given?
           yield chapter_details
         end
@@ -333,7 +358,8 @@
           puts "Heading: #{heading_text}"
         end
         
-        chapter_text = get_text_on_line(chapter_link, stop_at: :a, backward: in_li).strip
+        chapter_text, chapter_text_extras = get_chapter_titles(chapter_link, backward: in_li)
+        
         chapter_url = chapter_link.try(:[], :href)
         next unless chapter_url
         
@@ -348,7 +374,7 @@
         section_list = [superheading_text, heading_text]
         section_list.reject! {|thing| thing.nil? }
         
-        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
+        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
         if block_given?
           yield chapter_details
         end
