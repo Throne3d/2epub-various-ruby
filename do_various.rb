@@ -12,6 +12,7 @@ $LOAD_PATH << '.'
 require 'models'
 require 'model_methods'
 require 'handlers_indexes'
+require 'handlers_sites'
 include GlowficEpubMethods
 
 FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
@@ -53,7 +54,7 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, flats: :flats, epub: :epub, det: :details, 
+  processes = {tocs: :tocs, toc: :tocs, process: :process, epub: :epub, det: :details, 
     clean: :clean, rem: :remove, stat: :stats}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
@@ -111,6 +112,38 @@ def main(args)
       LOG.info chapter.to_s
     end
     set_chapters_data(chapter_list, group)
+  elsif (process == :process)
+    chapter_list = get_chapters_data(group)
+    
+    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    
+    LOG.info "Processing '#{group}'"
+    
+    LOG.info "Chapters: #{chapter_list.length}"
+    
+    site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
+    site_handlers.select! {|c| c.is_a? Class }
+    
+    unhandled_chapters = []
+    instance_handlers = {}
+    chapter_list.each do |chapter|
+      site_handler = site_handlers.select {|c| c.handles? chapter}
+      
+      if site_handler.nil? or site_handler.empty? or site_handler.length > 1
+        LOG.error "No site handler for #{chapter}!" if site_handler.nil? or site_handler.empty?
+        LOG.error "Too many site handlers for #{chapter}! [#{group_handler * ', '}]" if site_handler.length > 1
+        unhandled_chapters << chapter
+        next
+      end
+      
+      site_handler = site_handler.first
+      
+      unless instance_handlers.key?(site_handler)
+        instance_handlers[site_handler] = site_handler.new(group: group)
+      end
+      handler = instance_handlers[site_handler]
+      LOG.info "#{site_handler} handles #{chapter}"
+    end
   else
     LOG.info "Not yet implemented."
   end
