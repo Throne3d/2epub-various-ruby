@@ -121,8 +121,6 @@
             next
           end
           chapter_title += " +" unless complete
-          prev_chapter_load = (@prev_chapter_loads[chapter_url] or 0)
-          prev_chapter_page = (@prev_chapter_pages[chapter_url] or 0)
           
           chapter_sections = (chapter_section) ? [chapter_section] : []
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
