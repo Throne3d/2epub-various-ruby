@@ -4,6 +4,15 @@
   include GlowficEpubMethods
   
   class IndexHandler
+    def group
+      @group
+    end
+    def prev_pages
+      @prev_pages ||= get_prev_chapter_pages(group)
+    end
+    def initialize(options = {})
+      group = options[:group] if options.key?(:group)
+    end
     def self.handles(*args)
       @handles = args
     end
@@ -37,19 +46,25 @@
       
       [chapter_text, chapter_text_extras]
     end
+    def chapter_from_toc(params = {})
+      params[:url] = standardize_chapter_url(params[:url])
+      params[:thread] = get_url_param(params[:url], "thread")
+      params.delete(:thread) unless params[:thread]
+      params.delete(:title_extras) if params.key?(:title_extras) and (not params[:title_extras] or params[:title_extras].empty?)
+      
+      if prev_pages.key?(params[:url])
+        params[:pages] = prev_pages[params[:url]]
+      end
+      return GlowficEpub::Chapter.new(params)
+    end
   end
   
   class CommunityHandler < IndexHandler
     handles :glowfic
     def initialize(options = {})
-      @group = nil
-      @group = options[:group] if options.key?(:group)
     end
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
-      
-      @prev_chapter_pages = get_prev_chapter_pages(@group)
-      @prev_chapter_loads = get_prev_chapter_loads(@group)
       
       defaultCont = :"no continuity"
       chapter_list = {}
@@ -109,7 +124,7 @@
           prev_chapter_page = (@prev_chapter_pages[chapter_url] or 0)
           
           chapter_sections = (chapter_section) ? [chapter_section] : []
-          chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_title, sections: chapter_sections, page_count: prev_chapter_page, loaded: prev_chapter_load)
+          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
           if block_given?
             yield chapter_details
           end
@@ -145,8 +160,6 @@
   class OrderedListHandler < IndexHandler
     handles :effulgence, :pixiethreads, :incandescence, :radon
     def initialize(options = {})
-      @group = nil
-      @group = options[:group] if options.key?(:group)
       @strip_li_end = @group == :incandescence
       @strip_li_end = options[:strip_li_end] if options.key?(:strip_li_end)
     end
@@ -167,15 +180,8 @@
         chapter_text_extras = nil if chapter_text_extras.empty?
         chapter_url = chapter_link.try(:[], :href)
         return unless chapter_url
-        chapter_thread = get_url_param(chapter_url, "thread")
-        chapter_thread = nil unless chapter_thread
         
-        chapter_url = standardize_chapter_url(chapter_url)
-        
-        prev_chapter_load = (@prev_chapter_loads[chapter_url] or 0)
-        prev_chapter_page = (@prev_chapter_pages[chapter_url] or 0)
-        
-        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
+        chapter_details = chapter_from_toc(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list)
         if block_given?
           yield chapter_details
         end
@@ -204,9 +210,6 @@
     end
     def toc_to_chapterlist(options={}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
-      
-      @prev_chapter_pages = get_prev_chapter_pages(@group)
-      @prev_chapter_loads = get_prev_chapter_loads(@group)
       
       chapter_list = GlowficEpub::Chapters.new
       
@@ -242,14 +245,9 @@
   class SandboxListHandler < IndexHandler
     handles :sandbox
     def initialize(options = {})
-      @group = nil
-      @group = options[:group] if options.key?(:group)
     end
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
-      
-      @prev_chapter_pages = get_prev_chapter_pages(@group)
-      @prev_chapter_loads = get_prev_chapter_loads(@group)
       
       chapter_list = GlowficEpub::Chapters.new
       
@@ -363,18 +361,10 @@
         chapter_url = chapter_link.try(:[], :href)
         next unless chapter_url
         
-        chapter_thread = get_url_param(chapter_url, "thread")
-        chapter_thread = nil unless chapter_thread
-        
-        chapter_url = standardize_chapter_url(chapter_url)
-        
-        prev_chapter_load = (@prev_chapter_loads[chapter_url] or 0)
-        prev_chapter_page = (@prev_chapter_pages[chapter_url] or 0)
-        
         section_list = [superheading_text, heading_text]
         section_list.reject! {|thing| thing.nil? }
         
-        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
+        chapter_details = chapter_from_toc(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list)
         if block_given?
           yield chapter_details
         end
@@ -389,11 +379,8 @@
   class NeatListHandler < IndexHandler
     handles :marri, :peterverse, :maggie
     def initialize(options = {})
-      @group = nil
-      @group = options[:group] if options.key?(:group)
-      
       @heading_selects = ["b, strong", "u", "em, i"]
-      if @group == :maggie
+      if group == :maggie
         @heading_selects[0] = "u"
         @heading_selects[1] = "b, strong"
       end
@@ -420,9 +407,6 @@
     end
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
-      
-      @prev_chapter_pages = get_prev_chapter_pages(@group)
-      @prev_chapter_loads = get_prev_chapter_loads(@group)
       
       chapter_list = GlowficEpub::Chapters.new
       
@@ -510,18 +494,10 @@
         chapter_url = chapter_link.try(:[], :href)
         next unless chapter_url
         
-        chapter_thread = get_url_param(chapter_url, "thread")
-        chapter_thread = nil unless chapter_thread
-        
-        chapter_url = standardize_chapter_url(chapter_url)
-        
-        prev_chapter_load = (@prev_chapter_loads[chapter_url] or 0)
-        prev_chapter_page = (@prev_chapter_pages[chapter_url] or 0)
-        
         section_list = heading_text
         section_list.reject! {|thing| thing.nil? }
         
-        chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load, thread: chapter_thread)
+        chapter_details = chapter_from_toc(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list)
         if block_given?
           yield chapter_details
         end
@@ -535,14 +511,10 @@
   ##
   #class HandlerTemplate
   #  def initialize(options = {})
-  #    @group = nil
-  #    @group = options[:group] if options.key?(:group)
+  #    group = options[:group] if options.key?(:group)
   #  end
   #  def toc_to_chapterlist(options = {}, &block)
   #    fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
-  #    
-  #    @prev_chapter_pages = get_prev_chapter_pages(@group)
-  #    @prev_chapter_loads = get_prev_chapter_loads(@group)
   #    
   #    chapter_list = GlowficEpub::Chapters.new
   #    
@@ -562,13 +534,10 @@
   #    chapter_thread = nil unless chapter_thread
   #    
   #    chapter_url = standardize_chapter_url(chapter_url)
-  #    
-  #    prev_chapter_load = (@prev_chapter_loads[chapter_url] or 0)
-  #    prev_chapter_page = (@prev_chapter_pages[chapter_url] or 0)
   #
   #    section_list = ["no section"]
   #    
-  #    chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, sections: section_list, page_count: prev_chapter_page, loaded: prev_chapter_load)
+  #    chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, sections: section_list)
   #    if block_given?
   #      yield chapter_details
   #    end

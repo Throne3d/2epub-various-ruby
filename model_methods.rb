@@ -138,7 +138,7 @@
   
   def standardize_chapter_url(url)
     uri = URI.parse(url)
-    if uri.host["dreamwidth.org"]
+    if uri.host.end_with?("dreamwidth.org")
       uri.fragment = nil
       set_url_params(clear_url_params(uri.to_s), {style: :site})
     else
@@ -237,19 +237,10 @@
 
   def get_prev_chapter_pages(group)
     chapters = get_chapters_data(group)
-    prev_lengths = {}
+    prev_pages = {}
     chapters.each do |chapter|
-      prev_lengths[chapter.url] = chapter.page_count unless chapter.page_count == 0
+      prev_pages[chapter.url] = chapter.pages if chapter.pages and not chapter.pages.empty?
     end
-    prev_lengths
-  end
-
-  def get_prev_chapter_loads(group)
-    chapters = get_chapters_data(group)
-    prev_loads = {}
-    chapters.each do |chapter|
-      prev_loads[chapter.url] = chapter.fully_loaded unless chapter.page_count == 0
-    end
-    prev_loads
+    prev_pages
   end
 end

@@ -144,7 +144,10 @@ def main(args)
       handler = instance_handlers[site_handler]
       
       handler.get_updated(chapter)
-      LOG.info "#{site_handler} handled #{chapter}"
+      puts "#{chapter}: #{chapter.pages.length}"
+      
+      #LOG.info "#{site_handler} handled #{chapter}"
+      set_chapters_data(chapter_list, group)
     end
   else
     LOG.info "Not yet implemented."
