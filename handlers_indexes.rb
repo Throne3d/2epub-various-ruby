@@ -11,7 +11,7 @@
       @prev_pages ||= get_prev_chapter_pages(group)
     end
     def initialize(options = {})
-      group = options[:group] if options.key?(:group)
+      @group = options[:group] if options.key?(:group)
     end
     def self.handles(*args)
       @handles = args
@@ -62,6 +62,7 @@
   class CommunityHandler < IndexHandler
     handles :glowfic
     def initialize(options = {})
+      super(options)
     end
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
@@ -160,6 +161,7 @@
   class OrderedListHandler < IndexHandler
     handles :effulgence, :pixiethreads, :incandescence, :radon
     def initialize(options = {})
+      super(options)
       @strip_li_end = @group == :incandescence
       @strip_li_end = options[:strip_li_end] if options.key?(:strip_li_end)
     end
@@ -245,6 +247,7 @@
   class SandboxListHandler < IndexHandler
     handles :sandbox
     def initialize(options = {})
+      super(options)
     end
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
@@ -379,6 +382,7 @@
   class NeatListHandler < IndexHandler
     handles :marri, :peterverse, :maggie
     def initialize(options = {})
+      super(options)
       @heading_selects = ["b, strong", "u", "em, i"]
       if group == :maggie
         @heading_selects[0] = "u"
