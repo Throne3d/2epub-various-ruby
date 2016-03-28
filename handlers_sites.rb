@@ -76,16 +76,20 @@
         last_page_data = get_page_data(last_page_url, replace: true)
         last_page = Nokogiri::HTML(last_page_data)
         
+        pages_exist = true
         prev_pages.each_with_index do |page_url, i|
           next if page_url == last_page_url
-          get_page_data(page_url, replace: false)
-        end #Fetch all the pages if they don't exist, in case someone deleted them
+          page_loc = get_page_location(page_url)
+          if not File.file?(page_loc)
+            pages_exist = false
+          end
+        end #Check if all the pages exist, in case someone deleted them
         
         another_page = get_next_page_link(last_page)
-        return chapter unless another_page
+        return chapter if pages_exist and not another_page
       end
       
-      #Hasn't been done before, or it's outdated; re-get.
+      #Hasn't been done before, or it's outdated, or some pages were deleted; re-get.
       return get_full(chapter)
     end
   end
