@@ -76,6 +76,11 @@
         last_page_data = get_page_data(last_page_url, replace: true)
         last_page = Nokogiri::HTML(last_page_data)
         
+        prev_pages.each_with_index do |page_url, i|
+          next if page_url == last_page_url
+          get_page_data(page_url, replace: false)
+        end #Fetch all the pages if they don't exist, in case someone deleted them
+        
         another_page = get_next_page_link(last_page)
         return chapter unless another_page
       end
