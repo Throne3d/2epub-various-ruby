@@ -24,8 +24,8 @@ FIC_NAME_MAPPING = {
   sandbox: [:sandbox],
   pixiethreads: [:pixiethreads],
   glowfic: [:othersandbox, :sandbox2, :glowfic],
-  marri: [:marri, :marrinikari],
   radon: [:radon, :absinthe],
+  marri: [:marri, :marrinikari],
   peterverse: [:peter, :pedro, :peterverse],
   maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"]
 }
