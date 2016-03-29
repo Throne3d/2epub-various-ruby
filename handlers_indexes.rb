@@ -47,8 +47,8 @@
       [chapter_text, chapter_text_extras]
     end
     def chapter_from_toc(params = {})
-      params[:url] = standardize_chapter_url(params[:url])
       params[:thread] = get_url_param(params[:url], "thread")
+      params[:url] = standardize_chapter_url(params[:url])
       params.delete(:thread) unless params[:thread]
       params.delete(:title_extras) if params.key?(:title_extras) and (not params[:title_extras] or params[:title_extras].empty?)
       
