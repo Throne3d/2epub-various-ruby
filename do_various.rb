@@ -130,8 +130,8 @@ def main(args)
       site_handler = site_handlers.select {|c| c.handles? chapter}
       
       if site_handler.nil? or site_handler.empty? or site_handler.length > 1
-        LOG.error "No site handler for #{chapter}!" if site_handler.nil? or site_handler.empty?
-        LOG.error "Too many site handlers for #{chapter}! [#{group_handler * ', '}]" if site_handler.length > 1
+        LOG.error "No site handler for #{chapter.title}!" if site_handler.nil? or site_handler.empty?
+        LOG.error "Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if site_handler.length > 1
         unhandled_chapters << chapter
         next
       end
@@ -143,8 +143,8 @@ def main(args)
       end
       handler = instance_handlers[site_handler]
       
-      handler.get_updated(chapter)
-      puts "#{chapter}: #{chapter.pages.length}"
+      notify = true
+      handler.get_updated(chapter, debug: false, notify: notify)
       
       #LOG.info "#{site_handler} handled #{chapter}"
       set_chapters_data(chapter_list, group)
