@@ -122,6 +122,7 @@
       end
     rescue HTTPError => error
       LOG.error "Error loading page (#{page_url}); #{retries == 0 ? 'No' : retries} retr#{retries==1 ? 'y' : 'ies'} left"
+      LOG.debug error if debug
       options[:retries] = options[:retries] - 1
       data = get_page_data(page_url, options)
     end
