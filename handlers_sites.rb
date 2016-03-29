@@ -29,6 +29,8 @@
     def initialize(options = {})
       @group = nil
       @group = options[:group] if options.key?(:group)
+      @group_folder = "web_cache"
+      @group_folder += "/#{@group}" if @group
     end
     
     def get_full(chapter, options = {})
@@ -101,7 +103,8 @@
       if prev_pages and not prev_pages.empty?
         is_new = false
         first_page_url = prev_pages.first
-        first_page_old_data = get_page_data(first_page_url, replace: false)
+        
+        first_page_old_data = get_page_data(first_page_url, replace: false, where: @group_folder)
         first_page_new_data = get_page_data(first_page_url, replace: true, where: 'temp')
         
         first_page_old = Nokogiri::HTML(first_page_old_data)
