@@ -80,6 +80,27 @@
 
   def get_page_data(page_url, options={})
     replace = options.key?(:replace) ? options[:replace] : false
+    debug = options.key?(:debug) ? options[:debug] : false
+    if options.key?(:retry)
+      options[:do_retry] = options[:retry]
+      options.delete(:retry)
+    end
+    
+    retries = 3
+    if options.key?(:do_retry)
+      if options[:do_retry].is_a?(Integer)
+        retries = options[:do_retry]
+      elsif options[:do_retry].nil? or options[:do_retry].is_a?(TrueClass) or options[:do_retry].is_a?(FalseClass)
+        retries = 0 unless options[:do_retry]
+      end
+    elsif options.key?(:retries)
+      retries = options[:retries]
+    end
+    
+    options.delete(:do_retry) if options.key?(:do_retry)
+    options[:retries] = retries
+    
+    LOG.debug "get_page_data('#{page_url}', #{options})" if debug
     save_path = get_page_location(page_url, options)
     save_folder = File.dirname(save_path)
     FileUtils::mkdir_p save_folder
@@ -89,15 +110,25 @@
       open(save_path, 'r') do |file|
         data = file.read
       end
+      LOG.debug "Retrieved page from web-cache" if debug
       return data
     end
-    open(page_url) do |webpage|
-      data = webpage.read
-      open(save_path, 'w') do |file|
-        file.write data
+    begin
+      open(page_url) do |webpage|
+        data = webpage.read
+        open(save_path, 'w') do |file|
+          file.write data
+        end
       end
+    rescue HTTPError => error
+      LOG.error "Error loading page (#{page_url}); #{retries == 0 ? 'No' : retries} retr#{retries==1 ? 'y' : 'ies'} left"
+      options[:retries] = options[:retries] - 1
+      data = get_page_data(page_url, options)
     end
-    return data
+    LOG.debug "Downloaded page" if debug and data
+    LOG.error "Failed to load page (#{page_url})" unless data
+    
+    data
   end
   
   BLOCK_LEVELS = [:address, :article, :aside, :blockquote, :canvas, :dd, :div, :dl, :fieldset, :figcaption, :figure, :footer, :form, :h1, :h2, :h3, :h4, :h5, :h6, :header, :hgroup, :hr, :li, :main, :nav, :noscript, :ol, :output, :p, :pre, :section, :table, :tfoot, :ul, :video, :br]
