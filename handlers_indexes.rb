@@ -89,6 +89,7 @@
           entry_box = entry.parent
           entry_link = entry.at_css('a')
           chapter_title = entry_link.try(:text)
+          chapter_title_extras = nil
           chapter_url = entry_link.try(:[], :href)
           next unless chapter_url
           chapter_section = defaultCont
@@ -120,10 +121,10 @@
           if skip
             next
           end
-          chapter_title += " +" unless complete
+          chapter_title_extras = "+" unless complete
           
           chapter_sections = (chapter_section) ? [chapter_section] : []
-          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
+          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, title_extras: chapter_title_extras, sections: chapter_sections)
           if block_given?
             yield chapter_details
           end
