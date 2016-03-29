@@ -59,7 +59,8 @@
   end
   
   def get_page_location(page_url, options={})
-    where = options.key?("where") ? options["where"] : "web_cache"
+    standardize_params(options)
+    where = options.key?(:where) ? options[:where] : "web_cache"
     
     uri = URI.parse(page_url)
     return nil unless uri and (uri.scheme == "http" or uri.scheme == "https")
@@ -80,6 +81,7 @@
   end
 
   def get_page_data(page_url, options={})
+    standardize_params(options)
     replace = options.key?(:replace) ? options[:replace] : false
     if options.key?(:retry)
       options[:do_retry] = options[:retry]
@@ -137,6 +139,7 @@
   
   BLOCK_LEVELS = [:address, :article, :aside, :blockquote, :canvas, :dd, :div, :dl, :fieldset, :figcaption, :figure, :footer, :form, :h1, :h2, :h3, :h4, :h5, :h6, :header, :hgroup, :hr, :li, :main, :nav, :noscript, :ol, :output, :p, :pre, :section, :table, :tfoot, :ul, :video, :br]
   def get_text_on_line(node, options={})
+    standardize_params(options)
     raise(ArgumentError, "Invalid parameter combo: :after and :forward") if options.key?(:after) and options.key?(:forward)
     raise(ArgumentError, "Invalid parameter combo: :before and :backward") if options.key?(:before) and options.key?(:backward)
     options = {} unless options
@@ -178,6 +181,15 @@
       set_url_params(clear_url_params(uri.to_s), {style: :site})
     else
       url
+    end
+  end
+  
+  def standardize_params(params={})
+    params.keys.each do |key|
+      if key.is_a? String
+        params[key.to_sym] = params[key]
+        params.delete(key)
+      end
     end
   end
   
@@ -245,8 +257,9 @@
   end
 
   def set_chapters_data(chapters, group, others={})
-    where = others.key?("where") ? others["where"] : ""
-    old = others.key?("old") ? others["old"] : false
+    standardize_params(others)
+    where = others.key?(:where) ? others[:where] : ""
+    old = others.key?(:old) ? others[:old] : false
     where = unless where == ""
       where
     else
