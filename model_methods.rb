@@ -100,6 +100,8 @@
     options.delete(:do_retry) if options.key?(:do_retry)
     options[:retries] = retries
     
+    raise(ArgumentError, "Retries must be an integer. #{options}") unless retries.is_a?(Integer)
+    
     LOG.debug "get_page_data('#{page_url}', #{options})"
     save_path = get_page_location(page_url, options)
     save_folder = File.dirname(save_path)
@@ -123,8 +125,9 @@
     rescue HTTPError => error
       LOG.error "Error loading page (#{page_url}); #{retries == 0 ? 'No' : retries} retr#{retries==1 ? 'y' : 'ies'} left"
       LOG.debug error
-      options[:retries] = options[:retries] - 1
-      data = get_page_data(page_url, options)
+      
+      retries -= 1
+      retry if retries >= 0
     end
     LOG.debug "Downloaded page" if data
     LOG.error "Failed to load page (#{page_url})" unless data
