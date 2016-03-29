@@ -21,10 +21,10 @@ FileUtils.mkdir "logs" unless File.directory?("logs")
 FIC_NAME_MAPPING = {
   effulgence: [:effulgence],
   incandescence: [:incandescence],
-  sandbox: [:sandbox],
   pixiethreads: [:pixiethreads],
-  glowfic: [:othersandbox, :sandbox2, :glowfic],
   radon: [:radon, :absinthe],
+  glowfic: [:othersandbox, :sandbox2, :glowfic],
+  sandbox: [:sandbox],
   marri: [:marri, :marrinikari],
   peterverse: [:peter, :pedro, :peterverse],
   maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"]
