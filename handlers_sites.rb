@@ -96,9 +96,10 @@
       return nil unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
       
-      another_page = nil
+      is_new = true
       prev_pages = chapter.pages
       if prev_pages and not prev_pages.empty?
+        is_new = false
         first_page_url = prev_pages.first
         first_page_old_data = get_page_data(first_page_url, replace: false)
         first_page_new_data = get_page_data(first_page_url, replace: true, where: 'temp')
@@ -124,7 +125,7 @@
           end
         end #Check if all the pages exist, in case someone deleted them
         
-        LOG.debug "New page found for chapter #{chapter}" if another_page
+        LOG.debug "Content is different for #{chapter}" if changed
         if pages_exist and not changed
           LOG.info "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''}" if notify
           return chapter
@@ -135,7 +136,7 @@
       @download_count = 0
       pages = get_full(chapter, options.merge({new: (not changed)}))
       chapter.pages = pages
-      LOG.info "-- #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
+      LOG.info "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
       return chapter
     end
   end
