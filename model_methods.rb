@@ -122,7 +122,7 @@
           file.write data
         end
       end
-    rescue HTTPError => error
+    rescue OpenURI::HTTPError => error
       LOG.error "Error loading page (#{page_url}); #{retries == 0 ? 'No' : retries} retr#{retries==1 ? 'y' : 'ies'} left"
       LOG.debug error
       
