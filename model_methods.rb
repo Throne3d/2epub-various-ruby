@@ -26,7 +26,8 @@
       @file.close if @file
     end
   end
-
+  
+  DEBUGGING = false
   CONSOLE = Logger.new(STDOUT)
   CONSOLE.formatter = proc { |severity, datetime, progname, msg|
     "#{msg}\n"
@@ -38,7 +39,7 @@
 
   LOG = Object.new
   def LOG.debug(str)
-    CONSOLE.debug(str)
+    CONSOLE.debug(str) if DEBUGGING
   end
   def LOG.info(str)
     CONSOLE.info(str)
@@ -80,7 +81,6 @@
 
   def get_page_data(page_url, options={})
     replace = options.key?(:replace) ? options[:replace] : false
-    debug = options.key?(:debug) ? options[:debug] : false
     if options.key?(:retry)
       options[:do_retry] = options[:retry]
       options.delete(:retry)
@@ -100,7 +100,7 @@
     options.delete(:do_retry) if options.key?(:do_retry)
     options[:retries] = retries
     
-    LOG.debug "get_page_data('#{page_url}', #{options})" if debug
+    LOG.debug "get_page_data('#{page_url}', #{options})"
     save_path = get_page_location(page_url, options)
     save_folder = File.dirname(save_path)
     FileUtils::mkdir_p save_folder
@@ -110,7 +110,7 @@
       open(save_path, 'r') do |file|
         data = file.read
       end
-      LOG.debug "Retrieved page from web-cache" if debug
+      LOG.debug "Retrieved page from web-cache"
       return data
     end
     begin
@@ -122,11 +122,11 @@
       end
     rescue HTTPError => error
       LOG.error "Error loading page (#{page_url}); #{retries == 0 ? 'No' : retries} retr#{retries==1 ? 'y' : 'ies'} left"
-      LOG.debug error if debug
+      LOG.debug error
       options[:retries] = options[:retries] - 1
       data = get_page_data(page_url, options)
     end
-    LOG.debug "Downloaded page" if debug and data
+    LOG.debug "Downloaded page" if data
     LOG.error "Failed to load page (#{page_url})" unless data
     
     data

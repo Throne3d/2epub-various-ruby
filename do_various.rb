@@ -143,8 +143,7 @@ def main(args)
       end
       handler = instance_handlers[site_handler]
       
-      notify = true
-      handler.get_updated(chapter, debug: false, notify: notify)
+      handler.get_updated(chapter, notify: true)
       
       #LOG.info "#{site_handler} handled #{chapter}"
       set_chapters_data(chapter_list, group)
