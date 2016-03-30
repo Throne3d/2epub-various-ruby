@@ -54,8 +54,7 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, 
-    clean: :clean, rem: :remove, stat: :stats, :"do" => :"do"}
+  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do"}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
       process = value
@@ -152,7 +151,7 @@ def main(args)
     LOG.info "Processing '#{group}'"
     LOG.info "Chapter count: #{chapter_list.length}"
     
-    GlowficEpub::build_moieties()
+    GlowficEpub::build_moieties
     
     site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
     site_handlers.select! {|c| c.is_a? Class and c < GlowficSiteHandlers::SiteHandler }

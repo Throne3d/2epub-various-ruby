@@ -48,7 +48,7 @@ module GlowficEpub
     #, "Unknown":["ambrovimvor", "hide-and-seek", "antiprojectionist", "vvvvvvibrant", "botanical-engineer", "fine-tuned"]
   }
   
-  def build_moieties()
+  def self.build_moieties()
     file_path = "collectionPages.txt"
     return MOIETIES unless File.file?(file_path)
     
@@ -102,6 +102,8 @@ module GlowficEpub
       end
       params
     end
+    
+    
     def self.serialize_ignore? thing
       return false if @serialize_ignore.nil?
       thing = thing.to_sym if thing.is_a? String
@@ -109,9 +111,11 @@ module GlowficEpub
     end
     def self.serialize_ignore(*things)
       things = things.first if things.length == 1 and things.first.is_a? Array
-      @serialize_ignore = things.map do |thing|
+      things = things.map do |thing|
         (thing.is_a? String) ? thing.to_sym : thing
       end
+      @serialize_ignore = [] unless @serialize_ignore
+      things.each {|thing| @serialize_ignore << thing}
     end
     def serialize_ignore?(thing)
       self.class.serialize_ignore?(thing)
@@ -141,6 +145,7 @@ module GlowficEpub
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
+        var_sym = var_str.to_sym
         var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
@@ -155,7 +160,8 @@ module GlowficEpub
         raise(ArgumentError, "Not a string or a hash.")
       end
       
-      json_hash.parse(string).each do |var, val|
+      json_hash.each do |var, val|
+        var = "@#{var}" unless var.start_with?("@")
         self.instance_variable_set var, val
       end
     end
@@ -320,13 +326,29 @@ module GlowficEpub
   end
 
   class Face < Model
-    attr_accessor :user, :imageURL, :moiety, :user_display, :keyword
+    attr_accessor :user, :imageURL, :moiety, :user_display, :keyword, :unique_id
+    serialize_ignore :allowed_params
     
     def allowed_params
-      @allowed_params ||= [:user, :imageURL, :moiety, :keyword, :user_display]
+      @allowed_params ||= [:user, :imageURL, :moiety, :keyword, :user_display, :unique_id]
     end
     
-    def initialize
+    def initialize(params={})
+      return if params.empty?
+      params = standardize_params(params)
+      
+      params.reject! do |param|
+        unless allowed_params.include?(param)
+          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
+          true
+        end
+      end
+      
+      raise(ArgumentError, "User must be given") unless (params.key?(:user) and not params[:user].nil?)
+      raise(ArgumentError, "Unique ID must be given") unless (params.key?(:unique_id) and not params[:unique_id].nil?)
+      allowed_params.each do |symbol|
+        public_send("#{symbol}=", params[symbol]) if params[symbol]
+      end
     end
     def to_s
       "#{user}:#{keyword}"
@@ -340,17 +362,28 @@ module GlowficEpub
   
   class Message < Model #post or entry
     attr_accessor :author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children, :site_handler
-    serialize_ignore :site_handler, :face
-    
-    def allowed_params
-      @allowed_params ||= [:author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :site_handler]
+     
+    def self.message_serialize_ignore
+      serialize_ignore :site_handler, :face, :children, :chapter, :allowed_params
     end
     
+    def allowed_params
+      @allowed_params ||= [:author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :site_handler, :entry_title]
+    end
+    
+    @push_title = false
     def entry_title
       @chapter.entry_title
     end
     def entry_title=(newval)
-      @chapter.entry_title=newval
+      return (@chapter.entry_title=newval) if @chapter
+      @entry_title = newval
+      @push_title = true
+    end
+    
+    def chapter=(newval)
+      newval.entry_title=@entry_title if @push_title
+      @chapter = newval
     end
     
     def depth
@@ -358,6 +391,12 @@ module GlowficEpub
     end
     def children
       @children ||= []
+    end
+    
+    def parent=(newparent)
+      @parent = newparent
+      @parent.children << self unless @parent.children.include?(self)
+      @depth = @parent.depth + 1
     end
     
     def face
@@ -416,8 +455,9 @@ module GlowficEpub
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
+        var_sym = var_str.to_sym
         var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym) or var_str == "parent" or var_str == "children"
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym) or var_str == "parent"
         
         if var_str == "parent"
           parent = self.instance_variable_get(var)
@@ -430,6 +470,7 @@ module GlowficEpub
   end
 
   class Reply < Message
+    message_serialize_ignore
     def initialize(params={})
       super(params)
       @post_type = PostType::REPLY
@@ -437,6 +478,7 @@ module GlowficEpub
   end
   
   class Entry < Message
+    message_serialize_ignore
     def initialize(params={})
       super(params)
       @post_type = PostType::ENTRY

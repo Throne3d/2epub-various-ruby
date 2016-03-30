@@ -78,6 +78,11 @@ div[data-type] {
     background-color: rgba(0, 128, 255, 0.3);
     color: inherit;
 }
+.atheistcanuck .user {
+    background-color: #fdc1e8;
+    background-color: rgba(125, 5, 82, 0.3);
+    color: inherit;
+}
 .kappa .user {
     background-color: #dfcfef; /*hsl(270, 50%, 87%)*/
     background-color: rgba(128, 64, 191, 0.3);
@@ -115,7 +120,7 @@ div[data-type] {
 }
 .diaeresis .user {
     background-color: #bfffbf; /*hsl(120, 100%, 87%)*/
-    background-color: rgba(0, 64, 0, 0.3);
+    background-color: rgba(0, 96, 0, 0.3);
     color: inherit;
 }
 .erinflight .user {
@@ -159,8 +164,9 @@ div[data-type] {
     color: inherit;
 }
 .moriwen .user {
-    background-color: #c9e8f5; /*hsl(198, 69%, 87%)*/
-    background-color: rgba(135, 206, 235, 0.3);
+    background-color: #cac6f9; /*hsl(245, 81%, 88%)*/
+    background-color: rgba(105, 96, 236, 0.3);
+    color: inherit;
 }
 .nemo .user {
     background-color: #ffefbf; /*hsl(45, 100%, 87%)*/

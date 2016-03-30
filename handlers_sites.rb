@@ -6,6 +6,7 @@
   include GlowficEpub::PostType
   
   class SiteHandler
+    include GlowficEpub
     def self.handles?(chapter)
       false
     end
@@ -155,6 +156,10 @@
       user_profile = face_id.split('#').first
       face_name = face_id.sub("#{user_profile}#", "")
       face_name = "default" if face_name == face_id
+      face_name = "default" if face_name == "(Default)"
+      @icon_page_errors = [] unless @icon_page_errors
+      
+      return if @icon_page_errors.include?(user_profile)
       
       unless @face_cache.key?(user_profile) or @face_cache.key?(user_profile.gsub('_', '-'))
         user_id = user_profile.gsub('_', '-')
@@ -166,18 +171,22 @@
         
         icon_moiety = moieties * ' '
         
-        icon_page_data = get_page_data("http://#{user_id}.dreamwidth.org/icons")
+        icon_page_data = get_page_data("http://#{user_id}.dreamwidth.org/icons", replace: true)
         icon_page = Nokogiri::HTML(icon_page_data)
         icons = icon_page.at_css('#content').css('.icon-row .icon')
         default_icon = icon_page.at_css('#content').at_css('.icon.icon-default')
         
-        (LOG.error "No icons for #{user_id}." and return) if icons.nil? or icons.empty?
+        if icons.nil? or icons.empty?
+          LOG.error "No icons for #{user_id}."
+          @icon_page_errors << user_profile
+          return
+        end
         (LOG.error "No default icon for #{user_id}.") if default_icon.nil?
         
         icon_hash = {}
         icons.each do |icon_element|
           icon_img = icon_element.at_css('.icon-image img')
-          icon_src = icon_image.try(:[], :src)
+          icon_src = icon_img.try(:[], :src)
           
           (LOG.error "Failed to find an img URL on the icon page for #{user_id}" and next) if icon_src.nil? or icon_src.empty?
           
@@ -191,11 +200,13 @@
           
           icon_keywords.each do |keyword_element|
             params[:keyword] = keyword_element.text.strip
+            params[:unique_id] = "#{user_id}##{params[:keyword]}"
             face = Face.new(params)
-            icon_hash[icon_keyword] = face
+            icon_hash[params[:keyword]] = face
           end
           if (icon_element == default_icon)
             params[:keyword] = "default"
+            params[:unique_id] = "#{user_id}#default"
             face = Face.new(params)
             icon_hash[:default] = face
           end
@@ -208,7 +219,7 @@
       return icons_hash[face_name] if icons_hash.key?(face_name)
       return icons_hash[:default] if (face_name.downcase == "default" or face_name == :default) and icons_hash.key?(:default)
       
-      (LOG.error "Failed to find a face for user: #{user_profile} and face: #{face_name}")
+      (LOG.error "Failed to find a face for user: #{user_profile} and face: #{face_name}" and return nil)
     end
     
     def make_message(message_element, options = {})
@@ -217,18 +228,40 @@
       message_id = message_element["id"].sub("comment-", "").sub("entry-", "")
       message_type = (message_element["id"]["entry"]) ? PostType::ENTRY : PostType::REPLY
       
+      userpic = message_element.at_css(".userpic img")
+      author_name = message_element.at_css('span.ljuser').try(:[], "lj:user")
+      
+      face_name = "default"
+      if userpic and userpic["title"]
+        if userpic["title"] != author_name
+          face_name = userpic["title"].sub("#{author_name}: ", "").split(" (").first
+        end
+      end
+      
       params = {}
       params[:site_handler] = self
       params[:content] = message_element.at_css('.entry-content, .comment-content').inner_html
-      
+      params[:face] = get_face_by_id("#{author_name}##{face_name}")
+      params[:author] = author_name
+      params[:id] = message_id
       
       if message_type == PostType::ENTRY
         params[:entry_title] = message_element.at_css('.entry-title').text.strip
         
         entry = Entry.new(params)
       else
-        reply = Reply.new(params)
+        parent_link = message_element.at_css(".link.commentparent a")
+        if parent_link
+          parent_href = parent_link[:href]
+          parent_id = get_url_param(parent_href, "thread")
+          @replies.each do |reply|
+            params[:parent] = reply if reply.id == parent_id
+          end
+        else
+          params[:parent] = @chapter.entry
+        end
         
+        reply = Reply.new(params)
       end
     end
   
@@ -239,9 +272,10 @@
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
       
+      @chapter = chapter
       @replies = []
       pages.each do |page_url|
-        page_data = get_page_data(page, replace: false)
+        page_data = get_page_data(page_url, replace: false)
         page = Nokogiri::HTML(page_data)
         
         page_content = page.at_css('#content')
@@ -267,7 +301,9 @@
         end
       end
       
-      chapter.replies = replies
+      LOG.info "#{chapter.title}: #{pages.length} page#{pages.length == 1 ? '' : 's'}" if notify
+      
+      chapter.replies=@replies
     end
   end
 end
