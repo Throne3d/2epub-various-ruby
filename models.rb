@@ -13,6 +13,74 @@ module GlowficEpub
   require 'json'
   include GlowficEpubMethods
   
+  MOIETIES = {
+    "Adalene" => ["lurkingkobold", "wish-i-may"],
+    "Adiva" => ["gothamsheiress", "adivasheadvoices"],
+    "Ajzira" => ["lost-in-translation", "hearing-shadows"],
+    "AndaisQ" => ["fortheliving", "quite-enchanted", "andomega", "in-like-a", "hemomancer", "white-ram", "power-in-the", "strangely-literal", "sonofsnow", "dontbelieveinfairies"],
+    "Anthusiasm" => ["queenoftrash"],
+    "armokGoB" => ["armokgob"],
+    "Benedict" => ["unblinkered", "penitencelost"],
+    "Calima" => ["tenn-ambar-metta"],
+    "Ceitfianna" => ["balancingminds", "mm-ceit"],
+    "ChristyHotwater" => ["slgemp141"],
+    "CuriousDiscoverer" => ["mage-see-mage-do", "abodyinmotion", "superego-medico", "not-without-scars", "breeds-contempt", "curiousdiscoverer", "come-forth-winter", "copycast", "of-all-trades", "ignite-the-light", "there-is-no-such-thing-as", "unadalturedstrength", "tailedmonstrosity", "curiousbox"], #Bluelantern
+    "Endovior" => ["withmanyfingers"],
+    "ErinFlight" => ["thrown-in", "regards-the-possibilities", "back-from-nowhere", "vive-la-revolution"],
+    "Eva" => ["kaolinandbone", "evesystem", "all-the-worlds-have", "walksonmusic", "eternally-aggrieved"], #evenstar?
+    "Kel" => ["kelardry", "dotted-lines"], #BlueSkySprite
+    "kuuskytkolme" => ["can-i-help", "can-i-stay", "can-i-go"],
+    "Link" => ["meletiti-entelecheiai", "chibisilian"], #chibisilian is assumed from "Location: Entelechy"
+    "Liz" => ["sun-guided"],
+    "Lynette" => ["darkeningofthelight", "princeofsalem"],
+    "Maggie" => ["maggie-of-the-owls", "whatamithinking", "iamnotpolaris", "amongstherpeers", "amongstthewinds", "asteptotheright", "jumptotheleft", "themainattraction", "swordofdamocles", "swordofeden", "feyfortune", "mutatis-mutandis", "mindovermagic", "ragexserenity"],
+    "Nemo" => ["magnifiedandeducated", "connecticut-yankee", "unprophesied-of-ages", "nemoconsequentiae", "wormcan", "off-to-be-the-wizard", "whole-new-can"],
+    "roboticlin" => ["roboticlin"],
+    "Rockeye" => ["witchwatcher", "rockeye-stonetoe", "sturdycoldsteel", "characterquarry", "allforthehive", "neuroihive", "smallgod"],
+    "Sigma" => ["spiderzone"], #Ezra
+    "Teceler" => ["scatteredstars", "onwhatwingswedareaspire"],
+    "TheOneButcher" => ["theonebutcher"],
+    "Timepoof" => ["timepoof"],
+    "Unbitwise" => ["unbitwise", "wind-on-my-face", "synchrosyntheses"],
+    "Verdancy" => ["better-living", "forestsofthe"],
+    "Yadal" => ["yorisandboxcharacter", "kamikosandboxcharacter"],
+    "Zack" => ["intomystudies"]
+    #, "Unknown":["ambrovimvor", "hide-and-seek", "antiprojectionist", "vvvvvvibrant", "botanical-engineer", "fine-tuned"]
+  }
+  
+  def build_moieties()
+    file_path = "collectionPages.txt"
+    return MOIETIES unless File.file?(file_path)
+    
+    open(file_path, 'r') do |file|
+      file.each do |line|
+        next if line.chomp.strip.empty?
+        collection_name = line.chomp.split(" ~#~ ").first
+        collection_url = line.chomp.sub("#{collection_name} ~#~ ", "")
+        
+        collection_data = get_page_data(collection_url, replace: true)
+        collection = Nokogiri::HTML(collection_data)
+        
+        moiety_key = nil
+        MOIETIES.keys.each do |key|
+          moiety_key = key if key.downcase.strip == collection_name.downcase.strip
+        end
+        if moiety_key.nil?
+          moiety_key = collection_name
+          MOIETIES[moiety_key] = []
+        end
+        
+        count = 0
+        collection.css('#members_people_body a').each do |user_element|
+          MOIETIES[moiety_key] << user_element.text.strip.gsub('_', '-')
+          count += 1
+        end
+        
+        LOG.info "Processed collection #{collection_name}: #{count} member#{count==1 ? '' : 's'}."
+      end
+    end
+  end
+  
   class Model
     def initialize
       @param_transform = {}
