@@ -54,8 +54,8 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, process: :process, epub: :epub, det: :details, 
-    clean: :clean, rem: :remove, stat: :stats}
+  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, 
+    clean: :clean, rem: :remove, stat: :stats, :"do" => :"do"}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
       process = value
@@ -87,7 +87,11 @@ def main(args)
   
   LOG.info "-" * 60
   
-  if (process == :tocs)
+  if (process == :"do")
+    main("tocs_#{group}")
+    main("get_#{group}")
+    main("process_#{group}")
+  elsif (process == :tocs)
     chapter_list = []
     
     (LOG.fatal "Group #{group} has no TOC" and abort) unless FIC_TOCS.has_key? group and not FIC_TOCS[group].empty?
@@ -112,14 +116,11 @@ def main(args)
       LOG.info chapter.to_s
     end
     set_chapters_data(chapter_list, group)
-  elsif (process == :process)
+  elsif (process == :get)
     chapter_list = get_chapters_data(group)
-    
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
-    
-    LOG.info "Processing '#{group}'"
-    
-    LOG.info "Chapters: #{chapter_list.length}"
+    LOG.info "Getting '#{group}'"
+    LOG.info "Chapter count: #{chapter_list.length}"
     
     site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
     site_handlers.select! {|c| c.is_a? Class and c < GlowficSiteHandlers::SiteHandler }
@@ -137,10 +138,7 @@ def main(args)
       end
       
       site_handler = site_handler.first
-      
-      unless instance_handlers.key?(site_handler)
-        instance_handlers[site_handler] = site_handler.new(group: group)
-      end
+      instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
       handler = instance_handlers[site_handler]
       
       handler.get_updated(chapter, notify: true)
