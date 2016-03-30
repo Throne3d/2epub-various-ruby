@@ -3,6 +3,7 @@
   require 'models'
   require 'uri'
   include GlowficEpubMethods
+  include GlowficEpub::PostType
   
   class SiteHandler
     def self.handles?(chapter)
@@ -31,6 +32,12 @@
       @group = options[:group] if options.key?(:group)
       @group_folder = "web_cache"
       @group_folder += "/#{@group}" if @group
+      @chapter_list = []
+      @chapter_list = options[:chapters] if options.key?(:chapters)
+      @chapter_list = options[:chapter_list] if options.key?(:chapter_list)
+      @face_cache = {} #{"alicornutopia" => {"pen" => "(url)"}}
+      @face_id_cache = {} #{"alicornutopia#pen" => "(url)"}
+      # When retreived in get_face_by_id
     end
     
     def get_full(chapter, options = {})
@@ -141,6 +148,126 @@
       chapter.pages = pages
       LOG.info "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
       return chapter
+    end
+    
+    def get_face_by_id(face_id)
+      return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
+      user_profile = face_id.split('#').first
+      face_name = face_id.sub("#{user_profile}#", "")
+      face_name = "default" if face_name == face_id
+      
+      unless @face_cache.key?(user_profile) or @face_cache.key?(user_profile.gsub('_', '-'))
+        user_id = user_profile.gsub('_', '-')
+        
+        moieties = []
+        MOIETIES.keys.each do |author|
+          moieties << author if MOIETIES[author].include?(user_profile) or MOIETIES[author].include?(user_id)
+        end
+        
+        icon_moiety = moieties * ' '
+        
+        icon_page_data = get_page_data("http://#{user_id}.dreamwidth.org/icons")
+        icon_page = Nokogiri::HTML(icon_page_data)
+        icons = icon_page.at_css('#content').css('.icon-row .icon')
+        default_icon = icon_page.at_css('#content').at_css('.icon.icon-default')
+        
+        (LOG.error "No icons for #{user_id}." and return) if icons.nil? or icons.empty?
+        (LOG.error "No default icon for #{user_id}.") if default_icon.nil?
+        
+        icon_hash = {}
+        icons.each do |icon_element|
+          icon_img = icon_element.at_css('.icon-image img')
+          icon_src = icon_image.try(:[], :src)
+          
+          (LOG.error "Failed to find an img URL on the icon page for #{user_id}" and next) if icon_src.nil? or icon_src.empty?
+          
+          icon_keywords = icon_element.css('.icon-info .icon-keywords li')
+          
+          params = {}
+          params[:moiety] = icon_moiety
+          params[:imageURL] = icon_src
+          params[:user] = user_id
+          params[:user_display] = user_profile
+          
+          icon_keywords.each do |keyword_element|
+            params[:keyword] = keyword_element.text.strip
+            face = Face.new(params)
+            icon_hash[icon_keyword] = face
+          end
+          if (icon_element == default_icon)
+            params[:keyword] = "default"
+            face = Face.new(params)
+            icon_hash[:default] = face
+          end
+        end
+        
+        @face_cache[user_profile] = icon_hash
+      end
+      
+      icons_hash = @face_cache.key?(user_profile) ? @face_cache[user_profile] : @face_cache[user_profile.gsub('_', '-')]
+      return icons_hash[face_name] if icons_hash.key?(face_name)
+      return icons_hash[:default] if (face_name.downcase == "default" or face_name == :default) and icons_hash.key?(:default)
+      
+      (LOG.error "Failed to find a face for user: #{user_profile} and face: #{face_name}")
+    end
+    
+    def make_message(message_element, options = {})
+      in_context = (options.key?(:in_context) ? options[:in_context] : true)
+      
+      message_id = message_element["id"].sub("comment-", "").sub("entry-", "")
+      message_type = (message_element["id"]["entry"]) ? PostType::ENTRY : PostType::REPLY
+      
+      params = {}
+      params[:site_handler] = self
+      params[:content] = message_element.at_css('.entry-content, .comment-content').inner_html
+      
+      
+      if message_type == PostType::ENTRY
+        params[:entry_title] = message_element.at_css('.entry-title').text.strip
+        
+        entry = Entry.new(params)
+      else
+        reply = Reply.new(params)
+        
+      end
+    end
+  
+    def get_replies(chapter, options = {})
+      return nil unless self.handles?(chapter)
+      notify = options.key?(:notify) ? options[:notify] : true
+      
+      pages = chapter.pages
+      (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
+      
+      @replies = []
+      pages.each do |page_url|
+        page_data = get_page_data(page, replace: false)
+        page = Nokogiri::HTML(page_data)
+        
+        page_content = page.at_css('#content')
+        nsfw_warning = page_content.at_css('.panel.callout')
+        if nsfw_warning
+          nsfw_warning_text = nsfw_warning.at_css('text-center')
+          if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
+            (LOG.error('Page had discretion advised warning!') and break)
+          end
+        end
+        
+        if @replies.empty?
+          entry_element = page_content.at_css('.entry')
+          entry = make_message(entry_element)
+          chapter.entry = entry
+        end
+        
+        comments = page_content.css('.comment-wrapper.full')
+        comments.each do |comment|
+          comment_element = comment.at_css('.comment')
+          reply = make_message(comment_element)
+          @replies << reply
+        end
+      end
+      
+      chapter.replies = replies
     end
   end
 end

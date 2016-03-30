@@ -146,6 +146,40 @@ def main(args)
       #LOG.info "#{site_handler} handled #{chapter}"
       set_chapters_data(chapter_list, group)
     end
+  elsif (process == :process)
+    chapter_list = get_chapters_data(group)
+    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    LOG.info "Processing '#{group}'"
+    LOG.info "Chapter count: #{chapter_list.length}"
+    
+    GlowficEpub::build_moieties()
+    
+    site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
+    site_handlers.select! {|c| c.is_a? Class and c < GlowficSiteHandlers::SiteHandler }
+    
+    instance_handlers = {}
+    chapter_list.each do |chapter|
+      site_handler = site_handlers.select {|c| c.handles? chapter}
+      
+      if site_handler.nil? or site_handler.empty? or site_handler.length > 1
+        LOG.error "No site handler for #{chapter.title}!" if site_handler.nil? or site_handler.empty?
+        LOG.error "Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if site_handler.length > 1
+        next
+      end
+      
+      if chapter.pages.nil? or chapter.pages.empty?
+        LOG.error "No pages for #{chapter.title}!"
+        next
+      end
+      
+      site_handler = site_handler.first
+      instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
+      handler = instance_handlers[site_handler]
+      
+      handler.get_replies(chapter, notify: true)
+      
+      set_chapters_data(chapter_list, group)
+    end
   else
     LOG.info "Not yet implemented."
   end
