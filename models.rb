@@ -147,16 +147,26 @@ module GlowficEpub
       hash.to_json(options)
     end
     def from_json! string
-      JSON.parse(string).each do |var, val|
+      json_hash = if string.is_a? String
+        JSON.parse(string)
+      elsif string.is_a? Hash
+        string
+      else
+        raise(ArgumentError, "Not a string or a hash.")
+      end
+      
+      json_hash.parse(string).each do |var, val|
         self.instance_variable_set var, val
       end
     end
   end
   
   class Chapters < Model
-    attr_reader :chapters
+    attr_reader :chapters, :faces, :authors
     def initialize
       @chapters = []
+      @faces = []
+      @authors = []
     end
     def <<(arg)
       @chapters << arg
@@ -171,48 +181,70 @@ module GlowficEpub
       @chapters.each(&block)
     end
     def from_json! string
-      JSON.parse(string).each do |var, val|
-        self.instance_variable_set var, val unless var == "@chapters" or var == "chapters"
+      json_hash = if string.is_a? String
+        JSON.parse(string)
+      elsif string.is_a? Hash
+        string
+      else
+        raise(ArgumentError, "Not a string or a hash.")
+      end
         
-        @chapters = []
-        val.each do |chapter_hash|
-          chapter_hash.keys.each do |key|
-            next unless key and not key.empty?
-            next unless key.start_with?("@")
-            next if key.start_with?("@@")
-            next if key.length == 1
-            chapter_hash[key[1..-1]] = chapter_hash[key]
-            chapter_hash.delete(key)
+      json_hash.each do |var, val|
+        varname = (var.start_with?("@")) ? var[1..-1] : var
+        self.instance_variable_set var, val unless varname == "chapters" or varname == "faces" or varname == "authors"
+        
+        if var["chapters"]
+          @chapters = []
+          val.each do |chapter_hash|
+            chapter = Chapter.new
+            chapter.from_json! chapter_hash
+            @chapters << chapter
           end
-          chapter = Chapter.new(chapter_hash)
-          @chapters << chapter
+        elsif var["faces"]
+          @faces = []
+          val.each do |face_hash|
+            face = Face.new
+            face.from_json! face_hash
+            @faces << face
+          end
+        elsif var["authors"]
+          @authors = []
+          val.each do |author_hash|
+            author = Author.new
+            author.from_json! author_hash
+            @authors << author
+          end
         end
       end
     end
   end
 
   class Chapter < Model
-    attr_accessor :path, :title, :title_extras, :thread, :entry_title, :entry, :pages, :posts, :sections
+    attr_accessor :path, :title, :title_extras, :thread, :entry_title, :entry, :pages, :replies, :sections, :authors, :entry
     attr_reader :url, :smallURL
     
     param_transform :name => :title, :name_extras => :title_extras
     serialize_ignore :smallURL, :allowed_params
     
     def allowed_params
-      @allowed_params ||= [:path, :title, :title_extras, :thread, :sections, :entry_title, :entry, :posts, :url, :pages]
+      @allowed_params ||= [:path, :title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :authors]
     end
     
     def pages
       @pages ||= []
     end
-    def posts
-      @posts ||= []
+    def replies
+      @replies ||= []
     end
     def sections
       @sections ||= []
     end
+    def authors
+      @authors ||= []
+    end
     
     def initialize(params={})
+      return if params.empty?
       params = standardize_params(params)
       
       params.reject! do |param|
@@ -221,6 +253,11 @@ module GlowficEpub
           true
         end
       end
+      
+      @pages = []
+      @replies = []
+      @sections = []
+      @authors = []
       
       raise(ArgumentError, "URL must be given") unless (params.key?(:url) and not params[:url].strip.empty?)
       raise(ArgumentError, "Chapter Title must be given") unless (params.key?(:title) and not params[:title].strip.empty?)
@@ -250,27 +287,70 @@ module GlowficEpub
       str += " #{title_extras}" unless title_extras.nil? or title_extras.empty?
       str += ": #{smallURL}"
     end
+    
+    def from_json! string
+      json_hash = if string.is_a? String
+        JSON.parse(string)
+      elsif string.is_a? Hash
+        string
+      else
+        raise(ArgumentError, "Not a string or a hash.")
+      end
+        
+      json_hash.each do |var, val|
+        varname = (var.start_with?("@")) ? var[1..-1] : var
+        var = (var.start_with?("@") ? var : "@#{var}")
+        self.instance_variable_set var, val unless varname == "replies" or varname == "entry"
+        
+        if var["replies"]
+          @replies = []
+          val.each do |reply_hash|
+            reply = Reply.new
+            reply.from_json! reply_hash
+            @replies << reply
+          end
+        elsif var["entry"]
+          entry_hash = val
+          entry = Entry.new
+          entry.from_json! entry_hash
+          @entry = entry
+        end
+      end
+    end
   end
 
   class Face < Model
-    attr_accessor :user, :imageURL, :moiety, :image_path, :face, :user_display
+    attr_accessor :user, :imageURL, :moiety, :user_display, :keyword
     
     def allowed_params
-      @allowed_params ||= [:user, :imageURL, :moiety, :image_path, :face, :user_display]
+      @allowed_params ||= [:user, :imageURL, :moiety, :keyword, :user_display]
     end
     
     def initialize
     end
     def to_s
-      "#{user}:#{face}"
+      "#{user}:#{keyword}"
     end
   end
-
-  class Post < Model #post or comment
-    attr_accessor :author, :content, :time, :id, :chapter, :parent, :post_title, :post_type, :depth, :children
+  
+  module PostType
+    ENTRY = 0
+    REPLY = 1
+  end
+  
+  class Message < Model #post or entry
+    attr_accessor :author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children, :site_handler
+    serialize_ignore :site_handler, :face
     
     def allowed_params
-      @allowed_params ||= [:author, :content, :time, :id, :chapter, :parent, :post_title, :post_type]
+      @allowed_params ||= [:author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :site_handler]
+    end
+    
+    def entry_title
+      @chapter.entry_title
+    end
+    def entry_title=(newval)
+      @chapter.entry_title=newval
     end
     
     def depth
@@ -280,10 +360,91 @@ module GlowficEpub
       @children ||= []
     end
     
-    def initialize
+    def face
+      return unless @face_id
+      @face ||= @site_handler.get_face_by_id(@face_id)
+    end
+    def face=(face)
+      if (face.is_a?(String))
+        @face_id = face
+        @face = nil
+      elsif (face.is_a?(Face))
+        @face_id = face.unique_id
+        @face = face
+      else
+        raise(ArgumentError, "Invalid face type")
+      end
+    end
+    def face_id
+      @face_id
+    end
+    def face_id=(id)
+      @face = nil
+      @face_id = id
+    end
+    
+    def initialize(params={})
+      return if params.empty?
+      params = standardize_params(params)
+      
+      params.reject! do |param|
+        unless allowed_params.include?(param)
+          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
+          true
+        end
+      end
+      
+      raise(ArgumentError, "Author must be given") unless (params.key?(:author) and not params[:author].nil?)
+      raise(ArgumentError, "Content must be given") unless params.key?(:content)
+      allowed_params.each do |symbol|
+        public_send("#{symbol}=", params[symbol]) if params[symbol]
+      end
     end
     def to_s
-      "#{community}##{id}"
+      if @post_type
+        if @post_type == PostType::ENTRY
+          "#{community}##{id}"
+        elsif @post_type == PostType::REPLY
+          "#{community}##{chapter.entry.id}##{id}"
+        end
+      else
+        "#{community}##{id}"
+      end
+    end
+    
+    def to_json(options={})
+      hash = {}
+      self.instance_variables.each do |var|
+        var_str = (var.is_a? String) ? var : var.to_s
+        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym) or var_str == "parent" or var_str == "children"
+        
+        if var_str == "parent"
+          parent = self.instance_variable_get(var)
+          hash[var_sym] = [parent.community, parent.chapter.entry.id, parent.id] if parent.post_type == PostType::ENTRY
+          hash[var_sym] = [parent.community, parent.id] if parent.post_type == PostType::REPLY
+        end
+      end
+      hash.to_json(options)
+    end
+  end
+
+  class Reply < Message
+    def initialize(params={})
+      super(params)
+      @post_type = PostType::REPLY
+    end
+  end
+  
+  class Entry < Message
+    def initialize(params={})
+      super(params)
+      @post_type = PostType::ENTRY
+    end
+  end
+  
+  class Author < Model
+    def initialize
     end
   end
 end
