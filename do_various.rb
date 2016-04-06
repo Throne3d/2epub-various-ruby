@@ -13,6 +13,7 @@ require 'models'
 require 'model_methods'
 require 'handlers_indexes'
 require 'handlers_sites'
+require 'handlers_outputs'
 include GlowficEpubMethods
 
 FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
@@ -54,7 +55,7 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do"}
+  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", output_epub: :output_epub}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
       process = value
@@ -175,6 +176,14 @@ def main(args)
       
       set_chapters_data(chapter_list, group)
     end
+  elsif (process == :output_epub)
+    chapter_list = get_chapters_data(group)
+    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    LOG.info "Processing '#{group}'"
+    
+    handler = GlowficOutputHandlers::EpubHandler
+    handler.new(chapter_list: chapter_list)
+    handler.output
   else
     LOG.info "Not yet implemented."
   end

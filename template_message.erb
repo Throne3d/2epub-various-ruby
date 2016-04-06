@@ -1,0 +1,24 @@
+﻿<div id="<%= message.post_type_str + "-" + message.id %>" data-depth="<%= message.depth %>" data-type="<%= message.post_type_str %>" class="<%= message.moiety %>">
+  <div class="user">
+    <div class="usericon">
+      <% if message.face and message.face.path and not message.face.path.empty? %>
+        <img src="<%= message.face.path %>" />
+      <% else %>
+        <div>X</div>
+      <% end %>
+    </div>
+    <div class="username">
+      <% if message.face and not message.face.keyword.empty? %>
+        <%= h(message.face.user_display + ": " + message.face.keyword) %>
+      <% elsif message.face %>
+        <%= h(message.face.user_display) %>
+      <% else %>
+        Unknown
+      <% end %>
+    </div>
+    <div class="content">
+      <%= message.content %>
+      <div class="timestamp"><%= h(message.time) %></div>
+    </div>
+  </div>
+</div>

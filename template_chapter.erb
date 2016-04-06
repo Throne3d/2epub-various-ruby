@@ -1,0 +1,20 @@
+﻿<!doctype html>
+<html>
+  <head><meta charset="UTF-8" /><link rel='stylesheet' href='../style/default.css' type='text/css' /></head>
+  <body>
+    <% if chapter.sections %>
+      <h2 class="section-title"><%= h(chapter.sections * ", ") %></h2>
+    <% end %>
+    <h3 class="entry-title"><%= h(chapter.title) %></h3>
+    <% if chapter.title_extras %>
+      <strong class="entry-subtitle"><%= h(chapter.title_extras) %></strong><br />
+    <% end %>
+    <% if chapter.authors and not chapter.authors.empty? %>
+      <strong class="entry-authors">Authors: <%= h(chapter.authors * ", ") %></strong>
+    <% end %>
+    <% ([chapter.entry] + chapter.replies).each do |message| %>
+      <%= message.html %>
+    <% end %>
+    <%# todo: add branches %>
+  </body>
+</html>
