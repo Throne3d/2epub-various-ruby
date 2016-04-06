@@ -40,6 +40,7 @@
       @face_cache = {} #{"alicornutopia" => {"pen" => "(url)"}}
       @face_id_cache = {} #{"alicornutopia#pen" => "(url)"}
       # When retreived in get_face_by_id
+      @moiety_cache = {}
     end
     
     def get_full(chapter, options = {})
@@ -152,25 +153,37 @@
       return chapter
     end
     
-    def get_face_by_id(face_id)
+    def get_moiety_by_profile(profile)
+      return @moiety_cache[profile] if @moiety_cache.key?(profile)
+      user_id = profile.gsub('_', '-')
+      return @moiety_cache[user_id] if @moiety_cache.key?(user_id)
+      
+      moieties = []
+      MOIETIES.keys.each do |author|
+        moieties << author if MOIETIES[author].include?(profile) or MOIETIES[author].include?(user_id)
+      end
+      
+      icon_moiety = moieties * ' '
+      (LOG.error "No moiety for #{profile}") if icon_moiety.empty?
+      @moiety_cache[user_id] = icon_moiety
+      icon_moiety
+    end
+    
+    def get_face_by_id(face_id, default=nil)
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       user_profile = face_id.split('#').first
       face_name = face_id.sub("#{user_profile}#", "")
       face_name = "default" if face_name == face_id
       face_name = "default" if face_name == "(Default)"
       @icon_page_errors = [] unless @icon_page_errors
+      @icon_errors = [] unless @icon_errors
       
-      return if @icon_page_errors.include?(user_profile)
+      return default if @icon_page_errors.include?(user_profile)
       
       unless @face_cache.key?(user_profile) or @face_cache.key?(user_profile.gsub('_', '-'))
         user_id = user_profile.gsub('_', '-')
         
-        moieties = []
-        MOIETIES.keys.each do |author|
-          moieties << author if MOIETIES[author].include?(user_profile) or MOIETIES[author].include?(user_id)
-        end
-        
-        icon_moiety = moieties * ' '
+        icon_moiety = get_moiety_by_profile(user_profile)
         
         icon_page_data = get_page_data("http://#{user_id}.dreamwidth.org/icons", replace: true)
         icon_page = Nokogiri::HTML(icon_page_data)
@@ -221,10 +234,13 @@
       end
       
       icons_hash = @face_cache.key?(user_profile) ? @face_cache[user_profile] : @face_cache[user_profile.gsub('_', '-')]
-      return icons_hash[face_name] if icons_hash.key?(face_name)
-      return icons_hash[:default] if (face_name.downcase == "default" or face_name == :default) and icons_hash.key?(:default)
+      @face_id_cache[face_id] = icons_hash[face_name] if icons_hash.key?(face_name)
+      @face_id_cache[face_id] = icons_hash[:default] if (face_name.downcase == "default" or face_name == :default) and icons_hash.key?(:default)
+      return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       
-      (LOG.error "Failed to find a face for user: #{user_profile} and face: #{face_name}" and return nil)
+      LOG.error "Failed to find a face for user: #{user_profile} and face: #{face_name}" unless @icon_errors.include?(face_id)
+      @icon_errors << face_id unless @icon_errors.include?(face_id)
+      return default
     end
     
     def make_message(message_element, options = {})
@@ -236,10 +252,14 @@
       userpic = message_element.at_css(".userpic img")
       author_name = message_element.at_css('span.ljuser').try(:[], "lj:user")
       
+      face_url = ""
       face_name = "default"
       if userpic and userpic["title"]
         if userpic["title"] != author_name
           face_name = userpic["title"].sub("#{author_name}: ", "").split(" (").first
+        end
+        if userpic["src"]
+          face_url = userpic["src"]
         end
       end
       
@@ -249,6 +269,18 @@
       params[:face] = get_face_by_id("#{author_name}##{face_name}")
       params[:author] = author_name
       params[:id] = message_id
+      
+      if params[:face].nil? and not face_url.empty?
+        face_params = {}
+        face_params[:moiety] = get_moiety_by_profile(author_name)
+        face_params[:imageURL] = face_url
+        face_params[:user] = author_name.gsub('_', '-')
+        face_params[:user_display] = author_name
+        face_params[:keyword] = face_name
+        face_params[:unique_id] = "#{face_params[:user]}##{face_name}"
+        face = Face.new(face_params)
+        params[:face] = face
+      end
       
       if message_type == PostType::ENTRY
         params[:entry_title] = message_element.at_css('.entry-title').text.strip
