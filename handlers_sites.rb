@@ -290,7 +290,7 @@
         parent_link = message_element.at_css(".link.commentparent a")
         if parent_link
           parent_href = parent_link[:href]
-          parent_id = get_url_param(parent_href, "thread")
+          parent_id = "cmt" + get_url_param(parent_href, "thread")
           @replies.each do |reply|
             params[:parent] = reply if reply.id == parent_id
           end

@@ -161,7 +161,7 @@ module GlowficEpub
       end
       
       json_hash.each do |var, val|
-        var = "@#{var}" unless var.start_with?("@")
+        var = "@#{var}" unless var.to_s.start_with?("@")
         self.instance_variable_set var, val
       end
     end
@@ -320,12 +320,14 @@ module GlowficEpub
         if var["replies"]
           @replies = []
           val.each do |reply_hash|
+            reply_hash["post_type"] = PostType::REPLY
             reply = Reply.new
             reply.from_json! reply_hash
             @replies << reply
           end
         elsif var["entry"]
           entry_hash = val
+          entry_hash["post_type"] = PostType::ENTRY
           entry = Entry.new
           entry.from_json! entry_hash
           @entry = entry
@@ -373,7 +375,7 @@ module GlowficEpub
     attr_accessor :author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children, :site_handler
      
     def self.message_serialize_ignore
-      serialize_ignore :site_handler, :face, :children, :chapter, :allowed_params
+      serialize_ignore :author, :chapter, :parent, :children, :site_handler, :face, :allowed_params, :push_title, :face_id, :post_type
     end
     
     def allowed_params
