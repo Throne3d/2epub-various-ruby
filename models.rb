@@ -254,11 +254,10 @@ module GlowficEpub
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :replies, :sections, :authors, :entry
-    attr_reader :url, :smallURL
+    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :replies, :sections, :authors, :entry, :url
     
     param_transform :name => :title, :name_extras => :title_extras
-    serialize_ignore :smallURL, :allowed_params, :site_handler, :chapter_list
+    serialize_ignore :allowed_params, :site_handler, :chapter_list
     
     def allowed_params
       @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :authors]
@@ -312,9 +311,8 @@ module GlowficEpub
         public_send("#{symbol}=", params[symbol]) if params[symbol]
       end
     end
-    def url=(newURL)
-      @url=newURL
-      @smallURL=Chapter.shortenURL(@url)
+    def smallURL
+      Chapter.shortenURL(@url)
     end
     def self.shortenURL(longURL)
       uri = URI.parse(longURL)

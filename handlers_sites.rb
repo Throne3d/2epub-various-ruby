@@ -25,6 +25,16 @@
     def handles?(chapter)
       return self.class.handles?(chapter)
     end
+    def initialize(options = {})
+      @group = nil
+      @group = options[:group] if options.key?(:group)
+      @group_folder = "web_cache"
+      @group_folder += "/#{@group}" if @group
+      @chapter_list = []
+      @chapter_list = options[:chapters] if options.key?(:chapters)
+      @chapter_list = options[:chapter_list] if options.key?(:chapter_list)
+      @chapter_list = GlowficEpub::Chapters.new if @chapter_list.is_a?(Array) and @chapter_list.empty?
+    end
   end
   
   class DreamwidthHandler < SiteHandler
@@ -38,17 +48,10 @@
       return uri.host.end_with?("dreamwidth.org")
     end
     def initialize(options = {})
-      @group = nil
-      @group = options[:group] if options.key?(:group)
-      @group_folder = "web_cache"
-      @group_folder += "/#{@group}" if @group
-      @chapter_list = []
-      @chapter_list = options[:chapters] if options.key?(:chapters)
-      @chapter_list = options[:chapter_list] if options.key?(:chapter_list)
-      @chapter_list = GlowficEpub::Chapters.new if @chapter_list.is_a?(Array) and @chapter_list.empty?
-      @face_cache = {} #{"alicornutopia" => {"pen" => "(url)"}}
-      @face_id_cache = {} #{"alicornutopia#pen" => "(url)"}
-      # When retreived in get_face_by_id
+      super options
+      @face_cache = {} # {"alicornutopia" => {"pen" => "(url)"}}
+      @face_id_cache = {} # {"alicornutopia#pen" => "(url)"}
+      # When retrieved in get_face_by_id
       @moiety_cache = {}
     end
     
@@ -355,6 +358,311 @@
         comments = page_content.css('.comment-wrapper.full')
         comments.each do |comment|
           comment_element = comment.at_css('.comment')
+          reply = make_message(comment_element)
+          @replies << reply
+        end
+      end
+      
+      LOG.info "#{chapter.title}: #{pages.length} page#{pages.length == 1 ? '' : 's'}" if notify
+      
+      chapter.replies=@replies
+    end
+  end
+  
+  class ConstellationHandler < SiteHandler
+    attr_reader :download_count
+    def self.handles?(chapter)
+      return false if chapter.nil?
+      chapter_url = (chapter.is_a?(GlowficEpub::Chapter)) ? chapter.url : chapter
+      return false if chapter_url.nil? or chapter_url.empty?
+      
+      uri = URI.parse(chapter_url)
+      return uri.host.end_with?("vast-journey-9935.herokuapp.com")
+    end
+    def initialize(options = {})
+      super options
+      @face_cache = {} # {"alicornutopia" => {"pen" => "(url)"}}
+      @face_id_cache = {} # {"alicornutopia#pen" => "(url)"}
+      # When retrieved in get_face_by_id
+      @moiety_cache = {}
+    end
+    
+    def get_full(chapter, options = {})
+      if chapter.is_a?(GlowficEpub::Chapter)
+        params = {per_page: 'all'}
+        chapter_url = set_url_params(clear_url_params(chapter.url), params)
+      else
+        chapter_url = chapter
+      end
+      return nil unless self.handles?(chapter_url)
+      notify = options.key?(:notify) ? options[:notify] : true
+      is_new = options.key?(:new) ? options[:new] : false
+      
+      page_urls = [chapter_url]
+      
+      current_page_data = get_page_data(chapter_url, replace: true)
+      @download_count+=1
+      LOG.debug "Got a page in get_full"
+      current_page = Nokogiri::HTML(current_page_data)
+      LOG.debug "Nokogiri processed a page in get_full"
+      
+      return page_urls
+    end
+    
+    def get_updated(chapter, options = {})
+      return nil unless self.handles?(chapter)
+      notify = options.key?(:notify) ? options[:notify] : true
+      
+      is_new = true
+      prev_pages = chapter.pages
+      if prev_pages and not prev_pages.empty?
+        is_new = false
+        
+        first_page_url = prev_pages.first
+        
+        first_page_old_data = get_page_data(first_page_url, replace: false, where: @group_folder)
+        first_page_new_data = get_page_data(first_page_url, replace: true, where: 'temp')
+        
+        first_page_old = Nokogiri::HTML(first_page_old_data)
+        first_page_new = Nokogiri::HTML(first_page_new_data)
+        
+        old_content = first_page_old.at_css('#content')
+        new_content = first_page_new.at_css('#content')
+        
+        old_html = old_content.inner_html
+        new_html = new_content.inner_html
+        
+        changed = (old_html != new_html)
+        
+        pages_exist = true
+        prev_pages.each_with_index do |page_url, i|
+          page_loc = get_page_location(page_url)
+          if not File.file?(page_loc)
+            pages_exist = false
+            LOG.debug "Failed to find a file (page #{i}) for chapter #{chapter}"
+            break
+          end
+        end #Check if all the pages exist, in case someone deleted them
+        
+        LOG.debug "Content is different for #{chapter}" if changed
+        if pages_exist and not changed
+          LOG.info "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''}" if notify
+          return chapter
+        end
+      end
+      
+      #Hasn't been done before, or it's outdated, or some pages were deleted; re-get.
+      @download_count = 0
+      pages = get_full(chapter, options.merge({new: (not changed)}))
+      chapter.pages = pages
+      LOG.info "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
+      return chapter
+    end
+    
+    def get_moiety_by_id(character_id)
+      char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}", replace: false)
+      char_page = Nokogiri::HTML(char_page_date)
+      
+      breadcrumb1 = char_page.at_css('.flash.subber a')
+      if breadcrumb1.text.strip == "Characters"
+        user_info = char_page.at_css('#header #user-info')
+        user_info.at_css('img').try(:remove)
+        return user_info.text.strip
+      end
+      return breadcrumb1.text.split("Characters").first.strip
+    end
+    
+    def get_face_by_id(face_id, default=nil)
+      return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
+      
+      icon_id = face_id.split('#').last
+      character_id = face_id.sub("##{icon_id}", '')
+      
+      character_id = nil if character_id == face_id
+      character_id = nil if character_id.empty?
+      
+      @icon_page_errors = [] unless @icon_page_errors
+      @icon_errors = [] unless @icon_errors
+      
+      return default if @icon_page_errors.include?(character_id)
+      
+      if character_id and not @face_cache.key?(character_id)
+        char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}", replace: true)
+        char_page = Nokogiri::HTML(char_page_data)
+        icons = icon_page.css('.gallery-icon')
+        default_icon_url = icon_page.at_css('#content img').try(:[], :src)
+        
+        icon_moiety = get_moiety_by_id(character_id)
+        
+        if icons.nil? or icons.empty?
+          LOG.error "No icons for character ##{character_id}."
+          @icon_page_errors << character_id
+          return
+        end
+        
+        icon_hash = {}
+        icons.each do |icon_element|
+          icon_link = icon_element.at_css('a')
+          icon_img = icon_link.at_css('img')
+          icon_src = icon_img.try(:[], :src)
+          
+          (LOG.error "Failed to find an img URL on the icon page for character ##{character_id}" and next) if icon_src.nil? or icon_src.empty?
+          
+          icon_keyword = icon_img.try(:[], :title)
+          
+          params = {}
+          params[:moiety] = icon_moiety
+          params[:imageURL] = icon_src
+          params[:user] = character_id
+          params[:user_display] = character_display #TODO: make a character_display
+          
+          params[:keyword] = icon_keyword
+          params[:unique_id] = "#{character_id}##{icon_id}"
+          face = Face.new(params)
+          icon_hash[params[:keyword]] = face
+          
+          @chapter_list.add_face(face)
+          
+          if (icon_src == default_icon_url and not icon_hash.key?(:default))
+            params[:keyword] = "default"
+            params[:unique_id] = "#{character_id}#default"
+            face = Face.new(params)
+            icon_hash[:default] = face
+            
+            @chapter_list.add_face(face)
+          end
+        end
+        
+        @face_cache[character_id] = icon_hash
+      elsif not character_id
+        icon_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}", replace: true)
+        icon_page = Nokogiri::HTML(icon_page_data)
+        
+        
+        #TODO: Load the face's page and get it there
+      end
+      
+      #TODO: cache and return
+      icons_hash = @face_cache.key?(user_profile) ? @face_cache[user_profile] : @face_cache[user_profile.gsub('_', '-')]
+      @face_id_cache[face_id] = icons_hash[face_name] if icons_hash.key?(face_name)
+      @face_id_cache[face_id] = icons_hash[:default] if (face_name.downcase == "default" or face_name == :default) and icons_hash.key?(:default)
+      return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
+      
+      LOG.error "Failed to find a face for user: #{user_profile} and face: #{face_name}" unless @icon_errors.include?(face_id)
+      @icon_errors << face_id unless @icon_errors.include?(face_id)
+      return default
+    end
+    
+    def make_message(message_element, options = {})
+      permalink_btn = message_element.at_css(".post-edit-box img[alt='Link']")
+      if permalink_btn
+        permalink_btn = permalink_btn.parent
+        message_id = permalink_btn["href"].split('posts/').last.split('replies/').last.split("#").first
+        message_type = (permalink_btn["href"]["post"]) ? PostType::ENTRY : PostType::REPLY
+      end
+      
+      userpic = message_element.at_css(".post-icon img")
+      author_element = message_element.at_css('.post-author a')
+      author_name = author_element.text.strip
+      author_id = author_element["href"].split("users/").last
+      
+      character_element = message_element.at_css('.post-character a')
+      character_id = nil
+      character_name = nil
+      if character_element
+        character_id = character_element["href"].split("characters/").last
+        character_name = character_element.text.strip
+      end
+      
+      face_url = ""
+      face_name = "default"
+      face_id = ""
+      if userpic
+        face_id = userpic.parent["href"].split("icons/").last
+        face_url = userpic["src"]
+        face_name = userpic["title"]
+      end
+      
+      date_element = message_element.at_css('.post-footer')
+      date_element.at_css('a').try(:remove)
+      date_str = date_element.text.strip
+      if date_str.end_with?("|")
+        date_str = date_str[0..-2].strip
+      end
+      
+      params = {}
+      create_date = date_str.split("|").first.sub("Posted", "").trim
+      params[:time] = DateTime.strptime(create_date, "%b %d, %Y %l:%M %p")
+      if date_str["|"]
+        edit_date = date_str.split("|").last.sub("Updated", "").trim
+        params[:edittime] = DateTime.strptime(edit_date, "%b %d, %Y %l:%M %p")
+      end
+      
+      message_content = message_element.at_css('padding-10')
+      message_content.at_css('.post-info-box').remove
+      message_content.at_css('.post-edit-box').remove
+      message_content.at_css('.post-footer').remove
+      params[:content] = message_content.text
+      face_id = [character_id, face_id].reject{|thing| thing.nil?} * '#'
+      params[:face] = get_face_by_id(face_id)
+      params[:author] = character_id
+      params[:id] = message_id
+      params[:chapter] = @chapter
+      
+      if params[:face].nil? and not face_url.empty?
+        face_params = {}
+        face_params[:moiety] = author_name
+        face_params[:imageURL] = face_url
+        face_params[:user] = character_id
+        face_params[:user_display] = character_name or author_name
+        face_params[:keyword] = face_name
+        face_params[:unique_id] = face_id
+        face = Face.new(face_params)
+        params[:face] = face
+      end
+      
+      if message_type == PostType::ENTRY
+        params[:entry_title] = message_element.at_css('.post-title').text.strip
+        
+        entry = Entry.new(params)
+        @previous_message = entry
+      else
+        params[:parent] = @previous_message if @previous_message
+        
+        reply = Reply.new(params)
+        @previous_message = reply
+      end
+    end
+  
+    def get_replies(chapter, options = {})
+      return nil unless self.handles?(chapter)
+      notify = options.key?(:notify) ? options[:notify] : true
+      
+      pages = chapter.pages
+      (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
+      
+      @chapter = chapter
+      @replies = []
+      pages.each do |page_url|
+        page_data = get_page_data(page_url, replace: false)
+        page = Nokogiri::HTML(page_data)
+        
+        page_content = page.at_css('#content')
+        
+        @chapter.title_extras = page.at_css('.post-subheader').text.strip
+        
+        if @replies.empty?
+          paginator = page_content.at_css('.paginator')
+          
+          @entry_element = paginator.previous
+          entry = make_message(@entry_element)
+          chapter.entry = entry
+        end
+        
+        comments = page_content.css('.post-container')
+        comments.each do |comment_element|
+          next if comment_element == @entry_element
+          
           reply = make_message(comment_element)
           @replies << reply
         end

@@ -26,6 +26,7 @@ FIC_NAME_MAPPING = {
   pixiethreads: [:pixiethreads],
   radon: [:radon, :absinthe],
   glowfic: [:othersandbox, :sandbox2, :glowfic],
+  constellation: [:constellation],
   sandbox: [:sandbox],
   marri: [:marri, :marrinikari],
   peterverse: [:peter, :pedro, :peterverse],
@@ -33,17 +34,18 @@ FIC_NAME_MAPPING = {
 }
 FIC_SHOW_AUTHORS = [:sandbox, :glowfic, :marri, :peterverse, :maggie]
 FIC_TOCS = {
-  #Sandboxes
-  sandbox: "http://alicornutopia.dreamwidth.org/1640.html?style=site",
-  glowfic: "http://glowfic.dreamwidth.org/2015/06/",
-  
   #Continuities
   effulgence: "http://edgeofyourseat.dreamwidth.org/2121.html?style=site",
   incandescence: "http://alicornutopia.dreamwidth.org/7441.html?style=site",
   pixiethreads: "http://pixiethreads.dreamwidth.org/613.html?style=site",
   radon: "http://radon-absinthe.dreamwidth.org/295.html?style=site",
   
+  #Sandboxes
+  glowfic: "http://glowfic.dreamwidth.org/2015/06/",
+  constellation: "https://vast-journey-9935.herokuapp.com/boards/",
+  
   #Authors
+  sandbox: "http://alicornutopia.dreamwidth.org/1640.html?style=site",
   marri: "http://marrinikari.dreamwidth.org/1634.html?style=site",
   peterverse: "http://peterverse.dreamwidth.org/1643.html?style=site",
   maggie: "http://maggie-of-the-owls.dreamwidth.org/454.html?style=site"

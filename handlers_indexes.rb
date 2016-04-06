@@ -511,6 +511,72 @@
       chapter_list
     end
   end
+  
+  class ConstellationIndexHandler < IndexHandler
+    handles :constellation
+    def initialize(options = {})
+      super(options)
+    end
+    def get_absolute_url(url_path, current_url)
+      if url_path.start_with?("/")
+        url_path = "https://vast-journey-9935.herokuapp.com" + url_path
+      elsif not url_path.start_with?("http://") and not url_path.start_with?("https://")
+        url_path = File.join((current_url.split("/")[0..-2]) * '/', url_path)
+      end
+      url_path
+    end
+    def toc_to_chapterlist(options = {}, &block)
+      fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
+      
+      chapter_list = GlowficEpub::Chapters.new
+      
+      LOG.info "TOC Page: #{fic_toc_url}"
+      fic_toc_data = get_page_data(fic_toc_url, replace: true)
+      fic_toc = Nokogiri::HTML(fic_toc_data)
+      
+      sections = fic_toc.css("#content tr")
+      sections.each do |section|
+        next if section.at_css("th")
+        
+        section_link = section.at_css('a')
+        section_name = section_link.text.strip
+        next if section_name == "Site testing"
+        section_url = get_absolute_url(section_link["href"], fic_toc_url)
+        next if section_url.end_with?("/1")
+        
+        section_toc_data = get_page_data(section_url, replace: true)
+        section_toc = Nokogiri::HTML(section_toc_data)
+        
+        sections = [section_name]
+        
+        temp_chapters = []
+        chapters = section_toc.css("tr")
+        chapters.each do |chapter_row|
+          next if chapter_row.at_css('th')
+          no_post = chapter_row.at_css('.centered.padding-10')
+          next if no_post and no_post.text["No posts"]
+          
+          chapter_link = chapter_row.at_css('td a')
+          chapter_title = chapter_link.text.strip
+          chapter_url = get_absolute_url(chapter_link["href"], section_url)
+          chapter_sections = sections
+          
+          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
+          
+          temp_chapters << chapter_details
+        end
+        temp_chapters.reverse!
+        temp_chapters.each do |chapter|
+          chapter_list << chapter
+          if block_given?
+            yield chapter
+          end
+        end
+      end
+      chapter_list
+    end
+  end
+  
   ##
   #class HandlerTemplate
   #  def initialize(options = {})
