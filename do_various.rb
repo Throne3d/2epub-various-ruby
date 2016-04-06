@@ -48,7 +48,7 @@ FIC_TOCS = {
 }
 
 def main(args)
-  abort "Please input an argument (e.g. 'tocs_sandbox', 'flats_sandbox', 'epub_sandbox', or 'remove alicorn*#1640' to remove all 1640.html within any alicorn* community)" unless args.size > 0
+  abort "Please input an argument (e.g. 'tocs_sandbox', 'get_sandbox', 'process_sandbox', 'output_sandbox')" unless args.size > 0
   
   option = args.join(" ").downcase.strip
   process = :""
