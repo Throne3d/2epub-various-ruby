@@ -272,7 +272,6 @@
       end
       
       params = {}
-      params[:site_handler] = self
       params[:content] = message_element.at_css('.entry-content, .comment-content').inner_html
       params[:face] = get_face_by_id("#{author_name}##{face_name}")
       params[:author] = author_name

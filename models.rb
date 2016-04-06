@@ -178,6 +178,13 @@ module GlowficEpub
     def add_face(arg)
       @faces << arg
     end
+    def get_face_by_id(face_id)
+      found_face = nil
+      @faces.each do |face|
+        found_face = face if face.unique_id == face_id
+      end
+      found_face
+    end
     
     def <<(arg)
       if (arg.is_a?(Face))
@@ -207,29 +214,32 @@ module GlowficEpub
       json_hash.each do |var, val|
         varname = (var.start_with?("@")) ? var[1..-1] : var
         self.instance_variable_set var, val unless varname == "chapters" or varname == "faces" or varname == "authors"
-        
-        if var["chapters"]
-          @chapters = []
-          val.each do |chapter_hash|
-            chapter = Chapter.new
-            chapter.from_json! chapter_hash
-            @chapters << chapter
-          end
-        elsif var["faces"]
-          @faces = []
-          val.each do |face_hash|
-            face = Face.new
-            face.from_json! face_hash
-            @faces << face
-          end
-        elsif var["authors"]
-          @authors = []
-          val.each do |author_hash|
-            author = Author.new
-            author.from_json! author_hash
-            @authors << author
-          end
-        end
+      end
+      
+      authors = json_hash["authors"] or json_hash["@authors"]
+      faces = json_hash["faces"] or json_hash["@faces"]
+      chapters = json_hash["chapters"] or json_hash["@chapters"]
+      
+      @authors = []
+      authors.each do |author_hash|
+        author = Author.new
+        author.from_json! author_hash
+        @authors << author
+      end
+      
+      @faces = []
+      faces.each do |face_hash|
+        face = Face.new
+        face.from_json! face_hash
+        @faces << face
+      end
+      
+      @chapters = []
+      chapters.each do |chapter_hash|
+        chapter_hash["chapter_list"] = self
+        chapter = Chapter.new
+        chapter.from_json! chapter_hash
+        @chapters << chapter
       end
     end
   end
@@ -239,7 +249,7 @@ module GlowficEpub
     attr_reader :url, :smallURL
     
     param_transform :name => :title, :name_extras => :title_extras
-    serialize_ignore :smallURL, :allowed_params, :site_handler
+    serialize_ignore :smallURL, :allowed_params, :site_handler, :chapter_list
     
     def allowed_params
       @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :authors]
@@ -260,6 +270,10 @@ module GlowficEpub
     end
     def authors
       @authors ||= []
+    end
+    
+    def chapter_list
+      @chapter_list
     end
     
     def initialize(params={})
@@ -324,17 +338,17 @@ module GlowficEpub
           @replies = []
           val.each do |reply_hash|
             reply_hash["post_type"] = PostType::REPLY
+            reply_hash["chapter"] = self
             reply = Reply.new
             reply.from_json! reply_hash
-            reply.chapter = self
             @replies << reply
           end
         elsif var["entry"]
           entry_hash = val
           entry_hash["post_type"] = PostType::ENTRY
+          entry_hash["chapter"] = self
           entry = Entry.new
           entry.from_json! entry_hash
-          entry.chapter = self
           @entry = entry
         end
       end
@@ -442,9 +456,14 @@ module GlowficEpub
       @chapter.site_handler
     end
     
+    def chapter_list
+      chapter.chapter_list if chapter
+    end
+    
     def face
       return unless @face_id
       @face ||= site_handler.get_face_by_id(@face_id)
+      @face ||= chapter_list.get_face_by_id(@face_id) if chapter_list
     end
     def face=(face)
       if (face.is_a?(String))
