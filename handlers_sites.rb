@@ -2,6 +2,7 @@
   require 'model_methods'
   require 'models'
   require 'uri'
+  require 'date'
   include GlowficEpubMethods
   include GlowficEpub::PostType
   
@@ -272,6 +273,12 @@
       end
       
       params = {}
+      edit_element = message_element.at_css(".contents .edittime")
+      if edit_element
+        edit_text = edit_element.at_css(".datetime").text.strip
+        params[:edittime] = DateTime.strptime(edit_text, "%Y-%m-%d %H:%M (%Z)")
+        edit_element.remove
+      end
       params[:content] = message_element.at_css('.entry-content, .comment-content').inner_html
       params[:face] = get_face_by_id("#{author_name}##{face_name}")
       params[:author] = author_name
@@ -292,6 +299,10 @@
       if message_type == PostType::ENTRY
         params[:entry_title] = message_element.at_css('.entry-title').text.strip
         
+        time_text = message_element.at_css('.header .datetime').text.strip
+        time_text = time_text[1..-1].strip if time_text.start_with?("@")
+        params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P")
+        
         entry = Entry.new(params)
       else
         parent_link = message_element.at_css(".link.commentparent a")
@@ -304,6 +315,9 @@
         else
           params[:parent] = @chapter.entry
         end
+        
+        time_text = message_element.at_css('.header .datetime').text.strip
+        params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P (%Z)")
         
         reply = Reply.new(params)
       end

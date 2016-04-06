@@ -11,6 +11,7 @@ end
 module GlowficEpub
   require 'model_methods'
   require 'json'
+  require 'date'
   include GlowficEpubMethods
   
   MOIETIES = {
@@ -391,14 +392,14 @@ module GlowficEpub
   end
   
   class Message < Model #post or entry
-    attr_accessor :author, :content, :time, :id, :chapter, :post_type, :depth, :children
+    attr_accessor :author, :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children
      
     def self.message_serialize_ignore
       serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :face_id, :post_type
     end
     
     def allowed_params
-      @allowed_params ||= [:author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :entry_title]
+      @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :entry_title]
     end
     
     @push_title = false
@@ -414,6 +415,19 @@ module GlowficEpub
     def chapter=(newval)
       newval.entry_title=@entry_title if @push_title
       @chapter = newval
+    end
+    
+    def time
+      return unless @time
+      return @time unless @time.is_a?(String)
+      @time = DateTime.strptime(@time)
+      return @time
+    end
+    def edittime
+      return unless @edittime
+      return @edittime unless @edittime.is_a?(String)
+      @edittime = DateTime.strptime(@edittime)
+      return @edittime
     end
     
     def depth
