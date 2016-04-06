@@ -22,7 +22,14 @@
     end
     def get_face_path(face)
       return "" if face.imageURL.nil? or face.imageURL.empty?
-      download_file(face.imageURL, where: "output/epub/#{@group}")
+      
+      uri = URI.parse(face.imageURL)
+      save_path = "output/epub/#{@group}"
+      uri_path = uri.path
+      uri_path = uri_path[1..-1] if uri_path.start_with?("/")
+      relative_file = File.join(uri.host, uri_path.gsub('/', '-'))
+      download_file(face.imageURL, save_path: File.join(save_path, relative_file))
+      relative_file
     end
     def output(chapter_list=nil)
       chapter_list = @chapters if chapter_list.nil? and @chapters
@@ -54,7 +61,15 @@
         b = binding
         page_data = erb.result b
         
-        open(get_page_location(chapter.smallURL, "output/epub/#{@group}"), 'w') do |file|
+        uri = URI.parse(chapter.url)
+        save_path = "output/epub/#{@group}"
+        save_file = uri.host.sub(".dreamwidth.org", "")
+        uri_path = uri.path
+        uri_path = uri_path[1..-1] if uri_path.start_with?("/")
+        save_file += "-" + uri_path.sub(".html", "")
+        save_path = File.join(save_path, save_file.gsub("/", "-"))
+        
+        open(save_path, 'w') do |file|
           file.write page_data
         end
         LOG.info "Did chapter #{chapter}."

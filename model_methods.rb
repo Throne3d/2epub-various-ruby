@@ -88,6 +88,8 @@
       options.delete(:retry)
     end
     
+    save_path = options[:save_path] if options.key?(:save_path)
+    
     retries = 3
     if options.key?(:do_retry)
       if options[:do_retry].is_a?(Integer)
@@ -105,7 +107,7 @@
     raise(ArgumentError, "Retries must be an integer. #{options}") unless retries.is_a?(Integer)
     
     LOG.debug "download_file('#{file_url}', #{options})"
-    save_path = get_page_location(file_url, options)
+    save_path = get_page_location(file_url, options) unless save_path
     save_folder = File.dirname(save_path)
     FileUtils::mkdir_p save_folder
     
