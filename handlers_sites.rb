@@ -204,12 +204,16 @@
             params[:unique_id] = "#{user_id}##{params[:keyword]}"
             face = Face.new(params)
             icon_hash[params[:keyword]] = face
+            
+            @chapter_list.add_face(face)
           end
           if (icon_element == default_icon)
             params[:keyword] = "default"
             params[:unique_id] = "#{user_id}#default"
             face = Face.new(params)
             icon_hash[:default] = face
+            
+            @chapter_list.add_face(face)
           end
         end
         

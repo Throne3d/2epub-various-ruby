@@ -174,8 +174,17 @@ module GlowficEpub
       @faces = []
       @authors = []
     end
+    
+    def add_face(arg)
+      @faces << arg
+    end
+    
     def <<(arg)
-      @chapters << arg
+      if (arg.is_a?(Face))
+        self.add_face(arg)
+      else
+        @chapters << arg
+      end
     end
     def length
       @chapters.length
