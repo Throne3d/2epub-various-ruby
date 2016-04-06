@@ -283,6 +283,7 @@
       params[:face] = get_face_by_id("#{author_name}##{face_name}")
       params[:author] = author_name
       params[:id] = message_id
+      params[:chapter] = @chapter
       
       if params[:face].nil? and not face_url.empty?
         face_params = {}

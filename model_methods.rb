@@ -247,7 +247,7 @@
   def get_chapters_data(group, where="")
     where = "web_cache/chapterDetails_#{group}.txt" if where == ""
     
-    chapterRep = GlowficEpub::Chapters.new
+    chapterRep = GlowficEpub::Chapters.new(group: group)
     
     return chapterRep unless File.file?(where)
     File.open(where, "rb") do |f|

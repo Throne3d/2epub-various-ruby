@@ -169,11 +169,18 @@ module GlowficEpub
   end
   
   class Chapters < Model
-    attr_reader :chapters, :faces, :authors
-    def initialize
+    attr_reader :chapters, :faces, :authors, :group
+    attr_accessor :group
+    serialize_ignore :site_handlers
+    def initialize(options = {})
       @chapters = []
       @faces = []
       @authors = []
+      @group = options[:group] if options.key?(:group)
+    end
+    
+    def site_handlers
+      @site_handlers ||= {}
     end
     
     def add_face(arg)
@@ -214,7 +221,8 @@ module GlowficEpub
         
       json_hash.each do |var, val|
         varname = (var.start_with?("@")) ? var[1..-1] : var
-        self.instance_variable_set var, val unless varname == "chapters" or varname == "faces" or varname == "authors"
+        var = (var.start_with?("@") ? var : "@#{var}")
+        self.instance_variable_set var, val unless varname == "replies" or varname == "entry"
       end
       
       authors = json_hash["authors"] or json_hash["@authors"]
@@ -256,9 +264,14 @@ module GlowficEpub
       @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :authors]
     end
     
+    def group
+      @chapter_list.group
+    end
     def site_handler
       return @site_handler unless @site_handler.nil?
-      @site_handler ||= GlowficSiteHandlers.get_handler_for(self)
+      handler_type = GlowficSiteHandlers.get_handler_for(self)
+      chapter_list.site_handlers[handler_type] ||= handler_type.new(group: group)
+      @site_handler ||= chapter_list.site_handlers[handler_type]
     end
     def pages
       @pages ||= []
@@ -329,28 +342,30 @@ module GlowficEpub
       else
         raise(ArgumentError, "Not a string or a hash.")
       end
-        
+      
       json_hash.each do |var, val|
         varname = (var.start_with?("@")) ? var[1..-1] : var
         var = (var.start_with?("@") ? var : "@#{var}")
         self.instance_variable_set var, val unless varname == "replies" or varname == "entry"
-        
-        if var["replies"]
-          @replies = []
-          val.each do |reply_hash|
-            reply_hash["post_type"] = PostType::REPLY
-            reply_hash["chapter"] = self
-            reply = Reply.new
-            reply.from_json! reply_hash
-            @replies << reply
-          end
-        elsif var["entry"]
-          entry_hash = val
-          entry_hash["post_type"] = PostType::ENTRY
-          entry_hash["chapter"] = self
-          entry = Entry.new
-          entry.from_json! entry_hash
-          @entry = entry
+      end
+      entry = json_hash["entry"] or json_hash["@entry"]
+      replies = json_hash["replies"] or json_hash["@replies"]
+      if entry
+        entry_hash = entry
+        entry_hash["post_type"] = PostType::ENTRY
+        entry_hash["chapter"] = self
+        entry = Entry.new
+        entry.from_json! entry_hash
+        @entry = entry
+      end
+      if replies
+        @replies = []
+        replies.each do |reply_hash|
+          reply_hash["post_type"] = PostType::REPLY
+          reply_hash["chapter"] = self
+          reply = Reply.new
+          reply.from_json! reply_hash
+          @replies << reply
         end
       end
     end
@@ -393,7 +408,7 @@ module GlowficEpub
   
   class Message < Model #post or entry
     attr_accessor :author, :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children
-     
+    
     def self.message_serialize_ignore
       serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :face_id, :post_type
     end
@@ -468,8 +483,9 @@ module GlowficEpub
         #from JSON
         if @parent.length == 2
           @parent = @chapter.entry
+          puts "Parent is now chapter's entry"
         else
-          parent_id = newparent.last
+          parent_id = @parent.last
           @chapter.replies.each do |reply|
             @parent = reply if reply.id == parent_id
           end
@@ -502,7 +518,7 @@ module GlowficEpub
         @face_id = face.unique_id
         @face = face
       else
-        raise(ArgumentError, "Invalid face type")
+        raise(ArgumentError, "Invalid face type. Face: #{face}")
       end
     end
     def face_id
@@ -526,19 +542,22 @@ module GlowficEpub
       
       raise(ArgumentError, "Author must be given") unless (params.key?(:author) and not params[:author].nil?)
       raise(ArgumentError, "Content must be given") unless params.key?(:content)
+      raise(ArgumentError, "Chapter must be given") unless params.key?(:chapter)
       allowed_params.each do |symbol|
         public_send("#{symbol}=", params[symbol]) if params[symbol]
       end
     end
     def to_s
-      if @post_type
+      if chapter.nil?
+        "#{author}##{id} @ #{time}: #{content}"
+      elsif @post_type
         if @post_type == PostType::ENTRY
-          "#{community}##{id}"
+          "#{chapter.smallURL}##{id}"
         elsif @post_type == PostType::REPLY
-          "#{community}##{chapter.entry.id}##{id}"
+          "#{chapter.smallURL}##{chapter.entry.id}##{id}"
         end
       else
-        "#{community}##{id}"
+        "#{chapter.smallURL}##{id}"
       end
     end
     
@@ -550,16 +569,46 @@ module GlowficEpub
         var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
         
-        if var_str == "parent"
+        if var_str["parent"]
           parent = self.instance_variable_get(var)
-          hash[var_sym] = [parent.community, parent.chapter.entry.id, parent.id] if parent.post_type == PostType::REPLY
-          hash[var_sym] = [parent.community, parent.id] if parent.post_type == PostType::ENTRY
-        elsif var_str == "face"
+          hash[var_sym] = [chapter.smallURL, chapter.entry.id, parent.id] if parent.post_type == PostType::REPLY
+        elsif var_str["face"]
           face = self.instance_variable_get(var)
-          hash[var_sym] = face.unique_id
+          hash[var_sym] = face if face.is_a?(String)
+          hash[var_sym] = face.unique_id if face.is_a?(Face)
         end
       end
       hash.to_json(options)
+    end
+    
+    def from_json! string
+      json_hash = if string.is_a? String
+        JSON.parse(string)
+      elsif string.is_a? Hash
+        string
+      else
+        raise(ArgumentError, "Not a string or a hash.")
+      end
+      
+      json_hash.each do |var, val|
+        varname = (var.start_with?("@")) ? var[1..-1] : var
+        var = (var.start_with?("@") ? var : "@#{var}")
+        self.instance_variable_set var, val unless varname == "parent" or varname == "face"
+      end
+      
+      chapter.entry = self if post_type == PostType::ENTRY
+      
+      parent = json_hash["parent"] or json_hash["@parent"]
+      face = json_hash["face"] or json_hash["@face"]
+      
+      if parent
+        self.parent = parent
+        self.parent
+      end
+      if face
+        self.face = face
+        self.face
+      end
     end
   end
 

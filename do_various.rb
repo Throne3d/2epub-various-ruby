@@ -144,12 +144,11 @@ def main(args)
       set_chapters_data(chapter_list, group)
     end
   elsif (process == :process)
+    GlowficEpub::build_moieties
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Processing '#{group}'"
     LOG.info "Chapter count: #{chapter_list.length}"
-    
-    GlowficEpub::build_moieties
     
     site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
     site_handlers.select! {|c| c.is_a? Class and c < GlowficSiteHandlers::SiteHandler }
@@ -178,6 +177,7 @@ def main(args)
       set_chapters_data(chapter_list, group)
     end
   elsif (process == :output_epub)
+    GlowficEpub::build_moieties
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Processing '#{group}'"
