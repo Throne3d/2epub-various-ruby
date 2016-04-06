@@ -36,6 +36,7 @@
       @chapter_list = []
       @chapter_list = options[:chapters] if options.key?(:chapters)
       @chapter_list = options[:chapter_list] if options.key?(:chapter_list)
+      @chapter_list = GlowficEpub::Chapters.new if @chapter_list.is_a?(Array) and @chapter_list.empty?
       @face_cache = {} #{"alicornutopia" => {"pen" => "(url)"}}
       @face_id_cache = {} #{"alicornutopia#pen" => "(url)"}
       # When retreived in get_face_by_id
