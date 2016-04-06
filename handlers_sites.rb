@@ -5,6 +5,14 @@
   include GlowficEpubMethods
   include GlowficEpub::PostType
   
+  def self.get_handler_for(chapter)
+    site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
+    site_handlers.select! {|c| c.is_a? Class and c < GlowficSiteHandlers::SiteHandler }
+    chapter_handlers = site_handlers.select {|c| c.handles? chapter}
+    return chapter_handlers.first if chapter_handlers.length == 1
+    chapter_handlers
+  end
+  
   class SiteHandler
     include GlowficEpub
     def self.handles?(chapter)

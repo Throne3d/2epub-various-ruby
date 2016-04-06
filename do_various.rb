@@ -121,22 +121,18 @@ def main(args)
     LOG.info "Getting '#{group}'"
     LOG.info "Chapter count: #{chapter_list.length}"
     
-    site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
-    site_handlers.select! {|c| c.is_a? Class and c < GlowficSiteHandlers::SiteHandler }
-    
     unhandled_chapters = []
     instance_handlers = {}
     chapter_list.each do |chapter|
-      site_handler = site_handlers.select {|c| c.handles? chapter}
+      site_handler = GlowficSiteHandlers.get_handler_for(chapter)
       
-      if site_handler.nil? or site_handler.empty? or site_handler.length > 1
-        LOG.error "No site handler for #{chapter.title}!" if site_handler.nil? or site_handler.empty?
-        LOG.error "Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if site_handler.length > 1
+      if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?) or (site_handler.is_a?(Array) and site_handler.length > 1)
+        LOG.error "No site handler for #{chapter.title}!" if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?)
+        LOG.error "Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if (site_handler.is_a?(Array) and site_handler.length > 1)
         unhandled_chapters << chapter
         next
       end
       
-      site_handler = site_handler.first
       instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
       handler = instance_handlers[site_handler]
       
