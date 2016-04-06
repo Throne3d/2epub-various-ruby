@@ -375,14 +375,14 @@ module GlowficEpub
   end
   
   class Message < Model #post or entry
-    attr_accessor :author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children, :site_handler
+    attr_accessor :author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children
      
     def self.message_serialize_ignore
-      serialize_ignore :author, :chapter, :parent, :children, :site_handler, :face, :allowed_params, :push_title, :face_id, :post_type
+      serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :face_id, :post_type
     end
     
     def allowed_params
-      @allowed_params ||= [:author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :site_handler, :entry_title]
+      @allowed_params ||= [:author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :entry_title]
     end
     
     @push_title = false
@@ -413,9 +413,13 @@ module GlowficEpub
       @depth = @parent.depth + 1
     end
     
+    def site_handler
+      @chapter.site_handler
+    end
+    
     def face
       return unless @face_id
-      @face ||= @site_handler.get_face_by_id(@face_id)
+      @face ||= site_handler.get_face_by_id(@face_id)
     end
     def face=(face)
       if (face.is_a?(String))
