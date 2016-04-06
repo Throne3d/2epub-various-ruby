@@ -425,6 +425,20 @@ module GlowficEpub
     def children
       @children ||= []
     end
+    def moiety
+      return "" unless face
+      face.moiety
+    end
+    
+    def post_type_str
+      if @post_type == PostType::ENTRY
+        "entry"
+      elsif @post_type == PostType::REPLY
+        "comment"
+      else
+        "unknown"
+      end
+    end
     
     def parent=(newparent)
       if newparent.is_a?(Array)
@@ -461,8 +475,9 @@ module GlowficEpub
     end
     
     def face
+      return @face if @face
       return unless @face_id
-      @face ||= site_handler.get_face_by_id(@face_id)
+      @face ||= site_handler.get_face_by_id(@face_id) if site_handler
       @face ||= chapter_list.get_face_by_id(@face_id) if chapter_list
     end
     def face=(face)

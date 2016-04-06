@@ -182,7 +182,7 @@ def main(args)
     LOG.info "Processing '#{group}'"
     
     handler = GlowficOutputHandlers::EpubHandler
-    handler.new(chapter_list: chapter_list)
+    handler = handler.new(chapter_list: chapter_list)
     handler.output
   else
     LOG.info "Not yet implemented."
