@@ -235,16 +235,20 @@ module GlowficEpub
   end
 
   class Chapter < Model
-    attr_accessor :path, :title, :title_extras, :thread, :entry_title, :entry, :pages, :replies, :sections, :authors, :entry
+    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :replies, :sections, :authors, :entry
     attr_reader :url, :smallURL
     
     param_transform :name => :title, :name_extras => :title_extras
-    serialize_ignore :smallURL, :allowed_params
+    serialize_ignore :smallURL, :allowed_params, :site_handler
     
     def allowed_params
-      @allowed_params ||= [:path, :title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :authors]
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :authors]
     end
     
+    def site_handler
+      return @site_handler unless @site_handler.nil?
+      @site_handler ||= GlowficSiteHandlers.get_handler_for(self)
+    end
     def pages
       @pages ||= []
     end
@@ -279,7 +283,6 @@ module GlowficEpub
       allowed_params.each do |symbol|
         public_send("#{symbol}=", params[symbol]) if params[symbol]
       end
-      self.path=get_page_location(url) unless params.key?(:path)
     end
     def url=(newURL)
       @url=newURL
