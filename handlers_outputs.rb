@@ -11,6 +11,7 @@
     def initialize(options={})
       @chapters = options[:chapters] if options.key?(:chapters)
       @chapters = options[:chapter_list] if options.key?(:chapter_list)
+      @group = options[:group] if options.key?(:group)
     end
   end
   
@@ -18,6 +19,10 @@
     include ERB::Util
     def initialize(options={})
       super options
+    end
+    def get_face_path(face)
+      return "" if face.imageURL.nil? or face.imageURL.empty?
+      download_file(face.imageURL, where: "output/epub/#{@group}")
     end
     def output(chapter_list=nil)
       chapter_list = @chapters if chapter_list.nil? and @chapters
@@ -34,7 +39,7 @@
       
       chapter_list.each do |chapter|
         @chapter = chapter
-        @messages = [chapter.entry] + chapter.replies
+        @messages = [@chapter.entry] + @chapter.replies
         @messages.reject! {|element| element.nil? }
         (LOG.error "No messages for chapter." and next) if @messages.empty?
         
@@ -47,7 +52,12 @@
         
         erb = ERB.new(template_chapter, 0, '-')
         b = binding
-        puts erb.result b
+        page_data = erb.result b
+        
+        open(get_page_location(chapter.smallURL, "output/epub/#{@group}"), 'w') do |file|
+          file.write page_data
+        end
+        LOG.info "Did chapter #{chapter}."
       end
     end
   end

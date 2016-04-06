@@ -1,8 +1,8 @@
 ﻿<div id="<%= @message.post_type_str + "-" + @message.id %>" data-depth="<%= @message.depth %>" data-type="<%= @message.post_type_str %>" class="<%= @message.moiety %>">
   <div class="user">
     <div class="usericon">
-      <% if @message.face and @message.face.path and not @message.face.path.empty? -%>
-        <img src="<%= @message.face.path %>" />
+      <% if @message.face and get_face_path(@message.face) and not get_face_path(@message.face).empty? -%>
+        <img src="<%= get_face_path(@message.face) %>" />
       <% else -%>
         <div>X</div>
       <% end -%>

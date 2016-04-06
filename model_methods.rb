@@ -79,8 +79,8 @@
     save_path = File.join(where, uri_host, uri_folder, uri_file)
     save_path
   end
-
-  def get_page_data(page_url, options={})
+  
+  def download_file(file_url, options={})
     standardize_params(options)
     replace = options.key?(:replace) ? options[:replace] : false
     if options.key?(:retry)
@@ -104,36 +104,48 @@
     
     raise(ArgumentError, "Retries must be an integer. #{options}") unless retries.is_a?(Integer)
     
-    LOG.debug "get_page_data('#{page_url}', #{options})"
-    save_path = get_page_location(page_url, options)
+    LOG.debug "download_file('#{file_url}', #{options})"
+    save_path = get_page_location(file_url, options)
     save_folder = File.dirname(save_path)
     FileUtils::mkdir_p save_folder
     
     if File.file?(save_path) and not replace
-      data = ""
-      open(save_path, 'r') do |file|
-        data = file.read
-      end
-      LOG.debug "Retrieved page from web-cache"
-      return data
+      LOG.debug "File exists already, not replacing"
     end
+    success = false
     begin
-      open(page_url) do |webpage|
-        data = webpage.read
+      open(file_url) do |webpage|
         open(save_path, 'w') do |file|
-          file.write data
+          file.write webpage.read
         end
       end
+      success = true
     rescue OpenURI::HTTPError => error
-      LOG.error "Error loading page (#{page_url}); #{retries == 0 ? 'No' : retries} retr#{retries==1 ? 'y' : 'ies'} left"
+      LOG.error "Error loading file (#{file_url}); #{retries == 0 ? 'No' : retries} retr#{retries==1 ? 'y' : 'ies'} left"
       LOG.debug error
       
       retries -= 1
       retry if retries >= 0
     end
-    LOG.debug "Downloaded page" if data
-    LOG.error "Failed to load page (#{page_url})" unless data
+    LOG.debug "Downloaded page" if success
+    LOG.error "Failed to load page (#{file_url})" unless success
     
+    save_path
+  end
+
+  def get_page_data(page_url, options={})
+    standardize_params(options)
+    LOG.debug "get_page_data('#{page_url}', #{options})"
+    file_path = download_file(page_url, options)
+    
+    if !File.file?(file_path)
+      return nil
+    end
+    
+    data = ""
+    open(file_path, 'r') do |file|
+      data = file.read
+    end
     data
   end
   
