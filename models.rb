@@ -326,6 +326,7 @@ module GlowficEpub
             reply_hash["post_type"] = PostType::REPLY
             reply = Reply.new
             reply.from_json! reply_hash
+            reply.chapter = self
             @replies << reply
           end
         elsif var["entry"]
@@ -333,6 +334,7 @@ module GlowficEpub
           entry_hash["post_type"] = PostType::ENTRY
           entry = Entry.new
           entry.from_json! entry_hash
+          entry.chapter = self
           @entry = entry
         end
       end
@@ -375,7 +377,7 @@ module GlowficEpub
   end
   
   class Message < Model #post or entry
-    attr_accessor :author, :content, :time, :id, :chapter, :parent, :post_type, :depth, :children
+    attr_accessor :author, :content, :time, :id, :chapter, :post_type, :depth, :children
      
     def self.message_serialize_ignore
       serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :face_id, :post_type
@@ -401,6 +403,9 @@ module GlowficEpub
     end
     
     def depth
+      if @parent and not @depth
+        @depth = self.parent.depth + 1
+      end
       @depth ||= 0
     end
     def children
@@ -408,9 +413,29 @@ module GlowficEpub
     end
     
     def parent=(newparent)
-      @parent = newparent
-      @parent.children << self unless @parent.children.include?(self)
-      @depth = @parent.depth + 1
+      if newparent.is_a?(Array)
+        @parent = newparent
+      else
+        @parent = newparent
+        @parent.children << self unless @parent.children.include?(self)
+        @depth = @parent.depth + 1
+      end
+    end
+    def parent
+      if @parent.is_a?(Array)
+        #from JSON
+        if @parent.length == 2
+          @parent = @chapter.entry
+        else
+          parent_id = newparent.last
+          @chapter.replies.each do |reply|
+            @parent = reply if reply.id == parent_id
+          end
+        end
+        @parent.children << self unless @parent.children.include?(self)
+        @depth = @parent.depth + 1
+      end
+      @parent
     end
     
     def site_handler
@@ -475,12 +500,15 @@ module GlowficEpub
         var_str = (var.is_a? String) ? var : var.to_s
         var_sym = var_str.to_sym
         var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym) or var_str == "parent"
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
         
         if var_str == "parent"
           parent = self.instance_variable_get(var)
-          hash[var_sym] = [parent.community, parent.chapter.entry.id, parent.id] if parent.post_type == PostType::ENTRY
-          hash[var_sym] = [parent.community, parent.id] if parent.post_type == PostType::REPLY
+          hash[var_sym] = [parent.community, parent.chapter.entry.id, parent.id] if parent.post_type == PostType::REPLY
+          hash[var_sym] = [parent.community, parent.id] if parent.post_type == PostType::ENTRY
+        elsif var_str == "face"
+          face = self.instance_variable_get(var)
+          hash[var_sym] = face.unique_id
         end
       end
       hash.to_json(options)
