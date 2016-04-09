@@ -521,13 +521,15 @@
         icon_hash = {}
         icons.each do |icon_element|
           icon_link = icon_element.at_css('a')
+          icon_url = icon_link.try(:[], :href)
           icon_img = icon_link.at_css('img')
           icon_src = icon_img.try(:[], :src)
           
           (LOG.error "Failed to find an img URL on the icon page for character ##{character_id}" and next) if icon_src.nil? or icon_src.empty?
           
           icon_keyword = icon_img.try(:[], :title)
-          icon_numid = icon_src.split("icons/").last
+          icon_numid = icon_url.split("icons/").last if icon_url
+          icon_numid = "unknown" unless icon_numid
           
           params = {}
           params[:moiety] = icon_moiety
@@ -542,6 +544,8 @@
           
           @chapter_list.add_face(face)
           @face_id_cache[params[:unique_id]] = face
+          
+          LOG.debug "Found an icon for character #{character_id}: ID ##{icon_numid}"
           
           if (icon_src == default_icon_url and not icon_hash.key?(:default))
             params[:keyword] = "default"
