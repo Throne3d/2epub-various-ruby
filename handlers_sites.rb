@@ -602,11 +602,12 @@
       author_id = author_element["href"].split("users/").last
       
       character_element = message_element.at_css('.post-character a')
-      character_id = nil
-      character_name = nil
       if character_element
         character_id = character_element["href"].split("characters/").last
         character_name = character_element.text.strip
+      else
+        character_id = "user##{author_id}"
+        character_name = author_name
       end
       
       face_url = ""
