@@ -563,9 +563,9 @@
           
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
           
-          chapter_list << chapter
+          chapter_list << chapter_details
           if block_given?
-            yield chapter
+            yield chapter_details
           end
         end
       end
