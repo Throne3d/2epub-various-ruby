@@ -52,9 +52,15 @@ FIC_TOCS = {
 }
 
 def main(args)
-  abort "Please input an argument (e.g. 'tocs_sandbox', 'get_sandbox', 'process_sandbox', 'output_sandbox')" unless args.size > 0
+  abort "Please input an argument (e.g. 'tocs_sandbox', 'get_sandbox', 'process_sandbox', 'output_sandbox')" unless args and args.size > 0
   
-  option = args.join(" ").downcase.strip
+  option = if args.is_a?(String)
+    args.downcase.strip 
+  elsif args.is_a?(Array)
+    args.join(" ").downcase.strip
+  else
+    raise ArgumentError("process", "Invalid 'args' passed.")
+  end
   process = :""
   group = :""
   
