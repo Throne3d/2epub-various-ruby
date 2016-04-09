@@ -381,8 +381,8 @@
     end
     def initialize(options = {})
       super options
-      @face_cache = {} # {"alicornutopia" => {"pen" => "(url)"}}
-      @face_id_cache = {} # {"alicornutopia#pen" => "(url)"}
+      @face_id_cache = {} # {"6951" => "[is a face: ahein, imgur..., etc.]"}
+      @char_page_cache = {}
       # When retrieved in get_face_by_id
       @moiety_cache = {}
     end
@@ -469,13 +469,16 @@
         user_info.at_css('img').try(:remove)
         return user_info.text.strip
       end
-      return breadcrumb1.text.split("Characters").first.strip
+      username = breadcrumb1.text.split("Characters").first.strip
+      username = username[0..-3] if username.end_with?("'s")
+      username
     end
     
     def get_face_by_id(face_id, default=nil)
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       
       icon_id = face_id.split('#').last
+      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
       character_id = face_id.sub("##{icon_id}", '')
       
       character_id = nil if character_id == face_id
@@ -486,13 +489,28 @@
       
       return default if @icon_page_errors.include?(character_id)
       
-      if character_id and not @face_cache.key?(character_id)
+      if character_id and not @char_page_cache.key?(character_id)
         char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}", replace: true)
         char_page = Nokogiri::HTML(char_page_data)
-        icons = icon_page.css('.gallery-icon')
-        default_icon_url = icon_page.at_css('#content img').try(:[], :src)
+        icons = char_page.css(".gallery-icon")
+        default_icon_url = char_page.at_css("#content img").try(:[], :src)
         
         icon_moiety = get_moiety_by_id(character_id)
+        
+        char_screen_ele = char_page.at_css("#content > b")
+        if char_screen_ele
+          char_screen = char_screen_ele.text.strip
+          char_screen_ele.remove
+        else
+          char_screen = ""
+        end
+        
+        char_page.at_css("#content img").try(:remove)
+        
+        char_name = char_page.at_css("#content").text.strip.split("\n").first.strip
+        
+        char_display = char_name
+        char_display += " (#{char_screen})" unless char_screen.nil? or char_screen.empty?
         
         if icons.nil? or icons.empty?
           LOG.error "No icons for character ##{character_id}."
@@ -509,19 +527,21 @@
           (LOG.error "Failed to find an img URL on the icon page for character ##{character_id}" and next) if icon_src.nil? or icon_src.empty?
           
           icon_keyword = icon_img.try(:[], :title)
+          icon_numid = icon_src.split("icons/").last
           
           params = {}
           params[:moiety] = icon_moiety
           params[:imageURL] = icon_src
           params[:user] = character_id
-          params[:user_display] = character_display #TODO: make a character_display
+          params[:user_display] = char_display
           
           params[:keyword] = icon_keyword
-          params[:unique_id] = "#{character_id}##{icon_id}"
+          params[:unique_id] = icon_numid
           face = Face.new(params)
-          icon_hash[params[:keyword]] = face
+          icon_hash[icon_numid] = face
           
           @chapter_list.add_face(face)
+          @face_id_cache[params[:unique_id]] = face
           
           if (icon_src == default_icon_url and not icon_hash.key?(:default))
             params[:keyword] = "default"
@@ -533,22 +553,33 @@
           end
         end
         
-        @face_cache[character_id] = icon_hash
-      elsif not character_id
+        @char_page_cache[character_id] = icon_hash
+      end
+      
+      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
+      
+      if not character_id
         icon_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}", replace: true)
         icon_page = Nokogiri::HTML(icon_page_data)
         
+        params = {}
+        params[:moiety] = ""
+        params[:imageURL] = icon_page.at_css('#content img').try(:[], :src)
+        params[:user] = ""
+        params[:user_display] = ""
         
-        #TODO: Load the face's page and get it there
+        icon_page.at_css('#content img').try(:remove)
+        params[:keyword] = icon_page.at_css('#content').text.sub("Keyword:", "").strip.split("\n").first.strip
+        params[:unique_id] = icon_id
+        face = Face.new(params)
+        @chapter_list.add_face(face)
+        @face_id_cache[params[:unique_id]] = face
       end
       
-      #TODO: cache and return
-      icons_hash = @face_cache.key?(user_profile) ? @face_cache[user_profile] : @face_cache[user_profile.gsub('_', '-')]
-      @face_id_cache[face_id] = icons_hash[face_name] if icons_hash.key?(face_name)
-      @face_id_cache[face_id] = icons_hash[:default] if (face_name.downcase == "default" or face_name == :default) and icons_hash.key?(:default)
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
+      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
       
-      LOG.error "Failed to find a face for user: #{user_profile} and face: #{face_name}" unless @icon_errors.include?(face_id)
+      LOG.error "Failed to find a face for character: #{character_id} and face: #{icon_id}" unless @icon_errors.include?(face_id)
       @icon_errors << face_id unless @icon_errors.include?(face_id)
       return default
     end
