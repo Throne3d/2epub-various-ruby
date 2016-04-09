@@ -70,7 +70,7 @@
       page_urls = [chapter_url]
       comment_ids = []
       
-      current_page_data = get_page_data(chapter_url, replace: true)
+      current_page_data = get_page_data(chapter_url, replace: true, where: @group_folder)
       @download_count+=1
       LOG.debug "Got a page in get_full"
       current_page = Nokogiri::HTML(current_page_data)
@@ -337,7 +337,7 @@
       @chapter = chapter
       @replies = []
       pages.each do |page_url|
-        page_data = get_page_data(page_url, replace: false)
+        page_data = get_page_data(page_url, replace: false, where: @group_folder)
         page = Nokogiri::HTML(page_data)
         
         page_content = page.at_css('#content')
@@ -400,7 +400,7 @@
       
       page_urls = [chapter_url]
       
-      current_page_data = get_page_data(chapter_url, replace: true)
+      current_page_data = get_page_data(chapter_url, replace: true, where: @group_folder)
       @download_count+=1
       LOG.debug "Got a page in get_full"
       current_page = Nokogiri::HTML(current_page_data)
@@ -644,7 +644,7 @@
       @chapter = chapter
       @replies = []
       pages.each do |page_url|
-        page_data = get_page_data(page_url, replace: false)
+        page_data = get_page_data(page_url, replace: false, where: @group_folder)
         page = Nokogiri::HTML(page_data)
         
         page_content = page.at_css('#content')
