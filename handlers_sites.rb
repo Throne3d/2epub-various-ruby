@@ -593,7 +593,7 @@
       end
       
       userpic = message_element.at_css(".post-icon img")
-      author_element = message_element.at_css('.post-author a')
+      author_element = message_element.at_css(".post-author a")
       author_name = author_element.text.strip
       author_id = author_element["href"].split("users/").last
       
@@ -622,14 +622,14 @@
       end
       
       params = {}
-      create_date = date_str.split("|").first.sub("Posted", "").trim
+      create_date = date_str.split("|").first.sub("Posted", "").strip
       params[:time] = DateTime.strptime(create_date, "%b %d, %Y %l:%M %p")
       if date_str["|"]
-        edit_date = date_str.split("|").last.sub("Updated", "").trim
+        edit_date = date_str.split("|").last.sub("Updated", "").strip
         params[:edittime] = DateTime.strptime(edit_date, "%b %d, %Y %l:%M %p")
       end
       
-      message_content = message_element.at_css('padding-10')
+      message_content = message_element.at_css('.padding-10')
       message_content.at_css('.post-info-box').remove
       message_content.at_css('.post-edit-box').remove
       message_content.at_css('.post-footer').remove
@@ -680,12 +680,12 @@
         
         page_content = page.at_css('#content')
         
-        @chapter.title_extras = page.at_css('.post-subheader').text.strip
+        @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip)
         
         if @replies.empty?
           paginator = page_content.at_css('.paginator')
           
-          @entry_element = paginator.previous
+          @entry_element = paginator.previous_element
           entry = make_message(@entry_element)
           chapter.entry = entry
         end
