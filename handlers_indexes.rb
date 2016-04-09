@@ -549,8 +549,8 @@
         
         sections = [section_name]
         
-        temp_chapters = []
         chapters = section_toc.css("tr")
+        chapters = chapters.reverse
         chapters.each do |chapter_row|
           next if chapter_row.at_css('th')
           no_post = chapter_row.at_css('.centered.padding-10')
@@ -563,10 +563,6 @@
           
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
           
-          temp_chapters << chapter_details
-        end
-        temp_chapters.reverse!
-        temp_chapters.each do |chapter|
           chapter_list << chapter
           if block_given?
             yield chapter
