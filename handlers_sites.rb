@@ -464,7 +464,7 @@
       char_page = Nokogiri::HTML(char_page_data)
       
       breadcrumb1 = char_page.at_css('.flash.subber a')
-      if breadcrumb1.text.strip == "Characters"
+      if breadcrumb1 and breadcrumb1.text.strip == "Characters"
         user_info = char_page.at_css('#header #user-info')
         user_info.at_css('img').try(:remove)
         return user_info.text.strip
@@ -561,26 +561,24 @@
       end
       
       return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
-      
-      if not character_id
-        icon_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}", replace: true)
-        icon_page = Nokogiri::HTML(icon_page_data)
-        
-        params = {}
-        params[:moiety] = ""
-        params[:imageURL] = icon_page.at_css('#content img').try(:[], :src)
-        params[:user] = ""
-        params[:user_display] = ""
-        
-        icon_page.at_css('#content img').try(:remove)
-        params[:keyword] = icon_page.at_css('#content').text.sub("Keyword:", "").strip.split("\n").first.strip
-        params[:unique_id] = icon_id
-        face = Face.new(params)
-        @chapter_list.add_face(face)
-        @face_id_cache[params[:unique_id]] = face
-      end
-      
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
+      
+      icon_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}", replace: true)
+      icon_page = Nokogiri::HTML(icon_page_data)
+      
+      params = {}
+      params[:moiety] = ""
+      params[:imageURL] = icon_page.at_css('#content img').try(:[], :src)
+      params[:user] = ""
+      params[:user_display] = ""
+      
+      icon_page.at_css('#content img').try(:remove)
+      params[:keyword] = icon_page.at_css('#content').text.sub("Keyword:", "").strip.split("\n").first.strip
+      params[:unique_id] = icon_id
+      face = Face.new(params)
+      @chapter_list.add_face(face)
+      @face_id_cache[params[:unique_id]] = face
+      
       return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
       
       LOG.error "Failed to find a face for character: #{character_id} and face: #{icon_id}" unless @icon_errors.include?(face_id)
@@ -638,9 +636,10 @@
       message_content.at_css('.post-info-box').try(:remove)
       message_content.at_css('.post-edit-box').try(:remove)
       message_content.at_css('.post-footer').try(:remove)
-      params[:content] = message_content.text
-      face_id = [character_id, face_id].reject{|thing| thing.nil?} * '#'
-      params[:face] = get_face_by_id(face_id)
+      params[:content] = message_content.inner_html.strip
+      face_uniqid = [character_id, face_id].reject{|thing| thing.nil?} * '#'
+      face_uniqid = "#{face_id}" if character_id == "user##{author_id}"
+      params[:face] = get_face_by_id(face_uniqid)
       params[:author] = character_id
       params[:id] = message_id
       params[:chapter] = @chapter
