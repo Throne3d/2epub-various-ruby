@@ -461,7 +461,7 @@
     
     def get_moiety_by_id(character_id)
       char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}", replace: false)
-      char_page = Nokogiri::HTML(char_page_date)
+      char_page = Nokogiri::HTML(char_page_data)
       
       breadcrumb1 = char_page.at_css('.flash.subber a')
       if breadcrumb1.text.strip == "Characters"
@@ -482,7 +482,7 @@
       character_id = face_id.sub("##{icon_id}", '')
       
       character_id = nil if character_id == face_id
-      character_id = nil if character_id.empty?
+      character_id = nil if character_id.nil? or character_id.empty?
       
       @icon_page_errors = [] unless @icon_page_errors
       @icon_errors = [] unless @icon_errors
@@ -630,9 +630,9 @@
       end
       
       message_content = message_element.at_css('.padding-10')
-      message_content.at_css('.post-info-box').remove
-      message_content.at_css('.post-edit-box').remove
-      message_content.at_css('.post-footer').remove
+      message_content.at_css('.post-info-box').try(:remove)
+      message_content.at_css('.post-edit-box').try(:remove)
+      message_content.at_css('.post-footer').try(:remove)
       params[:content] = message_content.text
       face_id = [character_id, face_id].reject{|thing| thing.nil?} * '#'
       params[:face] = get_face_by_id(face_id)
@@ -653,7 +653,7 @@
       end
       
       if message_type == PostType::ENTRY
-        params[:entry_title] = message_element.at_css('.post-title').text.strip
+        params[:entry_title] = @entry_title
         
         entry = Entry.new(params)
         @previous_message = entry
@@ -672,12 +672,14 @@
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
       
+      @entry_title = nil
       @chapter = chapter
       @replies = []
       pages.each do |page_url|
         page_data = get_page_data(page_url, replace: false, where: @group_folder)
         page = Nokogiri::HTML(page_data)
         
+        @entry_title = page.at_css("#post-title").text.strip unless @entry_title
         page_content = page.at_css('#content')
         
         @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip)
