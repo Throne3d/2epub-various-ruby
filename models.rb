@@ -176,7 +176,8 @@ module GlowficEpub
       @chapters = []
       @faces = []
       @authors = []
-      @group = options[:group] if options.key?(:group)
+      @group = (options.key?(:group)) ? options[:group] : nil
+      @trash_messages = (options.key?(:trash_messages)) ? options[:trash_messages] : false
     end
     
     def site_handlers
@@ -246,7 +247,7 @@ module GlowficEpub
       @chapters = []
       chapters.each do |chapter_hash|
         chapter_hash["chapter_list"] = self
-        chapter = Chapter.new
+        chapter = Chapter.new(trash_messages: @trash_messages)
         chapter.from_json! chapter_hash
         @chapters << chapter
       end
@@ -290,6 +291,10 @@ module GlowficEpub
     end
     
     def initialize(params={})
+      if params.key?(:trash_messages)
+        @trash_messages = params[:trash_messages]
+        params.delete(:trash_messages)
+      end
       return if params.empty?
       params = standardize_params(params)
       
@@ -346,24 +351,27 @@ module GlowficEpub
         var = (var.start_with?("@") ? var : "@#{var}")
         self.instance_variable_set var, val unless varname == "replies" or varname == "entry"
       end
-      entry = json_hash["entry"] or json_hash["@entry"]
-      replies = json_hash["replies"] or json_hash["@replies"]
-      if entry
-        entry_hash = entry
-        entry_hash["post_type"] = PostType::ENTRY
-        entry_hash["chapter"] = self
-        entry = Entry.new
-        entry.from_json! entry_hash
-        @entry = entry
-      end
-      if replies
-        @replies = []
-        replies.each do |reply_hash|
-          reply_hash["post_type"] = PostType::REPLY
-          reply_hash["chapter"] = self
-          reply = Reply.new
-          reply.from_json! reply_hash
-          @replies << reply
+      
+      if not @trash_messages
+        entry = json_hash["entry"] or json_hash["@entry"]
+        replies = json_hash["replies"] or json_hash["@replies"]
+        if entry
+          entry_hash = entry
+          entry_hash["post_type"] = PostType::ENTRY
+          entry_hash["chapter"] = self
+          entry = Entry.new
+          entry.from_json! entry_hash
+          @entry = entry
+        end
+        if replies
+          @replies = []
+          replies.each do |reply_hash|
+            reply_hash["post_type"] = PostType::REPLY
+            reply_hash["chapter"] = self
+            reply = Reply.new
+            reply.from_json! reply_hash
+            @replies << reply
+          end
         end
       end
     end

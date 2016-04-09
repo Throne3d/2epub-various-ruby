@@ -258,10 +258,11 @@
     return params.first
   end
 
-  def get_chapters_data(group, where="")
-    where = "web_cache/chapterDetails_#{group}.txt" if where == ""
+  def get_chapters_data(group, options={})
+    where = (options.key?(:where)) ? options[:where] : "web_cache/chapterDetails_#{group}.txt"
+    trash_messages = (options.key?(:trash_messages)) ? options[:trash_messages] : false
     
-    chapterRep = GlowficEpub::Chapters.new(group: group)
+    chapterRep = GlowficEpub::Chapters.new(group: group, trash_messages: trash_messages)
     
     return chapterRep unless File.file?(where)
     File.open(where, "rb") do |f|

@@ -108,6 +108,7 @@ def main(args)
     
     LOG.info "Parsing TOC (of #{group})"
     
+    GlowficEpub::build_moieties
     prev_chapter_data = get_chapters_data(group)
     set_chapters_data(prev_chapter_data, group, old: true) unless prev_chapter_data.empty?
     
@@ -126,7 +127,7 @@ def main(args)
     end
     set_chapters_data(chapter_list, group)
   elsif (process == :get)
-    chapter_list = get_chapters_data(group)
+    chapter_list = get_chapters_data(group, trash_messages: true)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Getting '#{group}'"
     LOG.info "Chapter count: #{chapter_list.length}"
@@ -152,8 +153,7 @@ def main(args)
       set_chapters_data(chapter_list, group)
     end
   elsif (process == :process)
-    GlowficEpub::build_moieties
-    chapter_list = get_chapters_data(group)
+    chapter_list = get_chapters_data(group, trash_messages: true)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Processing '#{group}'"
     LOG.info "Chapter count: #{chapter_list.length}"
