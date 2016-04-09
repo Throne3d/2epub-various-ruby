@@ -28,7 +28,7 @@
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?("/")
       relative_file = File.join(uri.host, uri_path.gsub('/', '-'))
-      download_file(face.imageURL, save_path: File.join(save_path, relative_file))
+      download_file(face.imageURL, save_path: File.join(save_path, relative_file), replace: false)
       relative_file
     end
     def output(chapter_list=nil)
@@ -69,8 +69,16 @@
         save_file += "-" + uri_path.sub(".html", "")
         save_path = File.join(save_path, save_file.gsub("/", "-"))
         
+        page = Nokogiri::HTML(page_data)
+        page.css('img').each do |img_element|
+          img_src = img_element.try(:[], :src)
+          next unless img_src
+          next unless img_src.start_with?("http://") or img_src.start_with?("https://")
+          img_element["src"] = get_face_path(img_src)
+        end
+        
         open(save_path, 'w') do |file|
-          file.write page_data
+          file.write page.to_s
         end
         LOG.info "Did chapter #{chapter}."
       end
