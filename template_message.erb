@@ -1,4 +1,4 @@
-﻿<div id="<%= @message.post_type_str + "-" + @message.id %>" data-depth="<%= @message.depth %>" data-type="<%= @message.post_type_str %>" class="<%= @message.moiety %>">
+﻿<div id="<%= @message.post_type_str + "-" + @message.id %>" data-depth="<%= @message.depth %>" data-type="<%= @message.post_type_str %>" class="<%= @message.moiety.downcase %>">
   <div class="user">
     <div class="usericon">
       <% if @message.face and get_face_path(@message.face) and not get_face_path(@message.face).empty? -%>
