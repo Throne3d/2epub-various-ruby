@@ -169,9 +169,9 @@ module GlowficEpub
   end
   
   class Chapters < Model
-    attr_reader :chapters, :faces, :authors, :group
+    attr_reader :chapters, :faces, :authors, :group, :trash_messages
     attr_accessor :group
-    serialize_ignore :site_handlers
+    serialize_ignore :site_handlers, :trash_messages
     def initialize(options = {})
       @chapters = []
       @faces = []
@@ -258,7 +258,7 @@ module GlowficEpub
     attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :replies, :sections, :authors, :entry, :url
     
     param_transform :name => :title, :name_extras => :title_extras
-    serialize_ignore :allowed_params, :site_handler, :chapter_list
+    serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages
     
     def allowed_params
       @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :authors]
@@ -503,9 +503,8 @@ module GlowficEpub
     end
     
     def site_handler
-      @chapter.site_handler
+      chapter.site_handler if chapter
     end
-    
     def chapter_list
       chapter.chapter_list if chapter
     end
