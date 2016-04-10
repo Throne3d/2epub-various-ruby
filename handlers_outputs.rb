@@ -32,7 +32,8 @@
       uri_path = uri_path[1..-1] if uri_path.start_with?("/")
       relative_file = File.join(uri.host, uri_path.gsub('/', '-'))
       download_file(face.imageURL, save_path: File.join(save_path, relative_file), replace: false)
-      relative_file
+      
+      @face_path_cache[face.imageURL] = relative_file
     end
     def output(chapter_list=nil)
       chapter_list = @chapters if chapter_list.nil? and @chapters
