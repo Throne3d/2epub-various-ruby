@@ -448,6 +448,9 @@ module GlowficEpub
       author.moiety
     end
     
+    def imageURL=(newval)
+      @imageURL = newval.gsub(" ", "%20")
+    end
     def author
       return @author if @author and @author.is_a?(Author)
       return unless @author
