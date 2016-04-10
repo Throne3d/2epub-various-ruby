@@ -118,7 +118,7 @@
     
     success = false
     begin
-      open(file_url) do |webpage|
+      open(file_url, {ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE}) do |webpage| #EUGH UGLY HACK PLEASE FIX MAYBE?
         open(save_path, 'w') do |file|
           file.write webpage.read
         end

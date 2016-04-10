@@ -6,6 +6,7 @@ require 'nokogiri'
 require 'json'
 require 'uri'
 require 'open-uri'
+require 'openssl'
 require 'cgi'
 require 'date'
 
