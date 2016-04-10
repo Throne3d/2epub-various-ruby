@@ -492,25 +492,13 @@
       if character_id and not @char_page_cache.key?(character_id)
         char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}", replace: true)
         char_page = Nokogiri::HTML(char_page_data)
-        icons = char_page.css(".gallery-icon")
-        default_icon_url = char_page.at_css("#content img").try(:[], :src)
-        
+        char_page_c = char_page.at_css("#content")
+        icons = char_page_c.css(".gallery-icon")
         icon_moiety = get_moiety_by_id(character_id)
         
-        char_screen_ele = char_page.at_css("#content > b")
-        if char_screen_ele
-          char_screen = char_screen_ele.text.strip
-          char_screen_ele.remove
-        else
-          char_screen = ""
-        end
-        
-        char_page.at_css("#content img").try(:remove)
-        
-        char_name = char_page.at_css("#content").text.strip.split("\n").first.strip
-        
-        char_display = char_name
-        char_display += " (#{char_screen})" unless char_screen.nil? or char_screen.empty?
+        char_screen = char_page_c.at_css(".character-screenname").try(:text).try(:strip)
+        char_name = char_page_c.at_css(".character-name").try(:text).try(:strip)
+        char_display = char_name + (char_screen.nil? ? "" : " (#{char_screen})")
         
         if icons.nil? or icons.empty?
           LOG.error "No icons for character ##{character_id}."
@@ -519,6 +507,8 @@
         end
         
         icon_hash = {}
+        default_icon = char_page.at_css('#content > .character-icon')
+        icons = [default_icon] + icons if default_icon
         icons.each do |icon_element|
           icon_link = icon_element.at_css('a')
           icon_url = icon_link.try(:[], :href)
@@ -529,7 +519,11 @@
           
           icon_keyword = icon_img.try(:[], :title)
           icon_numid = icon_url.split("icons/").last if icon_url
-          icon_numid = "unknown" unless icon_numid
+          
+          unless icon_numid
+            LOG.error "Failed to find an icon's numeric ID on character page ##{character_id}?"
+            icon_numid = "unknown"
+          end
           
           params = {}
           params[:moiety] = icon_moiety
@@ -538,16 +532,17 @@
           params[:user_display] = char_display
           
           params[:keyword] = icon_keyword
-          params[:unique_id] = icon_numid
+          params[:unique_id] = "#{character_id}##{icon_numid}"
           face = Face.new(params)
           icon_hash[icon_numid] = face
           
           @chapter_list.add_face(face)
           @face_id_cache[params[:unique_id]] = face
+          LOG.debug "Found a duplicate face for ID ##{icon_numid} on character page for ID ##{character_id}" if @face_id_cache.key?(icon_numid)
+          @face_id_cache[icon_numid] = face
           
           LOG.debug "Found an icon for character #{character_id}: ID ##{icon_numid}"
-          
-          if (icon_src == default_icon_url and not icon_hash.key?(:default))
+          if (default_icon == icon_element and not icon_hash.key?(:default))
             params[:keyword] = "default"
             params[:unique_id] = "#{character_id}#default"
             face = Face.new(params)
@@ -556,7 +551,6 @@
             @chapter_list.add_face(face)
           end
         end
-        
         @char_page_cache[character_id] = icon_hash
       end
       
@@ -566,14 +560,13 @@
       icon_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}", replace: true)
       icon_page = Nokogiri::HTML(icon_page_data)
       
+      icon_img = icon_page.at_css('#content img')
       params = {}
       params[:moiety] = ""
-      params[:imageURL] = icon_page.at_css('#content img').try(:[], :src)
+      params[:imageURL] = icon_img.try(:[], :src)
       params[:user] = ""
       params[:user_display] = ""
-      
-      icon_page.at_css('#content img').try(:remove)
-      params[:keyword] = icon_page.at_css('#content').text.sub("Keyword:", "").strip.split("\n").first.strip
+      params[:keyword] = icon_img.try(:[], :title)
       params[:unique_id] = icon_id
       face = Face.new(params)
       @chapter_list.add_face(face)
@@ -581,6 +574,8 @@
       
       return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
       
+      #Shouldn't ever occur? We just loaded the icon page; it's probably going to error before this
+      #if there's no icon, or Face.new will complain about nil params?
       LOG.error "Failed to find a face for character: #{character_id} and face: #{icon_id}" unless @icon_errors.include?(face_id)
       @icon_errors << face_id unless @icon_errors.include?(face_id)
       return default
@@ -609,7 +604,7 @@
       end
       
       face_url = ""
-      face_name = "default"
+      face_name = "none"
       face_id = ""
       if userpic
         face_id = userpic.parent["href"].split("icons/").last
@@ -618,25 +613,15 @@
       end
       
       date_element = message_element.at_css('.post-footer')
-      date_element.at_css('a').try(:remove)
-      date_str = date_element.text.strip
-      if date_str.end_with?("|")
-        date_str = date_str[0..-2].strip
-      end
       
       params = {}
-      create_date = date_str.split("|").first.sub("Posted", "").strip
-      params[:time] = DateTime.strptime(create_date, "%b %d, %Y %l:%M %p")
-      if date_str["|"]
-        edit_date = date_str.split("|").last.sub("Updated", "").strip
-        params[:edittime] = DateTime.strptime(edit_date, "%b %d, %Y %l:%M %p")
-      end
+      create_date = date_element.at_css('.post-posted').try(:text).try(:strip)
+      LOG.error "No create date for message ID ##{message_id}?" unless create_date
+      params[:time] = DateTime.strptime(create_date, "%b %d, %Y %l:%M %p") if create_date
+      edit_date = date_element.at_css('.post-updated').try(:text).try(:strip)
+      params[:edittime] = DateTime.strptime(edit_date, "%b %d, %Y %l:%M %p") if edit_date
       
-      message_content = message_element.at_css('.padding-10')
-      message_content.at_css('.post-info-box').try(:remove)
-      message_content.at_css('.post-edit-box').try(:remove)
-      message_content.at_css('.post-footer').try(:remove)
-      params[:content] = message_content.inner_html.strip
+      params[:content] = message_element.at_css('.post-content').inner_html.strip
       face_uniqid = [character_id, face_id].reject{|thing| thing.nil?} * '#'
       face_uniqid = "#{face_id}" if character_id == "user##{author_id}"
       params[:face] = get_face_by_id(face_uniqid)
