@@ -257,9 +257,29 @@
     return default if params.empty?
     return params.first
   end
-
+  
+  def oldify_chapters_data(group, options={})
+    old_where = options.key?(:where) ? options[:where] : (options.key?(:old) ? options[:old] : (options.key?(:old_where) ? options[:old_where] : "web_cache/chapterdetails_#{group}.txt"))
+    new_where = options.key?(:new) ? options[:new] : (options.key?(:new_where) ? options[:new_where] : "")
+    
+    old_where = old_where.gsub("\\", "/")
+    new_where = new_where.gsub("\\", "/")
+    if new_where == ""
+      where_bits = old_where.split("/")
+      where_bits[-1] = "old_" + where_bits.last
+      new_where = where_bits * "/"
+    end
+    
+    return if not File.file?(old_where)
+    File.open(old_where, "rb") do |old|
+      File.open(new_where, "rb") do |new|
+        new.write old.read
+      end
+    end
+  end
+  
   def get_chapters_data(group, options={})
-    where = (options.key?(:where)) ? options[:where] : "web_cache/chapterDetails_#{group}.txt"
+    where = (options.key?(:where)) ? options[:where] : "web_cache/chapterdetails_#{group}.txt"
     trash_messages = (options.key?(:trash_messages)) ? options[:trash_messages] : false
     
     chapterRep = GlowficEpub::Chapters.new(group: group, trash_messages: trash_messages)
@@ -279,9 +299,9 @@
       where
     else
       if old
-        "web_cache/oldChapterDetails_#{group}.txt"
+        "web_cache/old_chapterdetails_#{group}.txt"
       else
-        "web_cache/chapterDetails_#{group}.txt"
+        "web_cache/chapterdetails_#{group}.txt"
       end
     end
     if chapters.is_a?(Array)
@@ -294,7 +314,6 @@
     temp = chapters.to_json
     File.open(where, "wb") do |f|
       f.write(temp)
-      #f.write(temp)
     end
   end
 

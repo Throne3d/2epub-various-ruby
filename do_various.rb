@@ -108,9 +108,7 @@ def main(args)
     
     LOG.info "Parsing TOC (of #{group})"
     
-    GlowficEpub::build_moieties
-    prev_chapter_data = get_chapters_data(group)
-    set_chapters_data(prev_chapter_data, group, old: true) unless prev_chapter_data.empty?
+    oldify_chapters_data(group)
     
     group_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
     group_handlers.select! {|c| c.is_a? Class and c < GlowficIndexHandlers::IndexHandler }
