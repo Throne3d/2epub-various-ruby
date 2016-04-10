@@ -30,7 +30,8 @@ FIC_NAME_MAPPING = {
   sandbox: [:sandbox],
   marri: [:marri, :marrinikari],
   peterverse: [:peter, :pedro, :peterverse],
-  maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"]
+  maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"],
+  test: [:test]
 }
 FIC_SHOW_AUTHORS = [:sandbox, :glowfic, :marri, :peterverse, :maggie]
 FIC_TOCS = {
@@ -48,7 +49,10 @@ FIC_TOCS = {
   sandbox: "http://alicornutopia.dreamwidth.org/1640.html?style=site",
   marri: "http://marrinikari.dreamwidth.org/1634.html?style=site",
   peterverse: "http://peterverse.dreamwidth.org/1643.html?style=site",
-  maggie: "http://maggie-of-the-owls.dreamwidth.org/454.html?style=site"
+  maggie: "http://maggie-of-the-owls.dreamwidth.org/454.html?style=site",
+  
+  #Test
+  test: "https://vast-journey-9935.herokuapp.com/boards/7"
 }
 
 def main(args)

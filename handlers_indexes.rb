@@ -513,7 +513,7 @@
   end
   
   class ConstellationIndexHandler < IndexHandler
-    handles :constellation
+    handles :constellation, :test
     def initialize(options = {})
       super(options)
     end
@@ -525,51 +525,77 @@
       end
       url_path
     end
+    
+    def board_to_block(options = {}, &block)
+      section_url = options[:section_url] if options.key?(:section_url)
+      
+      LOG.info "TOC Page: #{section_url}"
+      
+      section_toc_data = get_page_data(section_url, replace: true)
+      section_toc = Nokogiri::HTML(section_toc_data)
+      
+      section_title_ele = section_toc.at_css("#content tr th")
+      section_title_ele.at_css("a").try(:remove)
+      section_name = section_title_ele.text.strip
+      
+      chapter_sections = [section_name]
+      chapters = section_toc.css("tr")
+      chapters = chapters.reverse
+      chapters.each do |chapter_row|
+        next if chapter_row.at_css('th')
+        no_post = chapter_row.at_css('.centered.padding-10')
+        next if no_post and no_post.text["No posts"]
+        
+        chapter_link = chapter_row.at_css('td a')
+        chapter_title = chapter_link.text.strip
+        chapter_url = get_absolute_url(chapter_link["href"], section_url)
+        
+        chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
+        
+        if block_given?
+          yield chapter_details
+        end
+      end
+    end
+    
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
       
-      chapter_list = GlowficEpub::Chapters.new
-      
-      LOG.info "TOC Page: #{fic_toc_url}"
-      fic_toc_data = get_page_data(fic_toc_url, replace: true)
-      fic_toc = Nokogiri::HTML(fic_toc_data)
-      
-      sections = fic_toc.css("#content tr")
-      sections.each do |section|
-        next if section.at_css("th")
+      if fic_toc_url.end_with?("/boards")
+        chapter_list = GlowficEpub::Chapters.new
+        LOG.info "TOC Page: #{fic_toc_url}"
+        fic_toc_data = get_page_data(fic_toc_url, replace: true)
+        fic_toc = Nokogiri::HTML(fic_toc_data)
         
-        section_link = section.at_css('a')
-        section_name = section_link.text.strip
-        next if section_name == "Site testing"
-        section_url = get_absolute_url(section_link["href"], fic_toc_url)
-        next if section_url.end_with?("/1")
-        
-        section_toc_data = get_page_data(section_url, replace: true)
-        section_toc = Nokogiri::HTML(section_toc_data)
-        
-        sections = [section_name]
-        
-        chapters = section_toc.css("tr")
-        chapters = chapters.reverse
-        chapters.each do |chapter_row|
-          next if chapter_row.at_css('th')
-          no_post = chapter_row.at_css('.centered.padding-10')
-          next if no_post and no_post.text["No posts"]
+        sections = fic_toc.css("#content tr")
+        sections.each do |section|
+          next if section.at_css("th")
           
-          chapter_link = chapter_row.at_css('td a')
-          chapter_title = chapter_link.text.strip
-          chapter_url = get_absolute_url(chapter_link["href"], section_url)
-          chapter_sections = sections
+          section_link = section.at_css('a')
+          section_name = section_link.text.strip
+          next if section_name == "Site testing"
+          section_url = get_absolute_url(section_link["href"], fic_toc_url)
+          next if section_url.end_with?("/1")
           
-          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
           
+          board_to_block(section_url: section_url) do |chapter_details|
+            chapter_list << chapter_details
+            if block_given?
+              yield chapter_details
+            end
+          end
+        end
+        return chapter_list
+      elsif fic_toc_url[/\/boards\/\d+/]
+        chapter_list = GlowficEpub::Chapters.new
+        board_to_block(section_url: fic_toc_url) do |chapter_details|
           chapter_list << chapter_details
           if block_given?
             yield chapter_details
           end
         end
+        return chapter_list
       end
-      chapter_list
     end
   end
   
