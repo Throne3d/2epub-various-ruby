@@ -52,6 +52,7 @@
       @face_cache = {} # {"alicornutopia" => {"pen" => "(url)"}}
       @face_id_cache = {} # {"alicornutopia#pen" => "(url)"}
       # When retrieved in get_face_by_id
+      @author_id_cache = {}
       @moiety_cache = {}
     end
     
@@ -221,8 +222,7 @@
           params = {}
           params[:moiety] = icon_moiety
           params[:imageURL] = icon_src
-          params[:user] = user_id
-          params[:user_display] = user_profile
+          params[:author] = get_author_by_id(user_profile)
           
           icon_keywords.each do |keyword_element|
             params[:keyword] = keyword_element.text.strip
@@ -253,6 +253,36 @@
       LOG.error "Failed to find a face for user: #{user_profile} and face: #{face_name}" unless @icon_errors.include?(face_id)
       @icon_errors << face_id unless @icon_errors.include?(face_id)
       return default
+    end
+    
+    def get_updated_face(face)
+      get_face_by_id(face.unique_id)
+    end
+    
+    def get_author_by_id(author_id, default=nil)
+      author_id = author_id.gsub('_', '-')
+      return @author_id_cache[author_id] if @author_id_cache.key?(author_id)
+      char_page_data = get_page_data("http://#{author_id}.dreamwidth.org/profile", replace: true)
+      char_page = Nokogiri::HTML(char_page_data)
+      
+      params = {}
+      params[:moiety] = get_moiety_by_profile(author_id)
+      
+      profile_summary = char_page.at_css('.profile table')
+      profile_summary.css('th').each do |th_element|
+        if th_element.text["Name:"]
+          params[:name] = th_element.next_element.text.strip
+        end
+      end
+      params[:screenname] = author_id
+      params[:display] = (params.key?(:name)) ? "#{params[:name]} (#{params[:screenname]})" : "#{params[:screenname]}"
+      
+      author = Author.new(params)
+      @author_id_cache[author_id] = author
+    end
+    
+    def get_updated_author(author)
+      get_author_by_id(author.unique_id)
     end
     
     def make_message(message_element, options = {})
@@ -382,9 +412,11 @@
     def initialize(options = {})
       super options
       @face_id_cache = {} # {"6951" => "[is a face: ahein, imgur..., etc.]"}
+      @author_id_cache = {}
       @char_page_cache = {}
       # When retrieved in get_face_by_id
       @moiety_cache = {}
+      @author_pages_got = []
     end
     
     def get_full(chapter, options = {})
@@ -475,19 +507,17 @@
     end
     
     def get_face_by_id(face_id, default=nil)
+      face_id = face_id.sub("constellation#", "") if face_id.start_with?("constellation#")
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       
       icon_id = face_id.split('#').last
-      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
+      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id) and face_id.split('#').first.strip.empty?
       character_id = face_id.sub("##{icon_id}", '')
       
       character_id = nil if character_id == face_id
       character_id = nil if character_id.nil? or character_id.empty?
       
-      @icon_page_errors = [] unless @icon_page_errors
       @icon_errors = [] unless @icon_errors
-      
-      return default if @icon_page_errors.include?(character_id)
       
       if character_id and not @char_page_cache.key?(character_id)
         char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}", replace: true)
@@ -496,81 +526,71 @@
         icons = char_page_c.css(".gallery-icon")
         icon_moiety = get_moiety_by_id(character_id)
         
-        char_screen = char_page_c.at_css(".character-screenname").try(:text).try(:strip)
-        char_name = char_page_c.at_css(".character-name").try(:text).try(:strip)
-        char_display = char_name + (char_screen.nil? ? "" : " (#{char_screen})")
+        character = get_author_by_id(character_id)
         
         if icons.nil? or icons.empty?
           LOG.error "No icons for character ##{character_id}."
-          @icon_page_errors << character_id
-          return
-        end
-        
-        icon_hash = {}
-        default_icon = char_page.at_css('#content > .character-icon')
-        icons = [default_icon] + icons if default_icon
-        icons.each do |icon_element|
-          icon_link = icon_element.at_css('a')
-          icon_url = icon_link.try(:[], :href)
-          icon_img = icon_link.at_css('img')
-          icon_src = icon_img.try(:[], :src)
-          
-          (LOG.error "Failed to find an img URL on the icon page for character ##{character_id}" and next) if icon_src.nil? or icon_src.empty?
-          
-          icon_keyword = icon_img.try(:[], :title)
-          icon_numid = icon_url.split("icons/").last if icon_url
-          
-          unless icon_numid
-            LOG.error "Failed to find an icon's numeric ID on character page ##{character_id}?"
-            icon_numid = "unknown"
-          end
-          
-          params = {}
-          params[:moiety] = icon_moiety
-          params[:imageURL] = icon_src
-          params[:user] = character_id
-          params[:user_display] = char_display
-          
-          params[:keyword] = icon_keyword
-          params[:unique_id] = "#{character_id}##{icon_numid}"
-          face = Face.new(params)
-          icon_hash[icon_numid] = face
-          
-          @chapter_list.add_face(face)
-          @face_id_cache[params[:unique_id]] = face
-          LOG.debug "Found a duplicate face for ID ##{icon_numid} on character page for ID ##{character_id}" if @face_id_cache.key?(icon_numid)
-          @face_id_cache[icon_numid] = face
-          
-          LOG.debug "Found an icon for character #{character_id}: ID ##{icon_numid}"
-          if (default_icon == icon_element and not icon_hash.key?(:default))
-            params[:keyword] = "default"
-            params[:unique_id] = "#{character_id}#default"
+        else
+          icon_hash = {}
+          default_icon = char_page.at_css('#content > .character-icon')
+          icons = [default_icon] + icons if default_icon
+          icons.each do |icon_element|
+            icon_link = icon_element.at_css('a')
+            icon_url = icon_link.try(:[], :href)
+            icon_img = icon_link.at_css('img')
+            icon_src = icon_img.try(:[], :src)
+            
+            (LOG.error "Failed to find an img URL on the icon page for character ##{character_id}" and next) if icon_src.nil? or icon_src.empty?
+            
+            icon_keyword = icon_img.try(:[], :title)
+            icon_numid = icon_url.split("icons/").last if icon_url
+            
+            unless icon_numid
+              LOG.error "Failed to find an icon's numeric ID on character page ##{character_id}?"
+              icon_numid = "unknown"
+            end
+            
+            params = {}
+            params[:imageURL] = icon_src
+            params[:author] = character
+            params[:keyword] = icon_keyword
+            params[:unique_id] = "#{character_id}##{icon_numid}"
+            params[:chapter_list] = @chapter_list
             face = Face.new(params)
-            icon_hash[:default] = face
+            icon_hash[icon_numid] = face
             
             @chapter_list.add_face(face)
+            @face_id_cache[params[:unique_id]] = face
+            
+            LOG.debug "Found an icon for character #{character_id}: ID ##{icon_numid}"
+            if (default_icon == icon_element and not icon_hash.key?(:default))
+              params[:keyword] = "default"
+              params[:unique_id] = "#{character_id}#default"
+              face = Face.new(params)
+              icon_hash[:default] = face
+              
+              @chapter_list.add_face(face)
+            end
           end
+          @char_page_cache[character_id] = icon_hash
         end
-        @char_page_cache[character_id] = icon_hash
       end
       
-      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
+      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
       
       icon_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}", replace: true)
       icon_page = Nokogiri::HTML(icon_page_data)
       
       icon_img = icon_page.at_css('#content img')
       params = {}
-      params[:moiety] = ""
       params[:imageURL] = icon_img.try(:[], :src)
-      params[:user] = ""
-      params[:user_display] = ""
       params[:keyword] = icon_img.try(:[], :title)
-      params[:unique_id] = icon_id
+      params[:unique_id] = "constellation##{icon_id}"
+      params[:chapter_list] = @chapter_list
       face = Face.new(params)
       @chapter_list.add_face(face)
-      @face_id_cache[params[:unique_id]] = face
+      @face_id_cache[icon_id] = face
       
       return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
       
@@ -579,6 +599,62 @@
       LOG.error "Failed to find a face for character: #{character_id} and face: #{icon_id}" unless @icon_errors.include?(face_id)
       @icon_errors << face_id unless @icon_errors.include?(face_id)
       return default
+    end
+    
+    def get_updated_face(face)
+      get_face_by_id(face.unique_id)
+    end
+    
+    def get_author_by_id(character_id, default=nil)
+      character_id = character_id.sub("constellation#", "") if character_id.start_with?("constellation#")
+      return @author_id_cache[character_id] if @author_id_cache.key?(character_id)
+      
+      if character_id.start_with?("user#")
+        user_id = character_id.sub("user#", "")
+        
+        user_page_url = "https://vast-journey-9935.herokuapp.com/users/#{user_id}"
+        user_page_data = get_page_data(user_page_url, replace: (not @author_pages_got.include?(user_page_url)))
+        @author_pages_got << user_page_url unless @author_pages_got.include?(user_page_url)
+        user_page = Nokogiri::HTML(user_page_data)
+        user_page_c = user_page.at_css('#content')
+        
+        char_name = user_page_c.at_css('.username').try(:text).try(:strip)
+        
+        params = {}
+        params[:moiety] = char_name
+        params[:name] = char_name
+        params[:display] = char_name
+        params[:unique_id] = "constellation#user##{user_id}"
+        
+        author = Author.new(params)
+        @author_id_cache["user##{user_id}"] = author
+        return author
+      else
+        char_page_url = "https://vast-journey-9935.herokuapp.com/characters/#{character_id}"
+        char_page_data = get_page_data(char_page_url, replace: (not @author_pages_got.include?(char_page_url)))
+        @author_pages_got << char_page_url unless @author_pages_got.include?(char_page_url)
+        char_page = Nokogiri::HTML(char_page_data)
+        char_page_c = char_page.at_css('#content')
+        
+        char_screen = char_page_c.at_css(".character-screenname").try(:text).try(:strip)
+        char_name = char_page_c.at_css(".character-name").try(:text).try(:strip)
+        char_display = char_name + (char_screen.nil? ? "" : " (#{char_screen})")
+        
+        params = {}
+        params[:moiety] = get_moiety_by_id(character_id)
+        params[:name] = char_name
+        params[:screenname] = char_screen
+        params[:display] = char_display
+        params[:unique_id] = "constellation##{character_id}"
+        
+        author = Author.new(params)
+        @author_id_cache[character_id] = author
+        return author #because I like my hard returns, dammit!
+      end
+    end
+    
+    def get_updated_author(author)
+      get_author_by_id(author.unique_id)
     end
     
     def make_message(message_element, options = {})
@@ -625,18 +701,17 @@
       face_uniqid = [character_id, face_id].reject{|thing| thing.nil?} * '#'
       face_uniqid = "#{face_id}" if character_id == "user##{author_id}"
       params[:face] = get_face_by_id(face_uniqid)
-      params[:author] = character_id
+      params[:author] = get_author_by_id(character_id)
+      params[:face].author = params[:author] if params[:face]
       params[:id] = message_id
       params[:chapter] = @chapter
       
       if params[:face].nil? and not face_url.empty?
         face_params = {}
-        face_params[:moiety] = author_name
         face_params[:imageURL] = face_url
-        face_params[:user] = character_id
-        face_params[:user_display] = character_name or author_name
         face_params[:keyword] = face_name
         face_params[:unique_id] = face_id
+        face_params[:author] = get_author_by_id(character_id)
         face = Face.new(face_params)
         params[:face] = face
       end

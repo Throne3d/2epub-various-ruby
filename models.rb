@@ -184,8 +184,24 @@ module GlowficEpub
       @site_handlers ||= {}
     end
     
+    def add_author(arg)
+      @authors << arg unless @authors.include?(arg)
+      if arg.is_a?(String)
+        puts "-" * 60
+        puts "Got a weird string author! Not sure why! #{arg}! Here!"
+        puts caller
+      end
+    end
+    def replace_author(arg)
+      @authors.delete_if { |author| author.unique_id == arg.unique_id }
+      add_author(arg)
+    end
     def add_face(arg)
-      @faces << arg
+      @faces << arg unless @faces.include?(arg)
+    end
+    def replace_face(arg)
+      @faces.delete_if { |face| face.unique_id == arg.unique_id }
+      add_face(arg)
     end
     def get_face_by_id(face_id)
       found_face = nil
@@ -198,8 +214,10 @@ module GlowficEpub
     def <<(arg)
       if (arg.is_a?(Face))
         self.add_face(arg)
+      elsif (arg.is_a?(Author))
+        self.add_author(arg)
       else
-        @chapters << arg
+        @chapters << arg unless @chapters.include?(arg)
       end
     end
     def length
@@ -223,7 +241,7 @@ module GlowficEpub
       json_hash.each do |var, val|
         varname = (var.start_with?("@")) ? var[1..-1] : var
         var = (var.start_with?("@") ? var : "@#{var}")
-        self.instance_variable_set var, val unless varname == "replies" or varname == "entry"
+        self.instance_variable_set var, val
       end
       
       authors = json_hash["authors"] or json_hash["@authors"]
@@ -232,6 +250,7 @@ module GlowficEpub
       
       @authors = []
       authors.each do |author_hash|
+        author_hash["chapter_list"] = self
         author = Author.new
         author.from_json! author_hash
         @authors << author
@@ -239,6 +258,7 @@ module GlowficEpub
       
       @faces = []
       faces.each do |face_hash|
+        face_hash["chapter_list"] = self
         face = Face.new
         face.from_json! face_hash
         @faces << face
@@ -284,6 +304,10 @@ module GlowficEpub
     end
     def authors
       @authors ||= []
+    end
+    
+    def add_author(newauthor)
+      @authors << newauthor unless @authors.include?(newauthor)
     end
     
     def chapter_list
@@ -378,11 +402,28 @@ module GlowficEpub
   end
 
   class Face < Model
-    attr_accessor :user, :imageURL, :moiety, :user_display, :keyword, :unique_id
-    serialize_ignore :allowed_params
+    attr_accessor :imageURL, :keyword, :unique_id, :chapter_list
+    serialize_ignore :allowed_params, :author, :chapter_list
     
     def allowed_params
-      @allowed_params ||= [:user, :imageURL, :moiety, :keyword, :user_display, :unique_id]
+      @allowed_params ||= [:chapter_list, :imageURL, :keyword, :unique_id]
+    end
+    
+    def user_display
+      author.display
+    end
+    def moiety
+      author.moiety
+    end
+    
+    def author
+      return @author if @author and @author.is_a?(Author)
+      return unless @author
+      @author = chapter_list.get_author_by_id(@author) if chapter_list and not @author.is_a?(Author)
+      @author
+    end
+    def author=(author)
+      @author = author
     end
     
     def initialize(params={})
@@ -396,7 +437,6 @@ module GlowficEpub
         end
       end
       
-      raise(ArgumentError, "User must be given") unless (params.key?(:user) and not params[:user].nil?)
       raise(ArgumentError, "Unique ID must be given") unless (params.key?(:unique_id) and not params[:unique_id].nil?)
       allowed_params.each do |symbol|
         public_send("#{symbol}=", params[symbol]) if params[symbol]
@@ -404,6 +444,23 @@ module GlowficEpub
     end
     def to_s
       "#{user}:#{keyword}"
+    end
+    
+    def to_json(options={})
+      hash = {}
+      self.instance_variables.each do |var|
+        var_str = (var.is_a? String) ? var : var.to_s
+        var_sym = var_str.to_sym
+        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
+        
+        if var_str["author"]
+          author = self.instance_variable_get(var)
+          hash[var_sym] = author if author.is_a?(String)
+          hash[var_sym] = author.unique_id if author.is_a?(Author)
+        end
+      end
+      hash.to_json(options)
     end
   end
   
@@ -413,10 +470,10 @@ module GlowficEpub
   end
   
   class Message < Model #post or entry
-    attr_accessor :author, :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children
+    attr_accessor :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children
     
     def self.message_serialize_ignore
-      serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :face_id, :post_type
+      serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_author, :face_id, :post_type
     end
     
     def allowed_params
@@ -435,6 +492,10 @@ module GlowficEpub
     
     def chapter=(newval)
       newval.entry_title=@entry_title if @push_title
+      @push_title = false
+      newval.add_author(author) if @push_author
+      @push_author = false
+      
       @chapter = newval
     end
     
@@ -512,8 +573,12 @@ module GlowficEpub
     def face
       return @face if @face
       return unless @face_id
-      @face ||= site_handler.get_face_by_id(@face_id) if site_handler
       @face ||= chapter_list.get_face_by_id(@face_id) if chapter_list
+      @face = site_handler.get_updated_face(@face) if @face
+      chapter_list.replace_face(@face) if @face
+      @face ||= site_handler.get_face_by_id(@face_id) if site_handler
+      @face.author = author if author and @face
+      @face
     end
     def face=(face)
       if (face.is_a?(String))
@@ -532,6 +597,20 @@ module GlowficEpub
     def face_id=(id)
       @face = nil
       @face_id = id
+    end
+    
+    @push_author = false
+    def author
+      return @author if @author and @author.is_a?(Author)
+      return unless @author
+      @author = site_handler.get_author_by_id(@author) if site_handler
+      @author = chapter_list.get_author_by_id(@author) if chapter_list and not @author.is_a?(Author)
+      @author
+    end
+    def author=(author)
+      @author = author
+      chapter.add_author(self.author) if chapter
+      @push_author = true unless chapter
     end
     
     def initialize(params={})
@@ -581,6 +660,10 @@ module GlowficEpub
           face = self.instance_variable_get(var)
           hash[var_sym] = face if face.is_a?(String)
           hash[var_sym] = face.unique_id if face.is_a?(Face)
+        elsif var_str["author"]
+          author = self.instance_variable_get(var)
+          hash[var_sym] = author if author.is_a?(String)
+          hash[var_sym] = author.unique_id if author.is_a?(Author)
         end
       end
       hash.to_json(options)
@@ -604,11 +687,16 @@ module GlowficEpub
       chapter.entry = self if post_type == PostType::ENTRY
       
       parent = json_hash["parent"] or json_hash["@parent"]
+      author = json_hash["author"] or json_hash["@author"]
       face = json_hash["face"] or json_hash["@face"]
       
       if parent
         self.parent = parent
         self.parent
+      end
+      if author
+        self.author = author
+        self.author
       end
       if face
         self.face = face
@@ -634,7 +722,43 @@ module GlowficEpub
   end
   
   class Author < Model
-    def initialize
+    attr_accessor :moiety, :name, :screenname, :chapter_list, :display, :unique_id
+    serialize_ignore :faces, :chapters, :chapter_list, :allowed_params
+    
+    def allowed_params
+      @allowed_params ||= [:chapter_list, :moiety, :name, :screenname, :display, :unique_id]
+    end
+    
+    def initialize(params={})
+      return if params.empty?
+      params = standardize_params(params)
+      
+      params.reject! do |param|
+        unless allowed_params.include?(param)
+          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
+          true
+        end
+      end
+      
+      raise(ArgumentError, "Display must be given") unless (params.key?(:display) and not params[:display].nil?)
+      raise(ArgumentError, "Unique ID must be given") unless (params.key?(:unique_id) and not params[:unique_id].nil?)
+      allowed_params.each do |symbol|
+        public_send("#{symbol}=", params[symbol]) if params[symbol]
+      end
+    end
+    def to_s
+      "#{display}"
+    end
+    
+    def to_json(options={})
+      hash = {}
+      self.instance_variables.each do |var|
+        var_str = (var.is_a? String) ? var : var.to_s
+        var_sym = var_str.to_sym
+        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
+      end
+      hash.to_json(options)
     end
   end
 end
