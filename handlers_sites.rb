@@ -142,7 +142,7 @@
         new_html = new_content.inner_html
         
         changed = (old_html != new_html)
-        LOG.debug "#{(not changed ? 'not ' : '')}changed!"
+        LOG.debug "#{(not changed) ? 'not ' : ''}changed!"
         
         pages_exist = true
         prev_pages.each_with_index do |page_url, i|
@@ -320,7 +320,7 @@
         params[:edittime] = DateTime.strptime(edit_text, "%Y-%m-%d %H:%M (%Z)")
         edit_element.remove
       end
-      message_content = message_element.at_css('.comment-content') or message_element.at_css('.entry-content')
+      message_content = message_element.at_css('.comment-content, .entry-content')
       params[:content] = message_content.inner_html
       params[:face] = get_face_by_id("#{author_id}##{face_name}")
       params[:author] = get_author_by_id(author_id)
