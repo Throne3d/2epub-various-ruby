@@ -19,9 +19,12 @@
     include ERB::Util
     def initialize(options={})
       super options
+      @face_path_cache = {}
     end
+    
     def get_face_path(face)
       return "" if face.imageURL.nil? or face.imageURL.empty?
+      return @face_path_cache[face.imageURL] if @face_path_cache.key?(face.imageURL)
       
       uri = URI.parse(face.imageURL)
       save_path = "output/epub/#{@group}"
