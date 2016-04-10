@@ -35,6 +35,21 @@
       
       @face_path_cache[face.imageURL] = relative_file
     end
+    
+    def get_chapter_path(options = {})
+      chapter_url = options[:chapter].url if options.key?(:chapter)
+      chapter_url = options[:chapter_url] if options.key?(:chapter_url)
+      group = options.key?(:group) ? options[:group] : @group
+      
+      uri = URI.parse(chapter.url)
+      save_path = "output/epub/#{group}"
+      save_file = uri.host.sub(".dreamwidth.org", "").sub("vast-journey-9935.herokuapp.com", "constellation")
+      uri_path = uri.path
+      uri_path = uri_path[1..-1] if uri_path.start_with?("/")
+      save_file += "-" + uri_path.sub(".html", "") + ".html"
+      save_path = File.join(save_path, save_file.gsub("/", "-"))
+    end
+    
     def output(chapter_list=nil)
       chapter_list = @chapters if chapter_list.nil? and @chapters
       (LOG.fatal "No chapters given!" and return) unless chapter_list
@@ -65,13 +80,7 @@
         b = binding
         page_data = erb.result b
         
-        uri = URI.parse(chapter.url)
-        save_path = "output/epub/#{@group}"
-        save_file = uri.host.sub(".dreamwidth.org", "")
-        uri_path = uri.path
-        uri_path = uri_path[1..-1] if uri_path.start_with?("/")
-        save_file += "-" + uri_path.sub(".html", "")
-        save_path = File.join(save_path, save_file.gsub("/", "-"))
+        save_path = get_chapter_path(chapter: chapter, group: @group)
         
         page = Nokogiri::HTML(page_data)
         page.css('img').each do |img_element|
