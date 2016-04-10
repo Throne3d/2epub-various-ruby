@@ -426,6 +426,7 @@
       # When retrieved in get_face_by_id
       @moiety_cache = {}
       @author_pages_got = []
+      @char_user_map = {}
     end
     
     def get_full(chapter, options = {})
@@ -541,6 +542,16 @@
         char_page_c = char_page.at_css("#content")
         icons = char_page_c.css(".gallery-icon")
         
+        breadcrumb1 = char_page.at_css('.flash.subber a')
+        if breadcrumb1 and breadcrumb1.text.strip == "Characters"
+          user_info = char_page.at_css('#header #user-info')
+          user_url = user_info.at_css('a')["href"]
+          user_id = user_url.split('users/').last
+        else
+          user_id = breadcrumb1["href"].split('users/').last.split('/characters').first
+        end
+        @char_user_map[character_id] = user_id
+        
         character = get_author_by_id(character_id)
         
         if icons.nil? or icons.empty?
@@ -594,6 +605,53 @@
       
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
+      
+      if character_id and @char_user_map.key?(character_id)
+        user_id = @char_user_map[character_id]
+        usergal_page_url = "https://vast-journey-9935.herokuapp.com/users/#{user_id}/galleries"
+        usergal_page_data = get_page_data(usergal_page_url, replace: (not @author_pages_got.include?(usergal_page_url)))
+        @author_pages_got << usergal_page_url unless @author_pages_got.include?(usergal_page_url)
+        
+        LOG.debug "got author gallery for ID #{user_id}"
+        usergal_page = Nokogiri::HTML(usergal_page_data)
+        LOG.debug "nokogiri'd"
+        
+        icons = usergal_page.at_css('#content tbody').css('.gallery-icon')
+        icons.each do |icon_element|
+          icon_link = icon_element.at_css('a')
+          icon_url = icon_link.try(:[], :href)
+          next unless icon_url
+          icon_numid = icon_url.split("icons/").last if icon_url
+          next unless icon_numid == icon_id
+          
+          icon_img = icon_link.at_css('img')
+          icon_src = icon_img.try(:[], :src)
+          
+          (LOG.error "Failed to find an img URL on the icon page for user ##{user_id}" and next) if icon_src.nil? or icon_src.empty?
+          
+          icon_keyword = icon_img.try(:[], :title)
+          
+          unless icon_numid
+            LOG.error "Failed to find an icon's numeric ID on user gallery page ##{user_id}?"
+            icon_numid = "unknown"
+          end
+          
+          params = {}
+          params[:imageURL] = icon_src
+          params[:author] = character
+          params[:keyword] = icon_keyword
+          params[:unique_id] = "#{character_id}##{icon_numid}"
+          params[:chapter_list] = @chapter_list
+          face = Face.new(params)
+          
+          @chapter_list.add_face(face)
+          @face_id_cache[params[:unique_id]] = face
+          
+          LOG.debug "Found an icon for character #{character_id}: ID ##{icon_numid} (on userpage ##{user_id})"
+        end
+      end
+      
+      return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       
       icon_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}", replace: true)
       LOG.debug "got a page for the icon #{icon_id}"
