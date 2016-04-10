@@ -299,7 +299,7 @@
       message_id = message_element["id"].sub("comment-", "").sub("entry-", "")
       message_type = (message_element["id"]["entry"]) ? PostType::ENTRY : PostType::REPLY
       
-      userpic = message_element.at_css(".userpic img")
+      userpic = message_element.at_css('.userpic').try(:at_css, 'img')
       author_id = message_element.at_css('span.ljuser').try(:[], "lj:user")
       
       face_url = ""
@@ -314,13 +314,14 @@
       end
       
       params = {}
-      edit_element = message_element.at_css(".contents .edittime")
+      edit_element = message_element.at_css('.edittime')
       if edit_element
         edit_text = edit_element.at_css(".datetime").text.strip
         params[:edittime] = DateTime.strptime(edit_text, "%Y-%m-%d %H:%M (%Z)")
         edit_element.remove
       end
-      params[:content] = message_element.at_css('.entry-content, .comment-content').inner_html
+      message_content = message_element.at_css('.comment-content') or message_element.at_css('.entry-content')
+      params[:content] = message_content.inner_html
       params[:face] = get_face_by_id("#{author_id}##{face_name}")
       params[:author] = get_author_by_id(author_id)
       params[:id] = message_id
@@ -339,13 +340,13 @@
       if message_type == PostType::ENTRY
         params[:entry_title] = message_element.at_css('.entry-title').text.strip
         
-        time_text = message_element.at_css('.header .datetime').text.strip
+        time_text = message_element.at_css('.datetime').text.strip
         time_text = time_text[1..-1].strip if time_text.start_with?("@")
         params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P")
         
         entry = Entry.new(params)
       else
-        parent_link = message_element.at_css(".link.commentparent a")
+        parent_link = message_element.at_css('.link.commentparent').try(:at_css, 'a')
         if parent_link
           parent_href = parent_link[:href]
           parent_id = "cmt" + get_url_param(parent_href, "thread")
@@ -356,7 +357,7 @@
           params[:parent] = @chapter.entry
         end
         
-        time_text = message_element.at_css('.header .datetime').text.strip
+        time_text = message_element.at_css('.datetime').text.strip
         params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P (%Z)")
         
         reply = Reply.new(params)
