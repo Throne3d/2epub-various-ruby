@@ -113,7 +113,9 @@
     
     if File.file?(save_path) and not replace
       LOG.debug "File exists already, not replacing"
+      return save_path
     end
+    
     success = false
     begin
       open(file_url) do |webpage|
