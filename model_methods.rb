@@ -274,7 +274,7 @@
     
     return if not File.file?(old_where)
     File.open(old_where, "rb") do |old|
-      File.open(new_where, "rb") do |new|
+      File.open(new_where, "wb") do |new|
         new.write old.read
       end
     end
