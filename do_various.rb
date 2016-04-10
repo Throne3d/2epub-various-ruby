@@ -105,7 +105,7 @@ def main(args)
     main("get_#{group}")
     main("process_#{group}")
   elsif (process == :tocs)
-    chapter_list = []
+    chapter_list = GlowficEpub::Chapters.new(group: group)
     
     (LOG.fatal "Group #{group} has no TOC" and abort) unless FIC_TOCS.has_key? group and not FIC_TOCS[group].empty?
     fic_toc_url = FIC_TOCS[group]
@@ -151,10 +151,10 @@ def main(args)
       
       handler.get_updated(chapter, notify: true)
       
-      #LOG.info "#{site_handler} handled #{chapter}"
       set_chapters_data(chapter_list, group)
     end
   elsif (process == :process)
+    GlowficEpub::build_moieties
     chapter_list = get_chapters_data(group, trash_messages: true)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Processing '#{group}'"
