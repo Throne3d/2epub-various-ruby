@@ -130,8 +130,10 @@
         first_page_old_data = get_page_data(first_page_url, replace: false, where: @group_folder)
         first_page_new_data = get_page_data(first_page_url, replace: true, where: 'temp')
         
+        LOG.debug "Got old data, now nokogiri-ing"
         first_page_old = Nokogiri::HTML(first_page_old_data)
         first_page_new = Nokogiri::HTML(first_page_new_data)
+        LOG.debug "nokogiri'd"
         
         old_content = first_page_old.at_css('#content')
         new_content = first_page_new.at_css('#content')
@@ -140,6 +142,7 @@
         new_html = new_content.inner_html
         
         changed = (old_html != new_html)
+        LOG.debug "#{(not changed ? 'not ' : '')}changed!"
         
         pages_exist = true
         prev_pages.each_with_index do |page_url, i|
@@ -196,10 +199,10 @@
       unless @face_cache.key?(user_profile) or @face_cache.key?(user_profile.gsub('_', '-'))
         user_id = user_profile.gsub('_', '-')
         
-        icon_moiety = get_moiety_by_profile(user_profile)
-        
         icon_page_data = get_page_data("http://#{user_id}.dreamwidth.org/icons", replace: true)
+        LOG.debug "got icon page for #{user_id}"
         icon_page = Nokogiri::HTML(icon_page_data)
+        LOG.debug "nokogiri'd"
         icons = icon_page.at_css('#content').css('.icon-row .icon')
         default_icon = icon_page.at_css('#content').at_css('.icon.icon-default')
         
@@ -220,7 +223,6 @@
           icon_keywords = icon_element.css('.icon-info .icon-keywords li')
           
           params = {}
-          params[:moiety] = icon_moiety
           params[:imageURL] = icon_src
           params[:author] = get_author_by_id(user_profile)
           
@@ -242,6 +244,8 @@
           end
         end
         
+        LOG.debug "got #{icon_hash.keys.count} icon(s)"
+        
         @face_cache[user_profile] = icon_hash
       end
       
@@ -261,9 +265,12 @@
     
     def get_author_by_id(author_id, default=nil)
       author_id = author_id.gsub('_', '-')
+      author_id = author_id.sub("dreamwidth#", "") if author_id.start_with?("dreamwidth#")
       return @author_id_cache[author_id] if @author_id_cache.key?(author_id)
       char_page_data = get_page_data("http://#{author_id}.dreamwidth.org/profile", replace: true)
+      LOG.debug "got profile page for #{author_id}"
       char_page = Nokogiri::HTML(char_page_data)
+      LOG.debug "nokogiri'd"
       
       params = {}
       params[:moiety] = get_moiety_by_profile(author_id)
@@ -276,6 +283,7 @@
       end
       params[:screenname] = author_id
       params[:display] = (params.key?(:name)) ? "#{params[:name]} (#{params[:screenname]})" : "#{params[:screenname]}"
+      params[:unique_id] = "dreamwidth##{author_id}"
       
       author = Author.new(params)
       @author_id_cache[author_id] = author
@@ -292,13 +300,13 @@
       message_type = (message_element["id"]["entry"]) ? PostType::ENTRY : PostType::REPLY
       
       userpic = message_element.at_css(".userpic img")
-      author_name = message_element.at_css('span.ljuser').try(:[], "lj:user")
+      author_id = message_element.at_css('span.ljuser').try(:[], "lj:user")
       
       face_url = ""
       face_name = "default"
       if userpic and userpic["title"]
-        if userpic["title"] != author_name
-          face_name = userpic["title"].sub("#{author_name}: ", "").split(" (").first
+        if userpic["title"] != author_id
+          face_name = userpic["title"].sub("#{author_id}: ", "").split(" (").first
         end
         if userpic["src"]
           face_url = userpic["src"]
@@ -313,19 +321,17 @@
         edit_element.remove
       end
       params[:content] = message_element.at_css('.entry-content, .comment-content').inner_html
-      params[:face] = get_face_by_id("#{author_name}##{face_name}")
-      params[:author] = author_name
+      params[:face] = get_face_by_id("#{author_id}##{face_name}")
+      params[:author] = get_author_by_id(author_id)
       params[:id] = message_id
       params[:chapter] = @chapter
       
       if params[:face].nil? and not face_url.empty?
         face_params = {}
-        face_params[:moiety] = get_moiety_by_profile(author_name)
         face_params[:imageURL] = face_url
-        face_params[:user] = author_name.gsub('_', '-')
-        face_params[:user_display] = author_name
+        face_params[:author] = get_author_by_id(author_id)
         face_params[:keyword] = face_name
-        face_params[:unique_id] = "#{face_params[:user]}##{face_name}"
+        face_params[:unique_id] = "#{author_id}##{face_name}"
         face = Face.new(face_params)
         params[:face] = face
       end
@@ -368,7 +374,9 @@
       @replies = []
       pages.each do |page_url|
         page_data = get_page_data(page_url, replace: false, where: @group_folder)
+        LOG.debug "got page data for page #{page_url}"
         page = Nokogiri::HTML(page_data)
+        LOG.debug "nokogiri'd"
         
         page_content = page.at_css('#content')
         nsfw_warning = page_content.at_css('.panel.callout')
@@ -455,8 +463,10 @@
         first_page_old_data = get_page_data(first_page_url, replace: false, where: @group_folder)
         first_page_new_data = get_page_data(first_page_url, replace: true, where: 'temp')
         
+        LOG.debug "got old data for comparison"
         first_page_old = Nokogiri::HTML(first_page_old_data)
         first_page_new = Nokogiri::HTML(first_page_new_data)
+        LOG.debug "nokogiri'd"
         
         old_content = first_page_old.at_css('#content')
         new_content = first_page_new.at_css('#content')
@@ -465,6 +475,7 @@
         new_html = new_content.inner_html
         
         changed = (old_html != new_html)
+        LOG.debug "#{(not changed) ? 'not ' : ''}changed"
         
         pages_exist = true
         prev_pages.each_with_index do |page_url, i|
@@ -493,7 +504,9 @@
     
     def get_moiety_by_id(character_id)
       char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}", replace: false)
+      LOG.debug "got profile page for char #{character_id}"
       char_page = Nokogiri::HTML(char_page_data)
+      LOG.debug "nokogiri'd"
       
       breadcrumb1 = char_page.at_css('.flash.subber a')
       if breadcrumb1 and breadcrumb1.text.strip == "Characters"
@@ -521,10 +534,11 @@
       
       if character_id and not @char_page_cache.key?(character_id)
         char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}", replace: true)
+        LOG.debug "got profile page for char #{character_id}"
         char_page = Nokogiri::HTML(char_page_data)
+        LOG.debug "nokogiri'd"
         char_page_c = char_page.at_css("#content")
         icons = char_page_c.css(".gallery-icon")
-        icon_moiety = get_moiety_by_id(character_id)
         
         character = get_author_by_id(character_id)
         
@@ -532,7 +546,7 @@
           LOG.error "No icons for character ##{character_id}."
         else
           icon_hash = {}
-          default_icon = char_page.at_css('#content > .character-icon')
+          default_icon = char_page_c.at_css('> .character-icon')
           icons = [default_icon] + icons if default_icon
           icons.each do |icon_element|
             icon_link = icon_element.at_css('a')
@@ -572,6 +586,7 @@
               @chapter_list.add_face(face)
             end
           end
+          LOG.debug "got #{icon_hash.keys.length} icon(s)"
           @char_page_cache[character_id] = icon_hash
         end
       end
@@ -580,7 +595,9 @@
       return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
       
       icon_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}", replace: true)
+      LOG.debug "got a page for the icon #{icon_id}"
       icon_page = Nokogiri::HTML(icon_page_data)
+      LOG.debug "nokogiri'd"
       
       icon_img = icon_page.at_css('#content img')
       params = {}
@@ -615,7 +632,9 @@
         user_page_url = "https://vast-journey-9935.herokuapp.com/users/#{user_id}"
         user_page_data = get_page_data(user_page_url, replace: (not @author_pages_got.include?(user_page_url)))
         @author_pages_got << user_page_url unless @author_pages_got.include?(user_page_url)
+        LOG.debug "got user page for #{user_id}"
         user_page = Nokogiri::HTML(user_page_data)
+        LOG.debug "nokogiri'd"
         user_page_c = user_page.at_css('#content')
         
         char_name = user_page_c.at_css('.username').try(:text).try(:strip)
@@ -633,7 +652,9 @@
         char_page_url = "https://vast-journey-9935.herokuapp.com/characters/#{character_id}"
         char_page_data = get_page_data(char_page_url, replace: (not @author_pages_got.include?(char_page_url)))
         @author_pages_got << char_page_url unless @author_pages_got.include?(char_page_url)
+        LOG.debug "got char page for #{character_id}"
         char_page = Nokogiri::HTML(char_page_data)
+        LOG.debug "nokogiri'd"
         char_page_c = char_page.at_css('#content')
         
         char_screen = char_page_c.at_css(".character-screenname").try(:text).try(:strip)
@@ -741,7 +762,9 @@
       @replies = []
       pages.each do |page_url|
         page_data = get_page_data(page_url, replace: false, where: @group_folder)
+        LOG.debug "got page data for #{page_url}"
         page = Nokogiri::HTML(page_data)
+        LOG.debug "nokogiri'd"
         
         @entry_title = page.at_css("#post-title").text.strip unless @entry_title
         page_content = page.at_css('#content')
