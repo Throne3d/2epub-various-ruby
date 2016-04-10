@@ -56,8 +56,8 @@ module GlowficEpub
     open(file_path, 'r') do |file|
       file.each do |line|
         next if line.chomp.strip.empty?
-        collection_name = line.chomp.split(" ~#~ ").first
-        collection_url = line.chomp.sub("#{collection_name} ~#~ ", "")
+        collection_name = line.chomp.split(" ~#~ ").first.strip
+        collection_url = line.chomp.sub("#{collection_name} ~#~ ", "").strip
         
         uri = URI.parse(collection_url)
         collection_id = uri.host.sub(".dreamwidth.org", "")
@@ -190,11 +190,6 @@ module GlowficEpub
     
     def add_author(arg)
       @authors << arg unless @authors.include?(arg)
-      if arg.is_a?(String)
-        puts "-" * 60
-        puts "Got a weird string author! Not sure why! #{arg}! Here!"
-        puts caller
-      end
     end
     def replace_author(arg)
       @authors.delete_if { |author| author.unique_id == arg.unique_id }
@@ -259,8 +254,9 @@ module GlowficEpub
       faces = json_hash["faces"] or json_hash["@faces"]
       chapters = json_hash["chapters"] or json_hash["@chapters"]
       
+      @authors = []
+      @faces = []
       unless @trash_messages
-        @authors = []
         authors.each do |author_hash|
           author_hash["chapter_list"] = self
           author = Author.new
@@ -268,7 +264,6 @@ module GlowficEpub
           add_author(author)
         end
         
-        @faces = []
         faces.each do |face_hash|
           face_hash["chapter_list"] = self
           face = Face.new
@@ -410,6 +405,8 @@ module GlowficEpub
         self.instance_variable_set var, val unless varname == "replies" or varname == "entry"
       end
       
+      @authors = [] if @trash_messages
+      
       if not @trash_messages
         entry = json_hash["entry"] or json_hash["@entry"]
         replies = json_hash["replies"] or json_hash["@replies"]
@@ -432,6 +429,8 @@ module GlowficEpub
           end
         end
       end
+      
+      @trash_messages = false
     end
   end
 

@@ -115,6 +115,7 @@ def main(args)
     
     oldify_chapters_data(group)
     data = get_chapters_data(group, trash_messages: true)
+    set_chapters_data(data, group)
     
     group_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
     group_handlers.select! {|c| c.is_a? Class and c < GlowficIndexHandlers::IndexHandler }
