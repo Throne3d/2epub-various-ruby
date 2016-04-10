@@ -142,7 +142,7 @@
         
         pages_exist = true
         prev_pages.each_with_index do |page_url, i|
-          page_loc = get_page_location(page_url)
+          page_loc = get_page_location(page_url, where: @group_folder)
           if not File.file?(page_loc)
             pages_exist = false
             LOG.debug "Failed to find a file (page #{i}) for chapter #{chapter}"
@@ -436,7 +436,7 @@
         
         pages_exist = true
         prev_pages.each_with_index do |page_url, i|
-          page_loc = get_page_location(page_url)
+          page_loc = get_page_location(page_url, where: @group_folder)
           if not File.file?(page_loc)
             pages_exist = false
             LOG.debug "Failed to find a file (page #{i}) for chapter #{chapter}"
