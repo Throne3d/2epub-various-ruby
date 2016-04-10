@@ -616,7 +616,7 @@
         usergal_page = Nokogiri::HTML(usergal_page_data)
         LOG.debug "nokogiri'd"
         
-        icons = usergal_page.at_css('#content tbody').css('.gallery-icon')
+        icons = usergal_page.at_css('#content').css('.gallery-icon')
         icons.each do |icon_element|
           icon_link = icon_element.at_css('a')
           icon_url = icon_link.try(:[], :href)
