@@ -59,6 +59,9 @@ module GlowficEpub
         collection_name = line.chomp.split(" ~#~ ").first
         collection_url = line.chomp.sub("#{collection_name} ~#~ ", "")
         
+        uri = URI.parse(collection_url)
+        collection_id = uri.host.sub(".dreamwidth.org", "")
+        
         collection_data = get_page_data(collection_url, replace: true)
         collection = Nokogiri::HTML(collection_data)
         
@@ -71,6 +74,7 @@ module GlowficEpub
           MOIETIES[moiety_key] = []
         end
         
+        MOIETIES[moiety_key] << collection_id
         count = 0
         collection.css('#members_people_body a').each do |user_element|
           MOIETIES[moiety_key] << user_element.text.strip.gsub('_', '-')
