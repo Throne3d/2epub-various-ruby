@@ -196,6 +196,13 @@ module GlowficEpub
       @authors.delete_if { |author| author.unique_id == arg.unique_id }
       add_author(arg)
     end
+    def get_author_by_id(author_id)
+      found_author = nil
+      @authors.each do |author|
+        found_author = author if author.unique_id == author_id
+      end
+      found_author
+    end
     def add_face(arg)
       @faces << arg unless @faces.include?(arg)
     end
@@ -253,7 +260,7 @@ module GlowficEpub
         author_hash["chapter_list"] = self
         author = Author.new
         author.from_json! author_hash
-        @authors << author
+        add_author(author)
       end
       
       @faces = []
@@ -261,7 +268,7 @@ module GlowficEpub
         face_hash["chapter_list"] = self
         face = Face.new
         face.from_json! face_hash
-        @faces << face
+        add_face(face)
       end
       
       @chapters = []
@@ -278,7 +285,7 @@ module GlowficEpub
     attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :replies, :sections, :authors, :entry, :url
     
     param_transform :name => :title, :name_extras => :title_extras
-    serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages
+    serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors
     
     def allowed_params
       @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :authors]
@@ -304,10 +311,15 @@ module GlowficEpub
     end
     def authors
       @authors ||= []
+      unless @authors.empty? or @authors.first.is_a?(Author)
+        @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
+      end
+      @authors
     end
     
     def add_author(newauthor)
       @authors << newauthor unless @authors.include?(newauthor)
+      chapter_list.add_author(newauthor)
     end
     
     def chapter_list
@@ -361,6 +373,22 @@ module GlowficEpub
       str += ": #{smallURL}"
     end
     
+    def to_json(options={})
+      hash = {}
+      self.instance_variables.each do |var|
+        var_str = (var.is_a? String) ? var : var.to_s
+        var_sym = var_str.to_sym
+        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
+        
+        if var_str["authors"]
+          authors = self.instance_variable_get(var)
+          authors = authors.map {|author| (author.is_a?(Author) ? author.unique_id : author)}
+          hash[var_sym] = authors
+        end
+      end
+      hash.to_json(options)
+    end
     def from_json! string
       json_hash = if string.is_a? String
         JSON.parse(string)
