@@ -259,20 +259,22 @@ module GlowficEpub
       faces = json_hash["faces"] or json_hash["@faces"]
       chapters = json_hash["chapters"] or json_hash["@chapters"]
       
-      @authors = []
-      authors.each do |author_hash|
-        author_hash["chapter_list"] = self
-        author = Author.new
-        author.from_json! author_hash
-        add_author(author)
-      end
-      
-      @faces = []
-      faces.each do |face_hash|
-        face_hash["chapter_list"] = self
-        face = Face.new
-        face.from_json! face_hash
-        add_face(face)
+      unless @trash_messages
+        @authors = []
+        authors.each do |author_hash|
+          author_hash["chapter_list"] = self
+          author = Author.new
+          author.from_json! author_hash
+          add_author(author)
+        end
+        
+        @faces = []
+        faces.each do |face_hash|
+          face_hash["chapter_list"] = self
+          face = Face.new
+          face.from_json! face_hash
+          add_face(face)
+        end
       end
       
       @chapters = []

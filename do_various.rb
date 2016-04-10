@@ -114,6 +114,7 @@ def main(args)
     LOG.info "Parsing TOC (of #{group})"
     
     oldify_chapters_data(group)
+    data = get_chapters_data(group, trash_messages: true)
     
     group_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
     group_handlers.select! {|c| c.is_a? Class and c < GlowficIndexHandlers::IndexHandler }
