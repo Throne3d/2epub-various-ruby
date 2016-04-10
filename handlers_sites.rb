@@ -505,7 +505,7 @@
     end
     
     def get_moiety_by_id(character_id)
-      char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}", replace: false)
+      char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}/", replace: false)
       LOG.debug "got profile page for char #{character_id}"
       char_page = Nokogiri::HTML(char_page_data)
       LOG.debug "nokogiri'd"
@@ -535,7 +535,7 @@
       @icon_errors = [] unless @icon_errors
       
       if character_id and not @char_page_cache.key?(character_id)
-        char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}", replace: true)
+        char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}/", replace: true)
         LOG.debug "got profile page for char #{character_id}"
         char_page = Nokogiri::HTML(char_page_data)
         LOG.debug "nokogiri'd"
@@ -608,7 +608,7 @@
       
       if character_id and @char_user_map.key?(character_id)
         user_id = @char_user_map[character_id]
-        usergal_page_url = "https://vast-journey-9935.herokuapp.com/users/#{user_id}/galleries"
+        usergal_page_url = "https://vast-journey-9935.herokuapp.com/users/#{user_id}/galleries/"
         usergal_page_data = get_page_data(usergal_page_url, replace: (not @author_pages_got.include?(usergal_page_url)))
         @author_pages_got << usergal_page_url unless @author_pages_got.include?(usergal_page_url)
         
@@ -653,7 +653,7 @@
       
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       
-      icon_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}", replace: true)
+      icon_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}/", replace: true)
       LOG.debug "got a page for the icon #{icon_id}"
       icon_page = Nokogiri::HTML(icon_page_data)
       LOG.debug "nokogiri'd"
@@ -688,7 +688,7 @@
       if character_id.start_with?("user#")
         user_id = character_id.sub("user#", "")
         
-        user_page_url = "https://vast-journey-9935.herokuapp.com/users/#{user_id}"
+        user_page_url = "https://vast-journey-9935.herokuapp.com/users/#{user_id}/"
         user_page_data = get_page_data(user_page_url, replace: (not @author_pages_got.include?(user_page_url)))
         @author_pages_got << user_page_url unless @author_pages_got.include?(user_page_url)
         LOG.debug "got user page for #{user_id}"
@@ -708,7 +708,7 @@
         @author_id_cache["user##{user_id}"] = author
         return author
       else
-        char_page_url = "https://vast-journey-9935.herokuapp.com/characters/#{character_id}"
+        char_page_url = "https://vast-journey-9935.herokuapp.com/characters/#{character_id}/"
         char_page_data = get_page_data(char_page_url, replace: (not @author_pages_got.include?(char_page_url)))
         @author_pages_got << char_page_url unless @author_pages_got.include?(char_page_url)
         LOG.debug "got char page for #{character_id}"

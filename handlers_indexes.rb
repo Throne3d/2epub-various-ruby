@@ -1,4 +1,4 @@
-﻿module GlowficIndexHandlers
+module GlowficIndexHandlers
   require 'model_methods'
   require 'models'
   include GlowficEpubMethods
