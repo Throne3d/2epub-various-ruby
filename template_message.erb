@@ -8,7 +8,7 @@
       <% end -%>
     </div>
     <div class="username">
-      <% if @message.face and not @message.face.keyword.empty? -%>
+      <% if @message.face and @message.face.keyword and not @message.face.keyword.empty? -%>
         <%= h(@message.face.user_display + ": " + @message.face.keyword) %>
       <% elsif @message.face -%>
         <%= h(@message.face.user_display) %>
