@@ -499,7 +499,7 @@
         open(page_url, 'w') do |file|
           file.write first_page_new_data
         end
-        pages = [page_url]
+        pages = [chapter.url]
         chapter.pages = pages
         LOG.info "Updated: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got 1 page)" if notify
         return chapter
