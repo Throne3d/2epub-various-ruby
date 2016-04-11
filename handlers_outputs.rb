@@ -19,6 +19,7 @@
     include ERB::Util
     def initialize(options={})
       super options
+      FileUtils::mkdir_p "output/epub/style/"
       @face_path_cache = {}
     end
     
@@ -50,6 +51,18 @@
       save_path = File.join(save_path, save_file.gsub("/", "-"))
     end
     
+    def get_relative_chapter_path(options = {})
+      chapter_url = options[:chapter].url if options.key?(:chapter)
+      chapter_url = options[:chapter_url] if options.key?(:chapter_url)
+      
+      uri = URI.parse(chapter_url)
+      save_file = uri.host.sub(".dreamwidth.org", "").sub("vast-journey-9935.herokuapp.com", "constellation")
+      uri_path = uri.path
+      uri_path = uri_path[1..-1] if uri_path.start_with?("/")
+      save_file += "-" + uri_path.sub(".html", "") + ".html"
+      save_path = save_file.gsub("/", "-")
+    end
+    
     def output(chapter_list=nil)
       chapter_list = @chapters if chapter_list.nil? and @chapters
       (LOG.fatal "No chapters given!" and return) unless chapter_list
@@ -61,6 +74,68 @@
       template_message = ""
       open("template_message.erb") do |file|
         template_message = file.read
+      end
+      template_index = ""
+      open("template_index.erb") do |file|
+        template_index = file.read
+      end
+      
+      open("style.css", 'r') do |style|
+        open("output/epub/style/default.css", 'w') do |css|
+          css.write style.read
+        end
+      end
+      
+      @toc_html = ""
+      toc = []
+      sections = []
+      chapter_list.each do |chapter|
+        num_same = 0
+        sections.each_with_index do |section, i|
+          if chapter.sections.length <= i
+            num_same = chapter.sections.length
+            break
+          end
+          if chapter.sections[i] != section
+            num_same = i
+            break
+          end
+          num_same = i + 1
+        end
+        
+        if sections.length > num_same
+          ((sections.length-1).downto(num_same)).each do |i|
+            @toc_html += "</ol></li>"
+          end
+          sections = sections.take(num_same)
+        end
+        
+        if chapter.sections.length > sections.length
+          ((sections.length).upto(chapter.sections.length-1)).each do |i|
+            @toc_html += "<li>" + chapter.sections[i].gsub('<', '&lt;').gsub('>', '&gt;') + "<ol>"
+            sections[i] = chapter.sections[i]
+          end
+        end
+        
+        @toc_html += "<li><a href=\"" + get_relative_chapter_path(chapter: chapter) + "\">"
+        @toc_html += chapter.title.gsub('<', '&lt;').gsub('>', '&gt;') + "</a></li>"
+      end
+      
+      if sections.length > 0
+        ((sections.length-1).downto(0)).each do |i|
+          @toc_html += "</ol></li>"
+        end
+      end
+      
+      @chapter_list = chapter_list
+      @sections = []
+      erb = ERB.new(template_index, 0, '-')
+      b = binding
+      index_data = erb.result b
+      
+      index_path = "output/epub/#{@group}/index.html"
+      open(index_path, 'w') do |index_file|
+        index_file.write index_data
       end
       
       chapter_list.each do |chapter|
