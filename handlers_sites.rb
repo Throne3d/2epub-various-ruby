@@ -544,7 +544,9 @@
       @icon_errors = [] unless @icon_errors
       
       if character_id and not @char_page_cache.key?(character_id)
-        char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}/", replace: true)
+        char_page_url = "https://vast-journey-9935.herokuapp.com/characters/#{character_id}/"
+        char_page_data = get_page_data(char_page_url, replace: (not @author_pages_got.include?(char_page_url)))
+        @author_pages_got << char_page_url unless @author_pages_got.include?(char_page_url)
         LOG.debug "got profile page for char #{character_id}"
         char_page = Nokogiri::HTML(char_page_data)
         LOG.debug "nokogiri'd"
