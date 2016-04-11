@@ -494,13 +494,22 @@
           LOG.info "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''}" if notify
           return chapter
         end
+        
+        page_url = get_page_location(chapter.url, where: @group_folder)
+        open(page_url, 'w') do |file|
+          file.write first_page_new_data
+        end
+        pages = [page_url]
+        chapter.pages = pages
+        LOG.info "Updated: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got 1 page)" if notify
+        return chapter
       end
       
-      #Hasn't been done before, or it's outdated, or some pages were deleted; re-get.
+      #Hasn't been done before; get.
       @download_count = 0
       pages = get_full(chapter, options.merge({new: (not changed)}))
       chapter.pages = pages
-      LOG.info "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
+      LOG.info "New: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
       return chapter
     end
     
