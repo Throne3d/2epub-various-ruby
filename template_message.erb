@@ -17,8 +17,13 @@
       <% end -%>
     </div>
   </div>
-  <div class="content">
-    <%= @message.content %>
-    <div class="timestamp"><%= h(@message.time) %></div>
+  <div class="text">
+    <div class="content"><%= @message.content %></div>
+    <% if @message.edittime -%>
+      <div class="edittime timestamp">Edited: <%= h(@message.edittime_display) %></div>
+    <% end -%>
+    <% if @message.time -%>
+      <div class="posttime timestamp"><%= h(@message.time_display) %></div>
+    <% end -%>
   </div>
 </div>
