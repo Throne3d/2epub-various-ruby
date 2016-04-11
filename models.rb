@@ -286,7 +286,7 @@ module GlowficEpub
     attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :replies, :sections, :authors, :entry, :url
     
     param_transform :name => :title, :name_extras => :title_extras
-    serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors
+    serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties
     
     def allowed_params
       @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :authors]
@@ -318,8 +318,23 @@ module GlowficEpub
       @authors
     end
     
+    def moieties
+      @moieties if @moieties and not @moieties.empty?
+      @moieties = []
+      self.authors.each do |author|
+        author.moiety.split(' ').each do |moiety|
+          @moieties << moiety unless @moieties.include?(moiety)
+        end
+      end
+      @moieties.sort!
+      @moieties
+    end
+    
     def add_author(newauthor)
-      @authors << newauthor unless @authors.include?(newauthor)
+      unless @authors.include?(newauthor)
+        @authors << newauthor
+        @moieties = nil
+      end
       chapter_list.add_author(newauthor)
     end
     
