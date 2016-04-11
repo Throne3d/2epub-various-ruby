@@ -406,6 +406,7 @@ module GlowficEpub
       end
       
       @authors = [] if @trash_messages
+      self.authors
       
       if not @trash_messages
         entry = json_hash["entry"] or json_hash["@entry"]
@@ -639,8 +640,8 @@ module GlowficEpub
     def author
       return @author if @author and @author.is_a?(Author)
       return unless @author
-      @author = site_handler.get_author_by_id(@author) if site_handler
       @author = chapter_list.get_author_by_id(@author) if chapter_list and not @author.is_a?(Author)
+      @author = site_handler.get_author_by_id(@author) if site_handler and not @author.is_a?(Author)
       @author
     end
     def author=(author)
