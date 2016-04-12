@@ -9,6 +9,7 @@
   
   class OutputHandler
     include GlowficEpub
+    include GlowficEpubMethods
     def initialize(options={})
       @chapters = options[:chapters] if options.key?(:chapters)
       @chapters = options[:chapter_list] if options.key?(:chapter_list)
@@ -169,11 +170,11 @@
       epub_path = "output/epub/#{@group}.epub"
       epub = EeePub.make do
         title "#{group_name}"
-        creator "Misc"
+        creator FIC_AUTHORSTRINGS[group_name]
         publisher ''
-        date "2016-04-12"
-        identifier 'http://example.com/', scheme: 'URL'
-        uid "#{group_name}"
+        date DateTime.now.strftime("%Y-%m-%d")
+        identifier FIC_TOCS[group_name], scheme: 'URL'
+        uid "glowfic-#{group_name}"
         
         files files_list
         nav nav_array
