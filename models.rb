@@ -455,7 +455,7 @@ module GlowficEpub
     serialize_ignore :allowed_params, :author, :chapter_list
     
     def allowed_params
-      @allowed_params ||= [:chapter_list, :imageURL, :keyword, :unique_id]
+      @allowed_params ||= [:chapter_list, :imageURL, :keyword, :unique_id, :author]
     end
     
     def user_display
