@@ -69,9 +69,10 @@
     marri: [:marri, :marrinikari],
     peterverse: [:peter, :pedro, :peterverse],
     maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"],
+    throne: [:throne, :throne3d],
     test: [:test]
   }
-  FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie]
+  FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie, :throne]
   FIC_TOCS = {
     #Continuities
     effulgence: "http://edgeofyourseat.dreamwidth.org/2121.html?style=site",
@@ -88,6 +89,7 @@
     marri: "http://marrinikari.dreamwidth.org/1634.html?style=site",
     peterverse: "http://peterverse.dreamwidth.org/1643.html?style=site",
     maggie: "http://maggie-of-the-owls.dreamwidth.org/454.html?style=site",
+    throne: "https://theotrics.dreamwidth.org/268.html?style=site",
     
     #Test
     test: "https://vast-journey-9935.herokuapp.com/boards/7"
@@ -105,6 +107,7 @@
     marri: "Marri & Misc",
     peterverse: "Pedro & Misc",
     maggie: "Maggie & Misc",
+    throne: "Throne3d & Misc",
     
     test: "Pedro & Throne3d"
   }
@@ -121,6 +124,7 @@
     marri: "Marri's Sandboxes",
     peterverse: "Peterverse",
     maggie: "Maggie's Sandboxes",
+    throne: "Throne3d's Sandboxes",
     
     test: "Test EPUB"
   }

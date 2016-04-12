@@ -384,13 +384,15 @@ module GlowficIndexHandlers
   end
   
   class NeatListHandler < IndexHandler
-    handles :marri, :peterverse, :maggie
+    handles :marri, :peterverse, :maggie, :throne
     def initialize(options = {})
       super(options)
       @heading_selects = ["b, strong", "u", "em, i"]
       if group == :maggie
         @heading_selects[0] = "u"
         @heading_selects[1] = "b, strong"
+      elsif group == :throne
+        @heading_selects = ["h4", "h5"]
       end
     end
     def entry
