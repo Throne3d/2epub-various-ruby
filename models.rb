@@ -611,7 +611,6 @@ module GlowficEpub
         #from JSON
         if @parent.length == 2
           @parent = @chapter.entry
-          puts "Parent is now chapter's entry"
         else
           parent_id = @parent.last
           @chapter.replies.each do |reply|
