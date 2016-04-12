@@ -186,6 +186,7 @@
     end
     
     def get_face_by_id(face_id, default=nil)
+      face_id = face_id[0..-2].strip if face_id.end_with?(",")
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       user_profile = face_id.split('#').first
       face_name = face_id.sub("#{user_profile}#", "")
@@ -227,6 +228,8 @@
           params[:author] = get_author_by_id(user_profile)
           
           icon_keywords.each do |keyword_element|
+            keyword = keyword_element.text.strip
+            keyword = keyword[0..-2].strip if keyword.end_with?(",")
             params[:keyword] = keyword_element.text.strip
             params[:unique_id] = "#{user_id}##{params[:keyword]}"
             face = Face.new(params)
