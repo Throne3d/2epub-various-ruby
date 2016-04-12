@@ -550,9 +550,21 @@
       character_id = nil if character_id == face_id
       character_id = nil if character_id.nil? or character_id.empty?
       
+      if icon_id == "none" and character_id.start_with?("user#")
+        face_params = {}
+        face_params[:imageURL] = nil
+        face_params[:keyword] = "none"
+        face_params[:unique_id] = "#{character_id}#none"
+        face_params[:author] = get_author_by_id(character_id)
+        face = Face.new(face_params)
+        @chapter_list.add_face(face)
+        @face_id_cache[face_id] = face
+        return face
+      end
+      
       @icon_errors = [] unless @icon_errors
       
-      if character_id and not @char_page_cache.key?(character_id)
+      if character_id and not @char_page_cache.key?(character_id) and not character_id.start_with?("user#")
         char_page_url = "https://vast-journey-9935.herokuapp.com/characters/#{character_id}/"
         char_page_data = get_page_data(char_page_url, replace: (not @author_pages_got.include?(char_page_url)))
         @author_pages_got << char_page_url unless @author_pages_got.include?(char_page_url)
@@ -567,8 +579,10 @@
           user_info = char_page.at_css('#header #user-info')
           user_url = user_info.at_css('a')["href"]
           user_id = user_url.split('users/').last
-        else
+        elsif breadcrumb1
           user_id = breadcrumb1["href"].split('users/').last.split('/characters').first
+        else
+          LOG.error "No breadcrumb on char page for #{character_id}"
         end
         @char_user_map[character_id] = user_id
         
@@ -800,7 +814,7 @@
       params[:content] = message_element.at_css('.post-content').inner_html.strip
       face_uniqid = [character_id, face_id].reject{|thing| thing.nil?} * '#'
       face_uniqid = "#{face_id}" if character_id == "user##{author_id}"
-      params[:face] = get_face_by_id(face_uniqid)
+      params[:face] = get_face_by_id(face_uniqid) unless face_uniqid.empty?
       params[:author] = get_author_by_id(character_id)
       params[:face].author = params[:author] if params[:face]
       params[:id] = message_id
@@ -813,6 +827,17 @@
         face_params[:imageURL] = face_url
         face_params[:keyword] = face_name
         face_params[:unique_id] = face_id
+        face_params[:author] = get_author_by_id(character_id)
+        face = Face.new(face_params)
+        @chapter_list.add_face(face)
+        params[:face] = face
+      end
+      
+      if params[:face].nil? and face_url.empty?
+        face_params = {}
+        face_params[:imageURL] = nil
+        face_params[:keyword] = face_name
+        face_params[:unique_id] = "#{character_id}##{face_name}"
         face_params[:author] = get_author_by_id(character_id)
         face = Face.new(face_params)
         @chapter_list.add_face(face)
@@ -854,9 +879,7 @@
         @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip)
         
         if @replies.empty?
-          paginator = page_content.at_css('.paginator')
-          
-          @entry_element = paginator.previous_element
+          @entry_element = page_content.at_css('.post-container')
           entry = make_message(@entry_element)
           chapter.entry = entry
         end

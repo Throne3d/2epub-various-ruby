@@ -189,11 +189,11 @@
         end
       end
       
+      group_name = @group
       uri = URI.parse(FIC_TOCS[group_name])
       uri_host = uri.host
       uri_host = "" unless uri_host
       files_list = @files
-      group_name = @group
       epub_path = "output/epub/#{@group}.epub"
       epub = EeePub.make do
         title FIC_NAMESTRINGS[group_name]
