@@ -635,8 +635,11 @@ module GlowficEpub
       @face_id = @face if @face_id.nil? and @face.is_a?(String)
       return unless @face_id
       @face ||= chapter_list.get_face_by_id(@face_id) if chapter_list
-      @face = site_handler.get_updated_face(@face) if @face
-      chapter_list.replace_face(@face) if @face
+      if @face
+        new_face = site_handler.get_updated_face(@face)
+        @face = new_face if new_face
+        chapter_list.replace_face(new_face) if new_face
+      end
       @face ||= site_handler.get_face_by_id(@face_id) if site_handler
       @face.author = author if author and @face
       @face
