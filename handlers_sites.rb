@@ -342,7 +342,7 @@
         face_params[:unique_id] = face_id
         face = Face.new(face_params)
         @chapter_list.add_face(face)
-        LOG.debug "Face replaced by backup face: #{face} with URL #{face_url}"
+        LOG.debug "Face replaced by backup face '#{face}' with URL: #{face_url}"
         params[:face] = face
       end
       
