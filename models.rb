@@ -495,7 +495,7 @@ module GlowficEpub
       end
     end
     def to_s
-      "#{user}:#{keyword}"
+      "#{user_display}:#{keyword}"
     end
     
     def to_json(options={})
