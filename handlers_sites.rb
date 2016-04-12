@@ -382,7 +382,7 @@
         page_content = page.at_css('#content')
         nsfw_warning = page_content.at_css('.panel.callout')
         if nsfw_warning
-          nsfw_warning_text = nsfw_warning.at_css('text-center')
+          nsfw_warning_text = nsfw_warning.at_css('.text-center')
           if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
             (LOG.error('Page had discretion advised warning!') and break)
           end
