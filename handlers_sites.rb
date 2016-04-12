@@ -320,20 +320,25 @@
         params[:edittime] = DateTime.strptime(edit_text, "%Y-%m-%d %H:%M (%Z)")
         edit_element.remove
       end
+      
+      face_id = "#{author_id}##{face_name}"
       message_content = message_element.at_css('.comment-content, .entry-content')
       params[:content] = message_content.inner_html
-      params[:face] = get_face_by_id("#{author_id}##{face_name}")
+      params[:face] = get_face_by_id(face_id)
       params[:author] = get_author_by_id(author_id)
       params[:id] = message_id
       params[:chapter] = @chapter
+      
+      params[:face] = @chapter_list.get_face_by_id(face_id) if params[:face].nil?
       
       if params[:face].nil? and not face_url.empty?
         face_params = {}
         face_params[:imageURL] = face_url
         face_params[:author] = get_author_by_id(author_id)
         face_params[:keyword] = face_name
-        face_params[:unique_id] = "#{author_id}##{face_name}"
+        face_params[:unique_id] = face_id
         face = Face.new(face_params)
+        @chapter_list.add_face(face)
         params[:face] = face
       end
       
@@ -797,6 +802,8 @@
       params[:id] = message_id
       params[:chapter] = @chapter
       
+      params[:face] = @chapter_list.get_face_by_id(face_uniqid) if params[:face].nil?
+      
       if params[:face].nil? and not face_url.empty?
         face_params = {}
         face_params[:imageURL] = face_url
@@ -804,6 +811,7 @@
         face_params[:unique_id] = face_id
         face_params[:author] = get_author_by_id(character_id)
         face = Face.new(face_params)
+        @chapter_list.add_face(face)
         params[:face] = face
       end
       
