@@ -559,7 +559,7 @@ module GlowficIndexHandlers
         board_toc_data = get_page_data(previous_url, replace: (previous_url != section_url))
         board_toc = Nokogiri::HTML(board_toc_data)
         
-        chapters = section_toc.css("tr")
+        chapters = board_toc.css("tr")
         chapters = chapters.reverse
         chapters.each do |chapter_row|
           next if chapter_row.at_css('th')
