@@ -230,7 +230,7 @@
           icon_keywords.each do |keyword_element|
             keyword = keyword_element.text.strip
             keyword = keyword[0..-2].strip if keyword.end_with?(",")
-            params[:keyword] = keyword_element.text.strip
+            params[:keyword] = keyword
             params[:unique_id] = "#{user_id}##{params[:keyword]}"
             face = Face.new(params)
             icon_hash[params[:keyword]] = face
