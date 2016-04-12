@@ -3,6 +3,7 @@
   require 'models'
   require 'uri'
   require 'erb'
+  require 'eeepub'
   include GlowficEpubMethods
   include GlowficEpub::PostType
   
@@ -34,6 +35,7 @@
       relative_file = File.join(uri.host, uri_path.gsub('/', '-'))
       download_file(face.imageURL, save_path: File.join(save_path, relative_file), replace: false)
       
+      @files << {File.join(save_path, relative_file) => File.join("EPUB", File.dirname(relative_file))}
       @face_path_cache[face.imageURL] = relative_file
     end
     
@@ -63,6 +65,23 @@
       save_path = save_file.gsub("/", "-")
     end
     
+    def navify_navbits(navbits)
+      navified = []
+      if navbits.key?(:_order)
+        navbits[:_order].each do |section_name|
+          thing = {label: section_name}
+          thing[:nav] = navify_navbits(navbits[section_name])
+          navified << thing
+        end
+      end
+      if navbits.key?(:_contents)
+        navbits[:_contents].each do |thing|
+          navified << thing
+        end
+      end
+      navified
+    end
+    
     def output(chapter_list=nil)
       chapter_list = @chapters if chapter_list.nil? and @chapters
       (LOG.fatal "No chapters given!" and return) unless chapter_list
@@ -75,10 +94,6 @@
       open("template_message.erb") do |file|
         template_message = file.read
       end
-      template_index = ""
-      open("template_index.erb") do |file|
-        template_index = file.read
-      end
       
       open("style.css", 'r') do |style|
         open("output/epub/style/default.css", 'w') do |css|
@@ -86,57 +101,22 @@
         end
       end
       
-      @toc_html = ""
-      toc = []
-      sections = []
+      nav_bits = {}
       chapter_list.each do |chapter|
-        num_same = 0
-        sections.each_with_index do |section, i|
-          if chapter.sections.length <= i
-            num_same = chapter.sections.length
-            break
-          end
-          if chapter.sections[i] != section
-            num_same = i
-            break
-          end
-          num_same = i + 1
+        prev_bit = nav_bits
+        chapter.sections.each do |section|
+          prev_bit[:_order] = [] unless prev_bit.key?(:_order)
+          prev_bit[:_order] << section unless prev_bit[:_order].include?(section)
+          prev_bit[section] = {} unless prev_bit.key?(section)
+          prev_bit = prev_bit[section]
         end
-        
-        if sections.length > num_same
-          ((sections.length-1).downto(num_same)).each do |i|
-            @toc_html += "</ol></li>"
-          end
-          sections = sections.take(num_same)
-        end
-        
-        if chapter.sections.length > sections.length
-          ((sections.length).upto(chapter.sections.length-1)).each do |i|
-            @toc_html += "<li>" + chapter.sections[i].gsub('<', '&lt;').gsub('>', '&gt;') + "<ol>"
-            sections[i] = chapter.sections[i]
-          end
-        end
-        
-        @toc_html += "<li><a href=\"" + get_relative_chapter_path(chapter: chapter) + "\">"
-        @toc_html += chapter.title.gsub('<', '&lt;').gsub('>', '&gt;') + "</a></li>"
+        prev_bit[:_contents] = [] unless prev_bit.key?(:_contents)
+        prev_bit[:_contents] << {label: chapter.title, content: get_relative_chapter_path(chapter: chapter)}
       end
       
-      if sections.length > 0
-        ((sections.length-1).downto(0)).each do |i|
-          @toc_html += "</ol></li>"
-        end
-      end
+      nav_array = navify_navbits(nav_bits)
       
-      @chapter_list = chapter_list
-      @sections = []
-      erb = ERB.new(template_index, 0, '-')
-      b = binding
-      index_data = erb.result b
-      
-      index_path = "output/epub/#{@group}/index.html"
-      open(index_path, 'w') do |index_file|
-        index_file.write index_data
-      end
+      @files = [{"output/epub/style/default.css" => "EPUB/style"}]
       
       chapter_list.each do |chapter|
         @chapter = chapter
@@ -168,8 +148,33 @@
         open(save_path, 'w') do |file|
           file.write page.to_s
         end
+        @files << {save_path => File.join("EPUB", File.dirname(get_relative_chapter_path(chapter: chapter)))}
         LOG.info "Did chapter #{chapter}."
       end
+      
+      @files.each do |thing|
+        thing.keys.each do |key|
+          next if key.start_with?("/")
+          thing[File.join(Dir.pwd, key)] = thing[key]
+          thing.delete(key)
+        end
+      end
+      
+      files_list = @files
+      group_name = @group
+      epub_path = "output/epub/#{@group}.epub"
+      epub = EeePub.make do
+        title "#{group_name}"
+        creator "Misc"
+        publisher ''
+        date "2016-04-12"
+        identifier 'http://example.com/', scheme: 'URL'
+        uid "#{group_name}"
+        
+        files files_list
+        nav nav_array
+      end
+      epub.save(epub_path)
     end
   end
 end

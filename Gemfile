@@ -3,3 +3,5 @@ source "https://rubygems.org"
 
 # gem "rails"
 gem 'nokogiri'
+gem 'zip-zip'
+gem 'eeepub'

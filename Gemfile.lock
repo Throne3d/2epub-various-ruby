@@ -1,14 +1,20 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    builder (3.2.2)
+    eeepub (0.8.1)
+      builder
+      rubyzip
     mini_portile2 (2.0.0)
     nokogiri (1.6.7.2)
       mini_portile2 (~> 2.0.0.rc2)
+    rubyzip (1.2.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  eeepub
   nokogiri
 
 BUNDLED WITH
