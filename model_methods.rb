@@ -58,6 +58,57 @@
     FILELOG.fatal(str)
   end
   
+  FIC_NAME_MAPPING = {
+    effulgence: [:effulgence],
+    incandescence: [:incandescence],
+    pixiethreads: [:pixiethreads],
+    radon: [:radon, :absinthe],
+    glowfic: [:othersandbox, :sandbox2, :glowfic],
+    constellation: [:constellation],
+    sandbox: [:sandbox],
+    marri: [:marri, :marrinikari],
+    peterverse: [:peter, :pedro, :peterverse],
+    maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"],
+    test: [:test]
+  }
+  FIC_SHOW_AUTHORS = [:sandbox, :glowfic, :marri, :peterverse, :maggie]
+  FIC_TOCS = {
+    #Continuities
+    effulgence: "http://edgeofyourseat.dreamwidth.org/2121.html?style=site",
+    incandescence: "http://alicornutopia.dreamwidth.org/7441.html?style=site",
+    pixiethreads: "http://pixiethreads.dreamwidth.org/613.html?style=site",
+    radon: "http://radon-absinthe.dreamwidth.org/295.html?style=site",
+    
+    #Sandboxes
+    glowfic: "http://glowfic.dreamwidth.org/2015/06/",
+    constellation: "https://vast-journey-9935.herokuapp.com/boards/",
+    
+    #Authors
+    sandbox: "http://alicornutopia.dreamwidth.org/1640.html?style=site",
+    marri: "http://marrinikari.dreamwidth.org/1634.html?style=site",
+    peterverse: "http://peterverse.dreamwidth.org/1643.html?style=site",
+    maggie: "http://maggie-of-the-owls.dreamwidth.org/454.html?style=site",
+    
+    #Test
+    test: "https://vast-journey-9935.herokuapp.com/boards/7"
+  }
+  FIC_AUTHORSTRINGS = {
+    effulgence: "Alicorn & Kappa",
+    incandescence: "Alicorn & Aestrix",
+    pixiethreads: "Aestrix & Kappa",
+    radon: "Kappa & AndaisQ",
+    
+    glowfic: "Misc",
+    constellation: "Misc",
+    
+    sandbox: "Alicorn & Misc",
+    marri: "Marri & Misc",
+    peterverse: "Pedro & Misc",
+    maggie: "Maggie & Misc",
+    
+    test: "Pedro & Throne3d"
+  }
+  
   def get_page_location(page_url, options={})
     standardize_params(options)
     where = options.key?(:where) ? options[:where] : "web_cache"
