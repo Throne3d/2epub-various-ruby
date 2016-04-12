@@ -173,7 +173,7 @@
           file.write page.to_s
         end
         @files << {save_path => File.dirname(get_relative_chapter_path(chapter: chapter))}
-        LOG.info "Did chapter #{chapter}."
+        LOG.info "Did chapter #{chapter}"
       end
       
       @files.each do |thing|
