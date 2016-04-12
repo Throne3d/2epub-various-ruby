@@ -9,7 +9,7 @@
     <% if @chapter.title_extras -%>
       <strong class="entry-subtitle"><%= h(@chapter.title_extras) %></strong><br />
     <% end -%>
-    <% if @chapter.moieties and not @chapter.moieties.empty? -%>
+    <% if @show_authors and @chapter.moieties and not @chapter.moieties.empty? -%>
       <strong class="entry-authors">Authors: <%= h(@chapter.moieties * ", ") %></strong>
     <% end -%>
     <% @message_htmls.each_with_index do |message_html, i| -%>

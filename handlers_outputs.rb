@@ -123,6 +123,8 @@
       
       @files = [{style_path => "EPUB/style"}]
       
+      @show_authors = FIC_SHOW_AUTHORS.include?(@group)
+      
       chapter_list.each do |chapter|
         @chapter = chapter
         #messages = [@chapter.entry] + @chapter.replies

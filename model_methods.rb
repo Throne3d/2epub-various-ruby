@@ -71,7 +71,7 @@
     maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"],
     test: [:test]
   }
-  FIC_SHOW_AUTHORS = [:sandbox, :glowfic, :marri, :peterverse, :maggie]
+  FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie]
   FIC_TOCS = {
     #Continuities
     effulgence: "http://edgeofyourseat.dreamwidth.org/2121.html?style=site",
