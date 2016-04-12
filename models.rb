@@ -717,6 +717,7 @@ module GlowficEpub
         if var_str["parent"]
           parent = self.instance_variable_get(var)
           hash[var_sym] = [chapter.smallURL, chapter.entry.id, parent.id] if parent.post_type == PostType::REPLY
+          hash[var_sym] = [chapter.smallURL, parent.id] if parent.post_type == PostType::ENTRY
         elsif var_str["face"]
           face = self.instance_variable_get(var)
           hash[var_sym] = face if face.is_a?(String)
