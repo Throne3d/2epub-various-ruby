@@ -28,18 +28,20 @@
     end
     
     def get_face_path(face)
-      return "" if face.imageURL.nil? or face.imageURL.empty?
-      return @face_path_cache[face.imageURL] if @face_path_cache.key?(face.imageURL)
+      face_url = face if face.is_a?(String)
+      face_url = face.imageURL if face.is_a?(Face)
+      return "" if face_url.nil? or face_url.empty?
+      return @face_path_cache[face_url] if @face_path_cache.key?(face_url)
       
-      uri = URI.parse(face.imageURL)
+      uri = URI.parse(face_url)
       save_path = "output/epub/#{@group}"
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?("/")
       relative_file = File.join(uri.host, uri_path.gsub('/', '-'))
-      download_file(face.imageURL, save_path: File.join(save_path, "images", relative_file), replace: false)
+      download_file(face_url, save_path: File.join(save_path, "images", relative_file), replace: false)
       
       @files << {File.join(save_path, "images", relative_file) => File.join("EPUB", "images", File.dirname(relative_file))}
-      @face_path_cache[face.imageURL] = File.join("..", "images", relative_file)
+      @face_path_cache[face_url] = File.join("..", "images", relative_file)
     end
     
     def get_chapter_path(options = {})
