@@ -352,7 +352,7 @@ module GlowficEpub
       
       params.reject! do |param|
         unless allowed_params.include?(param)
-          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
+          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
           true
         end
       end
@@ -484,7 +484,7 @@ module GlowficEpub
       
       params.reject! do |param|
         unless allowed_params.include?(param)
-          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
+          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
           true
         end
       end
@@ -797,7 +797,7 @@ module GlowficEpub
       
       params.reject! do |param|
         unless allowed_params.include?(param)
-          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
+          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
           true
         end
       end
