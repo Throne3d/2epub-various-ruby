@@ -262,8 +262,8 @@
       return default
     end
     
-    def get_updated_face(face)
-      get_face_by_id(face.unique_id)
+    def get_updated_face(face, default=nil)
+      get_face_by_id(face.unique_id, default)
     end
     
     def get_author_by_id(author_id, default=nil)
@@ -292,8 +292,8 @@
       @author_id_cache[author_id] = author
     end
     
-    def get_updated_author(author)
-      get_author_by_id(author.unique_id)
+    def get_updated_author(author, default=nil)
+      get_author_by_id(author.unique_id, default)
     end
     
     def make_message(message_element, options = {})
@@ -697,8 +697,8 @@
       return default
     end
     
-    def get_updated_face(face)
-      get_face_by_id(face.unique_id)
+    def get_updated_face(face, default=nil)
+      get_face_by_id(face.unique_id, default)
     end
     
     def get_author_by_id(character_id, default=nil)
@@ -753,8 +753,8 @@
       end
     end
     
-    def get_updated_author(author)
-      get_author_by_id(author.unique_id)
+    def get_updated_author(author, default=nil)
+      get_author_by_id(author.unique_id, default)
     end
     
     def make_message(message_element, options = {})
