@@ -608,13 +608,13 @@ module GlowficIndexHandlers
       chapter_list = GlowficEpub::Chapters.new
       
       list = [
-        {url: "https://vast-journey-9935.herokuapp.com/posts/43/",
+        {url: "https://vast-journey-9935.herokuapp.com/posts/43",
         title: "Book of Discovery",
         sections: ["Book of the Moon"]},
-        {url: "https://vast-journey-9935.herokuapp.com/posts/50/",
+        {url: "https://vast-journey-9935.herokuapp.com/posts/50",
         title: "Book of Experience",
         sections: ["Book of the Moon"]},
-        {url: "https://vast-journey-9935.herokuapp.com/posts/53/",
+        {url: "https://vast-journey-9935.herokuapp.com/posts/53",
         title: "A fresh start",
         sections: ["Sandboxes & Oneshots"]},
         {url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
