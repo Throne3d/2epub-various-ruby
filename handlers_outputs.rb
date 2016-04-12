@@ -189,13 +189,16 @@
         end
       end
       
+      uri = URI.parse(FIC_TOCS[group_name])
+      uri_host = uri.host
+      uri_host = "" unless uri_host
       files_list = @files
       group_name = @group
       epub_path = "output/epub/#{@group}.epub"
       epub = EeePub.make do
-        title "#{group_name}"
+        title FIC_NAMESTRINGS[group_name]
         creator FIC_AUTHORSTRINGS[group_name]
-        publisher ''
+        publisher uri_host
         date DateTime.now.strftime("%Y-%m-%d")
         identifier FIC_TOCS[group_name], scheme: 'URL'
         uid "glowfic-#{group_name}"

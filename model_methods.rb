@@ -108,6 +108,22 @@
     
     test: "Pedro & Throne3d"
   }
+  FIC_NAMESTRINGS = {
+    effulgence: "Effulgence",
+    incandescence: "Incandescence",
+    pixiethreads: "Pixiethreads",
+    radon: "Radon Absinthe",
+    
+    glowfic: "Glowfic Community",
+    constellation: "Constellation",
+    
+    sandbox: "Alicorn's Sandboxes",
+    marri: "Marri's Sandboxes",
+    peterverse: "Peterverse",
+    maggie: "Maggie's Sandboxes",
+    
+    test: "Test EPUB"
+  }
   
   def get_page_location(page_url, options={})
     standardize_params(options)
