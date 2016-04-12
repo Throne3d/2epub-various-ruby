@@ -513,7 +513,7 @@ module GlowficIndexHandlers
   end
   
   class ConstellationIndexHandler < IndexHandler
-    handles :constellation, :test
+    handles :constellation
     def initialize(options = {})
       super(options)
     end
@@ -595,6 +595,42 @@ module GlowficIndexHandlers
           end
         end
         return chapter_list
+      end
+    end
+  end
+  
+  class TestIndexHandler < IndexHandler
+    handles :test
+    def initialize(options = {})
+      super(options)
+    end
+    def toc_to_chapterlist(options = {}, &block)
+      chapter_list = GlowficEpub::Chapters.new
+      
+      list = [
+        {url: "https://vast-journey-9935.herokuapp.com/posts/43/",
+        title: "Book of Discovery",
+        sections: ["Book of the Moon"]},
+        {url: "https://vast-journey-9935.herokuapp.com/posts/50/",
+        title: "Book of Experience",
+        sections: ["Book of the Moon"]},
+        {url: "https://vast-journey-9935.herokuapp.com/posts/53/",
+        title: "A fresh start",
+        sections: ["Sandboxes & Oneshots"]},
+        {url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
+        title: "Double Witch",
+        sections: ["Bluebell Flames"]},
+        {url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
+        title: "Clannish",
+        sections: ["Incandescence", "Chamomile"]}
+      ]
+      
+      list.each do |item|
+        chapter_details = chapter_from_toc(url: item[:url], title: item[:title], sections: item[:sections])
+        if block_given?
+          yield chapter_details
+        end
+        chapter_list << chapter_details
       end
     end
   end
