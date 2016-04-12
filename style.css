@@ -207,7 +207,7 @@ div[data-type] {
     padding-top: 5px;
     page-break-before: avoid;
 }
-.branchNote {
+.branchnote {
     color: #c50;
     font-weight: bold;
     border-top: solid 1px #ddd;
@@ -219,24 +219,6 @@ div[data-type] {
 }
 .entry-subtitle {
     padding-bottom: 5px;
-}
-.contMsg {
-    color: #c50;
-    font-weight: bold;
-    border-top: solid 1px #ddd;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    margin-top: 20px;
-
-    break-inside: avoid-column;
-    -webkit-column-break-inside: avoid;
-    column-break-inside: avoid;
-    page-break-inside: avoid;
-
-    break-after: avoid-column;
-    -webkit-column-break-after: avoid;
-    column-break-after: avoid;
-    page-break-after: avoid;
 }
 .edittime {
     font-size: 80%;
