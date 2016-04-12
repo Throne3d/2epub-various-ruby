@@ -544,22 +544,42 @@ module GlowficIndexHandlers
       section_name = section_title_ele.text.strip
       
       chapter_sections = [section_name]
-      chapters = section_toc.css("tr")
-      chapters = chapters.reverse
-      chapters.each do |chapter_row|
-        next if chapter_row.at_css('th')
-        no_post = chapter_row.at_css('.centered.padding-10')
-        next if no_post and no_post.text["No posts"]
+      
+      pages = section_toc.at_css('.pagination')
+      last_url = section_url
+      if pages
+        pages.at_css('a.last_page').try(:remove)
+        pages.at_css('a.next_page').try(:remove)
+        last_url = get_absolute_url(pages.css('a').last[:href].strip, section_url)
+      end
+      
+      previous_url = last_url
+      while previous_url
+        puts "URL: #{previous_url}"
+        board_toc_data = get_page_data(previous_url, replace: (previous_url != section_url))
+        board_toc = Nokogiri::HTML(board_toc_data)
         
-        chapter_link = chapter_row.at_css('td a')
-        chapter_title = chapter_link.text.strip
-        chapter_url = get_absolute_url(chapter_link["href"], section_url)
-        
-        chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
-        
-        if block_given?
-          yield chapter_details
+        chapters = section_toc.css("tr")
+        chapters = chapters.reverse
+        chapters.each do |chapter_row|
+          next if chapter_row.at_css('th')
+          no_post = chapter_row.at_css('.centered.padding-10')
+          next if no_post and no_post.text["No posts"]
+          
+          chapter_link = chapter_row.at_css('td a')
+          chapter_title = chapter_link.text.strip
+          chapter_url = get_absolute_url(chapter_link["href"], section_url)
+          
+          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
+          
+          if block_given?
+            yield chapter_details
+          end
         end
+        
+        temp_url = previous_url
+        previous_url = board_toc.at_css('.pagination a.previous_page').try(:[], :href)
+        previous_url = get_absolute_url(previous_url.strip, temp_url) if previous_url
       end
     end
     
@@ -580,8 +600,7 @@ module GlowficIndexHandlers
           section_name = section_link.text.strip
           next if section_name == "Site testing"
           section_url = get_absolute_url(section_link["href"], fic_toc_url)
-          next if section_url.end_with?("/1")
-          
+          next if section_url[/\/boards\/1($|\?)/]
           
           board_to_block(section_url: section_url) do |chapter_details|
             chapter_list << chapter_details
