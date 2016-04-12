@@ -20,7 +20,9 @@
     include ERB::Util
     def initialize(options={})
       super options
-      FileUtils::mkdir_p "output/epub/style/"
+      FileUtils::mkdir_p "output/epub/#{@group}/style/"
+      FileUtils::mkdir_p "output/epub/#{@group}/html/"
+      FileUtils::mkdir_p "output/epub/#{@group}/images/"
       @face_path_cache = {}
     end
     
@@ -33,10 +35,10 @@
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?("/")
       relative_file = File.join(uri.host, uri_path.gsub('/', '-'))
-      download_file(face.imageURL, save_path: File.join(save_path, relative_file), replace: false)
+      download_file(face.imageURL, save_path: File.join(save_path, "images", relative_file), replace: false)
       
-      @files << {File.join(save_path, relative_file) => File.join("EPUB", File.dirname(relative_file))}
-      @face_path_cache[face.imageURL] = relative_file
+      @files << {File.join(save_path, "images", relative_file) => File.join("EPUB", "images", File.dirname(relative_file))}
+      @face_path_cache[face.imageURL] = File.join("..", "images", relative_file)
     end
     
     def get_chapter_path(options = {})
@@ -50,7 +52,7 @@
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?("/")
       save_file += "-" + uri_path.sub(".html", "") + ".html"
-      save_path = File.join(save_path, save_file.gsub("/", "-"))
+      save_path = File.join(save_path, "html", save_file.gsub("/", "-"))
     end
     
     def get_relative_chapter_path(options = {})
@@ -63,6 +65,7 @@
       uri_path = uri_path[1..-1] if uri_path.start_with?("/")
       save_file += "-" + uri_path.sub(".html", "") + ".html"
       save_path = save_file.gsub("/", "-")
+      File.join("EPUB", "html", save_path)
     end
     
     def navify_navbits(navbits)
@@ -95,8 +98,9 @@
         template_message = file.read
       end
       
+      style_path = "output/epub/#{@group}/style/default.css"
       open("style.css", 'r') do |style|
-        open("output/epub/style/default.css", 'w') do |css|
+        open(style_path, 'w') do |css|
           css.write style.read
         end
       end
@@ -116,7 +120,7 @@
       
       nav_array = navify_navbits(nav_bits)
       
-      @files = [{"output/epub/style/default.css" => "EPUB/style"}]
+      @files = [{style_path => "EPUB/style"}]
       
       chapter_list.each do |chapter|
         @chapter = chapter
@@ -148,7 +152,7 @@
         open(save_path, 'w') do |file|
           file.write page.to_s
         end
-        @files << {save_path => File.join("EPUB", File.dirname(get_relative_chapter_path(chapter: chapter)))}
+        @files << {save_path => File.dirname(get_relative_chapter_path(chapter: chapter))}
         LOG.info "Did chapter #{chapter}."
       end
       
