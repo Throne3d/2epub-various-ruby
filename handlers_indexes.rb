@@ -561,7 +561,7 @@ module GlowficIndexHandlers
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
       
-      if fic_toc_url.end_with?("/boards")
+      if fic_toc_url.end_with?("/boards/")
         chapter_list = GlowficEpub::Chapters.new
         LOG.info "TOC Page: #{fic_toc_url}"
         fic_toc_data = get_page_data(fic_toc_url, replace: true)
