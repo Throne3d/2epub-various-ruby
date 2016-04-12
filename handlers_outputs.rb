@@ -32,6 +32,7 @@
       face_url = face.imageURL if face.is_a?(Face)
       return "" if face_url.nil? or face_url.empty?
       return @face_path_cache[face_url] if @face_path_cache.key?(face_url)
+      LOG.debug "get_face_path('#{face_url}')"
       
       uri = URI.parse(face_url)
       save_path = "output/epub/#{@group}"
