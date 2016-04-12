@@ -866,7 +866,7 @@
         end
       end
       
-      LOG.info "#{chapter.title}: #{pages.length} page#{pages.length == 1 ? '' : 's'}" if notify
+      LOG.info "#{chapter.title}: parsed #{pages.length} page#{pages.length == 1 ? '' : 's'}" if notify
       
       chapter.replies=@replies
     end
