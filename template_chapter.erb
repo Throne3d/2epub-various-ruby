@@ -12,9 +12,17 @@
     <% if @chapter.moieties and not @chapter.moieties.empty? -%>
       <strong class="entry-authors">Authors: <%= h(@chapter.moieties * ", ") %></strong>
     <% end -%>
-    <% @message_htmls.each do |message_html| -%>
+    <% @message_htmls.each_with_index do |message_html, i| -%>
+      <% parent = @messages[i].parent -%>
+      <% if parent and parent.children and parent.children.length > 1 -%>
+        <% child_index = parent.children.index(@messages[i]) -%>
+        <% if child_index == 0 -%>
+          <div class="branchnote branchnote1">This is a branching point! Branch 1:</div>
+        <% elsif child_index and child_index > 0 -%>
+          <div class="branchnote branchnote<%= child_index + 1 %>">The previous branch has ended. Branch <%= child_index + 1 %>:</div>
+        <% end %>
+      <% end %>
       <%= message_html %>
     <% end -%>
-    <%# todo: add branches -%>
   </body>
 </html>

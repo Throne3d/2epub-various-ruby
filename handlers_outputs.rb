@@ -125,9 +125,28 @@
       
       chapter_list.each do |chapter|
         @chapter = chapter
-        @messages = [@chapter.entry] + @chapter.replies
-        @messages.reject! {|element| element.nil? }
-        (LOG.error "No messages for chapter." and next) if @messages.empty?
+        #messages = [@chapter.entry] + @chapter.replies
+        #messages.reject! {|element| element.nil? }
+        (LOG.error "No entry for chapter." and next) unless chapter.entry
+        (LOG.info "Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
+        
+        @messages = []
+        message = @chapter.entry
+        while message
+          @messages << message unless @messages.include?(message)
+          new_msg = nil
+          
+          message.children.each do |child|
+            next if @messages.include?(child)
+            new_msg = child
+            break
+          end
+          unless new_msg
+            new_msg = message.parent
+          end
+          
+          message = new_msg
+        end
         
         @message_htmls = @messages.map do |message|
           @message = message
