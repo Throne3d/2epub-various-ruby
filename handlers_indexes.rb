@@ -178,6 +178,11 @@ module GlowficIndexHandlers
         return unless chapter_link
         chapter_text = get_text_on_line(chapter_link, after: false).strip
         chapter_text_extras = get_text_on_line(chapter_link, include_node: false, before: false).strip
+        open_count = chapter_text.scan("(").count - chapter_text.scan(")").count
+        if open_count > 0 and chapter_text_extras.start_with?(")")
+          chapter_text += ")"
+          chapter_text_extras = chapter_text_extras[1..-1]
+        end
         chapter_text_extras = nil if chapter_text_extras.empty?
         chapter_url = chapter_link.try(:[], :href)
         return unless chapter_url
