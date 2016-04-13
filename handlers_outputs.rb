@@ -25,6 +25,7 @@
       FileUtils::mkdir_p "output/epub/#{@group}/html/"
       FileUtils::mkdir_p "output/epub/#{@group}/images/"
       @face_path_cache = {}
+      @paths_used = []
     end
     
     def get_face_path(face)
@@ -38,7 +39,29 @@
       save_path = "output/epub/#{@group}"
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?("/")
-      relative_file = sanitize_local_path(File.join("images", uri.host, URI.unescape(uri_path.gsub('/', '-'))))
+      filename = URI.unescape(uri_path.gsub('/', '-'))
+      if filename.length > 100
+        temp_extension = filename.split('.').last
+        temp_filename = filename.sub(".#{temp_extension}", "")
+        temp_filename = temp_filename[0..50]
+        temp_filename += '.' + temp_extension if temp_extension.length < 20 and temp_extension != filename
+        LOG.debug "Shortening filename from #{filename} to #{temp_filename}"
+        filename = temp_filename
+      end
+      
+      test_ext = filename.split('.').last
+      test_ext = "" if test_ext == filename
+      test_ext = "." + test_ext if test_ext and not test_ext.empty?
+      test_filename = filename.sub("#{test_ext}", "")
+      i = 0
+      relative_file = sanitize_local_path(File.join("images", uri.host, test_filename + test_ext))
+      while @paths_used.include?(relative_file)
+        i += 1
+        temp_filename = "#{test_filename}_#{i}"
+        relative_file = sanitize_local_path(File.join("images", uri.host, temp_filename + test_ext))
+        LOG.debug "There was an issue with the previous file. Trying alternate path: #{temp_filename + test_ext}"
+      end
+      @paths_used << relative_file
       download_file(face_url, save_path: File.join(save_path, relative_file), replace: false)
       
       @files << {File.join(save_path, relative_file) => File.join("EPUB", File.dirname(relative_file))}
