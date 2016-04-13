@@ -151,6 +151,10 @@
     save_path
   end
   
+  def sanitize_local_path(local_path)
+    local_path.gsub("\\", "~BACKSLASH~").gsub(":", "~COLON~").gsub("*", "~ASTERISK~").gsub("?", "~QMARK~").gsub("\"", "~QUOT~").gsub("<", "~LT~").gsub(">", "~GT~").gsub("|", "~BAR~")
+  end
+  
   def download_file(file_url, options={})
     standardize_params(options)
     replace = options.key?(:replace) ? options[:replace] : false

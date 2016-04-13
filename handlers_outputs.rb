@@ -38,11 +38,11 @@
       save_path = "output/epub/#{@group}"
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?("/")
-      relative_file = File.join(uri.host, uri_path.gsub('/', '-'))
-      download_file(face_url, save_path: File.join(save_path, "images", relative_file), replace: false)
+      relative_file = sanitize_local_path(File.join("images", uri.host, URI.unescape(uri_path.gsub('/', '-'))))
+      download_file(face_url, save_path: File.join(save_path, relative_file), replace: false)
       
-      @files << {File.join(save_path, "images", relative_file) => File.join("EPUB", "images", File.dirname(relative_file))}
-      @face_path_cache[face_url] = File.join("..", "images", relative_file)
+      @files << {File.join(save_path, relative_file) => File.join("EPUB", File.dirname(relative_file))}
+      @face_path_cache[face_url] = File.join("..", relative_file)
     end
     
     def get_chapter_path(options = {})
