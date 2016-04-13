@@ -2,7 +2,7 @@
   <div class="user">
     <div class="usericon">
       <% if @message.face and get_face_path(@message.face) and not get_face_path(@message.face).empty? -%>
-        <img src="<%= get_face_path(@message.face) %>" />
+        <img src="<%= get_face_path(@message.face).gsub(' ', '%20') %>" />
       <% else -%>
         <div>X</div>
       <% end -%>
