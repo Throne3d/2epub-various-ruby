@@ -752,7 +752,7 @@
         
         char_screen = char_page_c.at_css(".character-screenname").try(:text).try(:strip)
         char_name = char_page_c.at_css(".character-name").try(:text).try(:strip)
-        char_display = char_name + (char_screen.nil? or char_screen.downcase == char_name.downcase ? "" : " (#{char_screen})")
+        char_display = char_name + ((char_screen.nil? or char_screen.downcase == char_name.downcase) ? "" : " (#{char_screen})")
         
         params = {}
         params[:moiety] = get_moiety_by_id(character_id)
