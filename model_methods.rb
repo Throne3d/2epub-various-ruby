@@ -70,7 +70,8 @@
     peterverse: [:peter, :pedro, :peterverse],
     maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"],
     throne: [:throne, :throne3d],
-    test: [:test]
+    test: [:test],
+    temp_starlight: [:temp_starlight, :starlight]
   }
   FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie, :throne]
   FIC_TOCS = {
@@ -92,7 +93,8 @@
     throne: "https://theotrics.dreamwidth.org/268.html?style=site",
     
     #Test
-    test: "https://vast-journey-9935.herokuapp.com/boards/7"
+    test: "https://vast-journey-9935.herokuapp.com/boards/7",
+    temp_starlight: "https://alicornutopia.dreamwidth.org/29069.html"
   }
   FIC_AUTHORSTRINGS = {
     effulgence: "Alicorn & Kappa",
@@ -109,7 +111,8 @@
     maggie: "Maggie & Misc",
     throne: "Throne3d & Misc",
     
-    test: "Pedro & Throne3d"
+    test: "Pedro & Throne3d",
+    temp_starlight: "Alicorn & Pedro"
   }
   FIC_NAMESTRINGS = {
     effulgence: "Effulgence",
@@ -126,7 +129,8 @@
     maggie: "Maggie's Sandboxes",
     throne: "Throne3d's Sandboxes",
     
-    test: "Test EPUB"
+    test: "Test EPUB",
+    temp_starlight: "Starlight"
   }
   
   def get_page_location(page_url, options={})

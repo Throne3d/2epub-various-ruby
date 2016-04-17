@@ -626,30 +626,41 @@ module GlowficIndexHandlers
   end
   
   class TestIndexHandler < IndexHandler
-    handles :test
+    handles :test, :temp_starlight
     def initialize(options = {})
       super(options)
     end
     def toc_to_chapterlist(options = {}, &block)
       chapter_list = GlowficEpub::Chapters.new
       
-      list = [
-        {url: "https://vast-journey-9935.herokuapp.com/posts/43",
-        title: "Book of Discovery",
-        sections: ["Book of the Moon"]},
-        {url: "https://vast-journey-9935.herokuapp.com/posts/50",
-        title: "Book of Experience",
-        sections: ["Book of the Moon"]},
-        {url: "https://vast-journey-9935.herokuapp.com/posts/53",
-        title: "A fresh start",
-        sections: ["Sandboxes & Oneshots"]},
-        {url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
-        title: "Double Witch",
-        sections: ["Bluebell Flames"]},
-        {url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
-        title: "Clannish",
-        sections: ["Incandescence", "Chamomile"]}
-      ]
+      list = if @group == :test
+        [
+          {url: "https://vast-journey-9935.herokuapp.com/posts/43",
+          title: "Book of Discovery",
+          sections: ["Book of the Moon"]},
+          {url: "https://vast-journey-9935.herokuapp.com/posts/50",
+          title: "Book of Experience",
+          sections: ["Book of the Moon"]},
+          {url: "https://vast-journey-9935.herokuapp.com/posts/53",
+          title: "A fresh start",
+          sections: ["Sandboxes & Oneshots"]},
+          {url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
+          title: "Double Witch",
+          sections: ["Bluebell Flames"]},
+          {url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
+          title: "Clannish",
+          sections: ["Incandescence", "Chamomile"]}
+        ]
+      else
+        [
+          {url: "https://alicornutopia.dreamwidth.org/29069.html",
+          title: "and in my hands place honesty",
+          sections: ["Starlight"]},
+          {url: "https://alicornutopia.dreamwidth.org/29401.html",
+          title: "veritable",
+          sections: ["Starlight"]}
+        ]
+      end
       
       list.each do |item|
         chapter_details = chapter_from_toc(url: item[:url], title: item[:title], sections: item[:sections])
