@@ -69,7 +69,7 @@
     marri: [:marri, :marrinikari],
     peterverse: [:peter, :pedro, :peterverse],
     maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"],
-    throne: [:throne, :throne3d],
+    throne: [:throne, :throne3d, :theotrics],
     test: [:test],
     temp_starlight: [:temp_starlight, :starlight]
   }
