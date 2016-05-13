@@ -485,6 +485,11 @@
         is_new = false
         
         first_page_url = prev_pages.first
+        unless first_page_url["per_page=all"]
+          LOG.error "Constellation page has no per_page=all! #{chapter}" 
+          first_page_url = set_url_params(clear_url_params(first_page_url), {per_page: 'all'})
+          chapter.pages = [first_page_url]
+        end
         
         first_page_old_data = get_page_data(first_page_url, replace: false, where: @group_folder)
         first_page_new_data = get_page_data(first_page_url, replace: true, where: 'temp')
