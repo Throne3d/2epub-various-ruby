@@ -613,6 +613,7 @@ module GlowficEpub
           @parent = @chapter.entry
         else
           parent_id = @parent.last
+          LOG.error "Parent of post is nil! #{self}" unless parent_id
           @chapter.replies.each do |reply|
             @parent = reply if reply.id == parent_id
           end
