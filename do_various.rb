@@ -17,6 +17,7 @@ require 'handlers_indexes'
 require 'handlers_sites'
 require 'handlers_outputs'
 include GlowficEpubMethods
+include GlowficEpub
 
 FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
 FileUtils.mkdir "logs" unless File.directory?("logs")
@@ -163,6 +164,63 @@ def main(args)
     handler = GlowficOutputHandlers::EpubHandler
     handler = handler.new(chapter_list: chapter_list, group: group)
     handler.output
+  elsif (process == :stats)
+    GlowficEpub::build_moieties
+    chapter_list = get_chapters_data(group)
+    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    LOG.info "Processing '#{group}'"
+    
+    #replies by author, replies by character, icon uses
+    #total and per-month?
+    #maybe track per continuity thing on the constellation, too.
+    #things started by author
+    
+    stats = {}
+    stats[:_] = {entry_moiety: {}, msg_moiety: {}, msg_character: {}, msg_icons: {}}
+    
+    chapter_list.each do |chapter|
+      next unless chapter.entry
+      
+      msgs = [chapter.entry] + chapter.replies
+      LOG.info "Processing chapter #{chapter}: #{msgs.length} message#{('s' unless msgs.length == 1)}"
+      msgs.each do |msg|
+        msg_date = msg.time
+        msg_mo_str = "#{msg_date.year}-#{msg_date.month}"
+        
+        stats[msg_mo_str] = {entry_moiety: {}, msg_moiety: {}, msg_character: {}, msg_icons: {}} unless stats[msg_mo_str]
+        
+        msg_moiety = msg.author.moiety
+        msg_char = msg.author.to_s
+        msg_icon = msg.face.try(:to_s)
+        
+        if msg.post_type == PostType::ENTRY 
+          stats[msg_mo_str][:entry_moiety][msg_moiety] = 0 unless stats[msg_mo_str][:entry_moiety].key?(msg_moiety)
+          stats[msg_mo_str][:entry_moiety][msg_moiety] += 1
+          stats[:_][:entry_moiety][msg_moiety] = 0 unless stats[:_][:entry_moiety].key?(msg_moiety)
+          stats[:_][:entry_moiety][msg_moiety] += 1
+        end
+        
+        stats[msg_mo_str][:msg_moiety][msg_moiety] = 0 unless stats[msg_mo_str][:msg_moiety].key?(msg_moiety)
+        stats[msg_mo_str][:msg_moiety][msg_moiety] += 1
+        stats[:_][:msg_moiety][msg_moiety] = 0 unless stats[:_][:msg_moiety].key?(msg_moiety)
+        stats[:_][:msg_moiety][msg_moiety] += 1
+        
+        stats[msg_mo_str][:msg_character][msg_char] = 0 unless stats[msg_mo_str][:msg_character].key?(msg_char)
+        stats[msg_mo_str][:msg_character][msg_char] += 1
+        stats[:_][:msg_character][msg_char] = 0 unless stats[:_][:msg_character].key?(msg_char)
+        stats[:_][:msg_character][msg_char] += 1
+        
+        if msg_icon
+          stats[msg_mo_str][:msg_icons][msg_icon] = 0 unless stats[msg_mo_str][:msg_icons].key?(msg_icon)
+          stats[msg_mo_str][:msg_icons][msg_icon] += 1
+          stats[:_][:msg_icons][msg_icon] = 0 unless stats[:_][:msg_icons].key?(msg_icon)
+          stats[:_][:msg_icons][msg_icon] += 1
+        end
+      end
+      
+    end
+    
+    p stats
   else
     LOG.info "Not yet implemented."
   end
