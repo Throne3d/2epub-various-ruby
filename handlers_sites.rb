@@ -787,11 +787,17 @@
     end
     
     def make_message(message_element, options = {})
-      permalink_btn = message_element.at_css(".post-edit-box img[alt='Link']")
-      if permalink_btn
-        permalink_btn = permalink_btn.parent
-        message_id = permalink_btn["href"].split('posts/').last.split('replies/').last.split("#").first
-        message_type = (permalink_btn["href"]["post"]) ? PostType::ENTRY : PostType::REPLY
+      #message_element is the ".post-container"
+      message_anchor = message_element.at_css("> a[name]")
+      if message_anchor
+        message_id = message_anchor[:name].split("reply-").last
+        message_type = PostType::REPLY
+      else
+        entry_title = message_element.parent.at_css('#post-title a')
+        LOG.error "Couldn't find the post's title! Gah!" unless entry_title
+        
+        message_id = entry_title[:href].split('posts/').last
+        message_type = PostType::ENTRY
       end
       
       userpic = message_element.at_css(".post-icon img")
