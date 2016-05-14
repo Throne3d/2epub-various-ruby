@@ -135,40 +135,31 @@
       
       is_new = true
       prev_pages = chapter.pages
+      check_pages = chapter.check_pages
       if prev_pages and not prev_pages.empty?
         is_new = false
-        first_page_url = prev_pages.first
-        last_page_url = prev_pages.last
-        same_urls = first_page_url == last_page_url
         
-        last_page_old_data = get_page_data(last_page_url, replace: false, where: @group_folder)
-        last_page_new_data = get_page_data(last_page_url, replace: true, where: 'temp')
-        
-        LOG.debug "Got old last data, now nokogiri-ing"
-        last_page_old = Nokogiri::HTML(last_page_old_data)
-        last_page_new = Nokogiri::HTML(last_page_new_data)
-        LOG.debug "nokogiri'd"
-        
-        last_old_content = last_page_old.at_css('#content')
-        last_new_content = last_page_new.at_css('#content')
-        
-        last_old_content.at_css(".entry-interaction-links").try(:remove)
-        last_new_content.at_css(".entry-interaction-links").try(:remove)
-        
-        changed = (last_old_content.inner_html != last_new_content.inner_html)
-        if not changed and not same_urls
-          LOG.debug "last page wasn't changed, checking first"
-          first_page_old_data = get_page_data(first_page_url, replace: false, where: @group_folder)
-          first_page_new_data = get_page_data(first_page_url, replace: true, where: 'temp')
-          LOG.debug "Got old first data, now nokogiri-ing"
-          first_page_old = Nokogiri::HTML(first_page_old_data)
-          first_page_new = Nokogiri::HTML(first_page_new_data)
-          first_old_content = first_page_old.at_css('#content')
-          first_new_content = first_page_new.at_css('#content')
-          first_old_content.at_css(".entry-interaction-links").try(:remove)
-          first_new_content.at_css(".entry-interaction-links").try(:remove)
-          changed = (first_old_content.inner_html != first_new_content.inner_html)
+        changed = false
+        check_pages.each_with_index do |check_page, i|
+          page_old_data = get_page_data(check_page, replace: false, where: @group_folder)
+          page_new_data = get_page_data(check_page, replace: true, where: 'temp')
+          
+          LOG.debug "Got old last data, now nokogiri-ing"
+          page_old = Nokogiri::HTML(page_old_data)
+          page_new = Nokogiri::HTML(page_new_data)
+          LOG.debug "nokogiri'd"
+          
+          old_content = page_old.at_css('#content')
+          new_content = page_new.at_css('#content')
+          
+          old_content.at_css(".entry-interaction-links").try(:remove)
+          new_content.at_css(".entry-interaction-links").try(:remove)
+          
+          changed = (old_content.inner_html != new_content.inner_html)
+          break if changed
+          LOG.debug "check page #{i} was not different"
         end
+        
         LOG.debug "#{(not changed) ? 'not ' : ''}changed!"
         
         pages_exist = true
