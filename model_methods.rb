@@ -273,7 +273,10 @@
     uri = URI.parse(url)
     if uri.host.end_with?("dreamwidth.org")
       uri.fragment = nil
-      set_url_params(clear_url_params(uri.to_s), {style: :site})
+      thread = get_url_param(url, "thread")
+      params = {style: :site}
+      params[:thread] = thread unless thread.nil? or thread.empty?
+      set_url_params(clear_url_params(uri.to_s), params)
     else
       url
     end
