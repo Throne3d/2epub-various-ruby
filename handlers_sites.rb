@@ -317,6 +317,7 @@
     end
     
     def make_message(message_element, options = {})
+      #message_element is .comment
       in_context = (options.key?(:in_context) ? options[:in_context] : true)
       
       message_id = message_element["id"].sub("comment-", "").sub("entry-", "")
