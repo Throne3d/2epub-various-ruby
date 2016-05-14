@@ -933,7 +933,7 @@
         end
       end
       
-      pages_effectual = (@replies * 1.0 / 25).ceil
+      pages_effectual = (@replies.length * 1.0 / 25).ceil
       pages_effectual = 1 if pages_effectual < 1
       
       LOG.info "#{chapter.title}: parsed #{pages_effectual} page#{pages.length == 1 ? '' : 's'}" if notify
