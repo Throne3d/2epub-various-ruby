@@ -77,6 +77,16 @@
       current_page = Nokogiri::HTML(current_page_data)
       LOG.debug "Nokogiri processed a page in get_full"
       
+      nsfw_warning = current_page.at_css('#content').at_css('.panel.callout')
+      if nsfw_warning
+        nsfw_warning_text = nsfw_warning.at_css('.text-center')
+        if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
+          @error = "Page had discretion advised warning!"
+          @success = false
+          return
+        end
+      end
+      
       full_comments = current_page.css('.comment-wrapper.full')
       LOG.debug "found fulls"
       full_comments.each do |full_comment|
@@ -106,14 +116,16 @@
         LOG.debug "Niced URL to: #{new_page_url}"
         
         @comment_ids = []
+        @success = false
         sub_page_urls = get_full(new_page_url, options)
-        next if sub_page_urls.nil?
+        next if sub_page_urls.nil? or not @success
         
         page_urls += sub_page_urls
         comment_ids += @comment_ids
       end
       
       @comment_ids = comment_ids
+      @success = true
       return page_urls
     end
     
@@ -178,9 +190,11 @@
       
       #Hasn't been done before, or it's outdated, or some pages were deleted; re-get.
       @download_count = 0
+      @success = false
       pages = get_full(chapter, options.merge({new: (not changed)}))
       chapter.pages = pages
-      LOG.info "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
+      LOG.info "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify and @success
+      LOG.error "ERROR: #{chapter.title}: #{@error}" unless @success
       return chapter
     end
     
