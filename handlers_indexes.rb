@@ -669,6 +669,8 @@ module GlowficIndexHandlers
         end
         chapter_list << chapter_details
       end
+      
+      return chapter_list
     end
   end
   
