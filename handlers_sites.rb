@@ -54,6 +54,8 @@
       # When retrieved in get_face_by_id
       @author_id_cache = {}
       @moiety_cache = {}
+      
+      @downloaded = []
     end
     
     def get_full(chapter, options = {})
@@ -71,8 +73,11 @@
       page_urls = [chapter_url]
       comment_ids = []
       
-      current_page_data = get_page_data(chapter_url, replace: true, where: @group_folder)
-      @download_count+=1
+      downd = @downloaded.include?(chapter_url)
+      current_page_data = get_page_data(chapter_url, replace: (not downd), where: @group_folder)
+      @download_count+=1 unless downd
+      @downloaded << chapter_url unless downd
+      
       LOG.debug "Got a page in get_full"
       current_page = Nokogiri::HTML(current_page_data)
       LOG.debug "Nokogiri processed a page in get_full"
@@ -184,6 +189,13 @@
       @success = false
       pages = get_full(chapter, options.merge({new: (not changed)}))
       chapter.pages = pages
+      chapter.check_pages.each do |check_page|
+        downd = @downloaded.include?(check_page)
+        page_new_data = get_page_data(check_page, replace: (not downd), where: @group_folder)
+        @download_count+=1 unless downd
+        @downloaded << check_page unless downd
+      end
+      
       LOG.info "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify and @success
       LOG.error "ERROR: #{chapter.title}: #{@error}" unless @success
       return chapter
