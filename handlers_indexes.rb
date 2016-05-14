@@ -635,23 +635,29 @@ module GlowficIndexHandlers
       
       list = if @group == :test
         [
-          {url: "https://vast-journey-9935.herokuapp.com/posts/43",
-          title: "Book of Discovery",
-          sections: ["Book of the Moon"]},
-          {url: "https://vast-journey-9935.herokuapp.com/posts/50",
-          title: "Book of Experience",
-          sections: ["Book of the Moon"]},
-          {url: "https://vast-journey-9935.herokuapp.com/posts/53",
-          title: "A fresh start",
-          sections: ["Sandboxes & Oneshots"]},
-          {url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
-          title: "Double Witch",
-          sections: ["Bluebell Flames"]},
-          {url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
-          title: "Clannish",
-          sections: ["Incandescence", "Chamomile"]}
+          {url: "https://theotrics.dreamwidth.org/682.html",
+          title: "test post please ignore",
+          sections: ["Theotrics"]},
+          {url: "https://theotrics.dreamwidth.org/682.html?thread=9642#cmt9642",
+          title: "test post please ignore pt 2",
+          sections: ["Theotrics"]}#,
+          #{url: "https://vast-journey-9935.herokuapp.com/posts/43",
+          #title: "Book of Discovery",
+          #sections: ["Book of the Moon"]},
+          #{url: "https://vast-journey-9935.herokuapp.com/posts/50",
+          #title: "Book of Experience",
+          #sections: ["Book of the Moon"]},
+          #{url: "https://vast-journey-9935.herokuapp.com/posts/53",
+          #title: "A fresh start",
+          #sections: ["Sandboxes & Oneshots"]},
+          #{url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
+          #title: "Double Witch",
+          #sections: ["Bluebell Flames"]},
+          #{url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
+          #title: "Clannish",
+          #sections: ["Incandescence", "Chamomile"]}
         ]
-      else
+      elsif @group == :temp_starlight
         [
           {url: "https://alicornutopia.dreamwidth.org/29069.html",
           title: "and in my hands place honesty",
