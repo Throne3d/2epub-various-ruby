@@ -109,8 +109,8 @@ def main(args)
       site_handler = GlowficSiteHandlers.get_handler_for(chapter)
       
       if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?) or (site_handler.is_a?(Array) and site_handler.length > 1)
-        LOG.error "No site handler for #{chapter.title}!" if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?)
-        LOG.error "Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if (site_handler.is_a?(Array) and site_handler.length > 1)
+        LOG.error "ERROR: No site handler for #{chapter.title}!" if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?)
+        LOG.error "ERROR: Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if (site_handler.is_a?(Array) and site_handler.length > 1)
         unhandled_chapters << chapter
         next
       end
@@ -137,8 +137,8 @@ def main(args)
       site_handler = site_handlers.select {|c| c.handles? chapter}
       
       if site_handler.nil? or site_handler.empty? or site_handler.length > 1
-        LOG.error "No site handler for #{chapter.title}!" if site_handler.nil? or site_handler.empty?
-        LOG.error "Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if site_handler.length > 1
+        LOG.error "ERROR: No site handler for #{chapter.title}!" if site_handler.nil? or site_handler.empty?
+        LOG.error "ERROR: Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if site_handler.length > 1
         next
       end
       
