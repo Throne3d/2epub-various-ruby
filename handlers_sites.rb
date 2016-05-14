@@ -403,6 +403,10 @@
       
       @chapter = chapter
       @replies = []
+      @reply_ids = []
+      @reply_ids << -1 unless chapter.thread
+      @reply_ids << "cmt#{chapter.thread}" if chapter.thread
+      
       pages.each do |page_url|
         page_data = get_page_data(page_url, replace: false, where: @group_folder)
         LOG.debug "got page data for page #{page_url}"
@@ -427,8 +431,19 @@
         comments = page_content.css('.comment-wrapper.full')
         comments.each do |comment|
           comment_element = comment.at_css('.comment')
-          reply = make_message(comment_element)
-          @replies << reply
+          
+          parent_link = comment_element.at_css('.link.commentparent').try(:at_css, 'a')
+          parent_id = -1
+          if parent_link
+            parent_href = parent_link[:href]
+            parent_id = "cmt" + get_url_param(parent_href, "thread")
+          end
+          
+          if (@reply_ids.include?(parent_id))
+            reply = make_message(comment_element)
+            @replies << reply
+            @reply_ids << reply.id
+          end
         end
       end
       
