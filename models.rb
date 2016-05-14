@@ -283,13 +283,13 @@ module GlowficEpub
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :replies, :sections, :authors, :entry, :url
+    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url
     
     param_transform :name => :title, :name_extras => :title_extras
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties
     
     def allowed_params
-      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :authors]
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors]
     end
     
     def group
@@ -303,6 +303,10 @@ module GlowficEpub
     end
     def pages
       @pages ||= []
+    end
+    def check_pages
+      @check_pages ||= []
+      ((@check_pages.empty? and not self.pages.empty?) ? (self.pages.length > 1 ? [self.pages.last, self.pages.first] : [self.pages.first]) : @check_pages)
     end
     def replies
       @replies ||= []
@@ -358,6 +362,7 @@ module GlowficEpub
       end
       
       @pages = []
+      @check_pages = []
       @replies = []
       @sections = []
       @authors = []
