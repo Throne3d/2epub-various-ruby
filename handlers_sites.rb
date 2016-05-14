@@ -172,7 +172,7 @@
           page_loc = get_page_location(page_url, where: @group_folder)
           if not File.file?(page_loc)
             pages_exist = false
-            LOG.debug "Failed to find a file (page #{i}) for chapter #{chapter}"
+            LOG.error "Failed to find a file (page #{i}) for chapter #{chapter}. Will get again."
             break
           end
         end #Check if all the pages exist, in case someone deleted them
