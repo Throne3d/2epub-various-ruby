@@ -201,6 +201,14 @@
       main_page_data = down_or_cache(main_page, where: @group_folder)
       main_page_stuff = Nokogiri::HTML(main_page_data)
       
+      nsfw_warning = main_page_stuff.at_css('.panel.callout')
+      if nsfw_warning
+        nsfw_warning_text = nsfw_warning.at_css('.text-center')
+        if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
+          @error = "Page had discretion advised warning!"
+        end
+      end
+      
       #Check the comments and find each branch-end and get a link to them all :D
       chapter.check_pages = [main_page]
       main_page_content = main_page_stuff.at_css('#content')
