@@ -56,8 +56,22 @@
       @moiety_cache = {}
       
       @downloaded = []
+      @download_count = 0
+      @downcache = {}
     end
     
+    def down_or_cache(page, options = {})
+      where = (options.key?(:where)) ? options[:where] : nil
+      @downcache[where] = [] unless @downcache.key?(where)
+      
+      downd = @downcache[where].include?(page)
+      data = get_page_data(page, options)
+      @download_count+=1 unless downd
+      @downcache[where] << page unless downd
+      data
+    end
+    
+    #TODO: Make sure to set the check_pages! Set it to the 3rd-from-last comment in the thread or something!
     def get_full(chapter, options = {})
       if chapter.is_a?(GlowficEpub::Chapter)
         params = {style: :site}
@@ -70,19 +84,16 @@
       notify = options.key?(:notify) ? options[:notify] : true
       is_new = options.key?(:new) ? options[:new] : false
       
-      page_urls = [chapter_url]
-      comment_ids = []
+      page_urls = []
       
-      downd = @downloaded.include?(chapter_url)
-      current_page_data = get_page_data(chapter_url, replace: (not downd), where: @group_folder)
-      @download_count+=1 unless downd
-      @downloaded << chapter_url unless downd
+      params = {style: :site, view: :flat, page: 1}
+      first_page = set_url_params(clear_url_params(chapter.url), params)
+      first_page_data = down_or_cache(first_page, where: @group_folder)
+      first_page_stuff = Nokogiri::HTML(first_page_data)
       
-      LOG.debug "Got a page in get_full"
-      current_page = Nokogiri::HTML(current_page_data)
-      LOG.debug "Nokogiri processed a page in get_full"
+      first_page_content = first_page_stuff.at_css('#content')
       
-      nsfw_warning = current_page.at_css('#content').at_css('.panel.callout')
+      nsfw_warning = first_page_content.at_css('.panel.callout')
       if nsfw_warning
         nsfw_warning_text = nsfw_warning.at_css('.text-center')
         if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
@@ -92,44 +103,17 @@
         end
       end
       
-      full_comments = current_page.css('.comment-wrapper.full')
-      LOG.debug "found fulls"
-      full_comments.each do |full_comment|
-        comment_id = full_comment.parent.try(:[], :id)
-        next unless comment_id
-        comment_ids << comment_id
+      page_count = first_page_content.try(:at_css, '.comment-pages').try(:at_css, '.page-links').try(:at_css, 'a:last').try(:text).try(:strip)
+      page_count = page_count.gsub("[","").gsub("]","").to_i if page_count
+      page_count = 1 unless page_count
+      
+      1.upto(page_count).each do |num|
+        params[:page] = num
+        this_page = set_url_params(clear_url_params(chapter.url), params)
+        down_or_cache(this_page, where: @group_folder)
+        page_urls << this_page
       end
       
-      partial_comments = current_page.css('.comment-wrapper.partial')
-      LOG.debug "found partials"
-      partial_comments.each do |partial_comment|
-        comment_id = partial_comment.parent.try(:[], :id)
-        next unless comment_id
-        next if comment_ids.include?(comment_id)
-        
-        comment_link = partial_comment.at_css('h4.comment-title a')
-        LOG.debug "found link"
-        (LOG.warning "Issue finding link while processing chapter `#{chapter}`, comment #{partial_comment}" and return nil) if comment_link.nil? or not comment_link.try(:[], :href)
-        
-        new_url = comment_link.try(:[], :href)
-        new_thread = get_url_param(new_url, "thread")
-        params = {style: :site}
-        params[:thread] = new_thread if new_thread
-        (LOG.warning "No chapter thread?" and return nil) unless new_thread
-        LOG.debug "Got thread"
-        new_page_url = set_url_params(clear_url_params(new_url), params)
-        LOG.debug "Niced URL to: #{new_page_url}"
-        
-        @comment_ids = []
-        @success = false
-        sub_page_urls = get_full(new_page_url, options)
-        next if sub_page_urls.nil? or not @success
-        
-        page_urls += sub_page_urls
-        comment_ids += @comment_ids
-      end
-      
-      @comment_ids = comment_ids
       @success = true
       return page_urls
     end
@@ -188,12 +172,55 @@
       @download_count = 0
       @success = false
       pages = get_full(chapter, options.merge({new: (not changed)}))
+      
+      params = {style: :site}
+      params[:thread] = chapter.thread if chapter.thread
+      main_page = set_url_params(clear_url_params(chapter.url), params)
+      
+      main_page_data = down_or_cache(main_page, where: @group_folder)
+      main_page_stuff = Nokogiri::HTML(main_page_data)
+      
+      #Check the comments and find each branch-end and get a link to them all :D
+      chapter.check_pages = [main_page]
+      main_page_content = main_page_stuff.at_css('#content')
+      comments = main_page_content.css('.comment-thread')
+      prev_chain = []
+      prev_depth = 0
+      comments.each do |comment|
+        prev_chain = prev_chain.drop(prev_chain.length - 3) if prev_chain.length > 3
+        
+        comm_depth = 0
+        comment[:class].split(/\s+/).each do |klass|
+          next unless klass["comment-depth-"]
+          comm_depth = klass.split("comment-depth-").last.to_i
+        end
+        (LOG.error "Error: failed comment depth" and next) if comm_depth == 0
+        
+        if comm_depth > prev_depth
+          prev_chain << comment
+          prev_depth = comm_depth
+          next
+        end
+        
+        upper_comment = prev_chain.first
+        partial = upper_comment.at_css('> .dwexpcomment > .partial')
+        if partial
+          comm_link = partial.at_css('.comment-title').try(:at_css, 'a').try(:href)
+        else
+          full = upper_comment.at_css('> .dwexpcomment > .full')
+          comm_link = full.try(:at_css, '.commentpermalink').try(:at_css, 'a').try(:href)
+        end
+        (LOG.error "Error: failed upper comment link" and next) unless comm_link
+        
+        chapter.check_pages << comm_link
+        LOG.debug "Added to chapter check_pages: #{comm_link}"
+        
+        prev_chain = [comment]
+      end
+      
       chapter.pages = pages
       chapter.check_pages.each do |check_page|
-        downd = @downloaded.include?(check_page)
-        page_new_data = get_page_data(check_page, replace: (not downd), where: @group_folder)
-        @download_count+=1 unless downd
-        @downloaded << check_page unless downd
+        page_new_data = down_or_cache(check_page, where: @group_folder)
       end
       
       LOG.info "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify and @success
