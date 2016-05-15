@@ -409,4 +409,13 @@
     end
     prev_pages
   end
+  
+  def get_prev_chapter_check_pages(group)
+    chapters = get_chapters_data(group)
+    prev_check_pages = {}
+    chapters.each do |chapter|
+      prev_check_pages[chapter.url] = chapter.check_pages if chapter.check_pages and not chapter.check_pages.empty?
+    end
+    prev_check_pages
+  end
 end

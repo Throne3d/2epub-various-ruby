@@ -10,6 +10,9 @@ module GlowficIndexHandlers
     def prev_pages
       @prev_pages ||= get_prev_chapter_pages(group)
     end
+    def prev_check_pages
+      @prev_check_pages ||= get_prev_chapter_check_pages(group)
+    end
     def initialize(options = {})
       @group = options[:group] if options.key?(:group)
     end
@@ -54,6 +57,9 @@ module GlowficIndexHandlers
       
       if prev_pages.key?(params[:url])
         params[:pages] = prev_pages[params[:url]]
+      end
+      if prev_check_pages.key?(params[:url])
+        params[:check_pages] = prev_check_pages[params[:url]]
       end
       return GlowficEpub::Chapter.new(params)
     end
