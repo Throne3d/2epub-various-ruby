@@ -306,7 +306,15 @@ module GlowficEpub
     end
     def check_pages
       @check_pages ||= []
-      ((@check_pages.empty? and not self.pages.empty?) ? (self.pages.length > 1 ? [self.pages.last, self.pages.first] : [self.pages.first]) : @check_pages)
+      if @check_pages.empty? and not self.pages.empty?
+        if self.pages.length > 1
+          [self.pages.last, self.pages.first]
+        else
+          self.pages
+        end
+      else
+        @check_pages
+      end
     end
     def replies
       @replies ||= []
