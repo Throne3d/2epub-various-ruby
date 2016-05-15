@@ -73,12 +73,15 @@
       chapter_url = options[:chapter_url] if options.key?(:chapter_url)
       group = options.key?(:group) ? options[:group] : @group
       
+      thread = get_url_param(chapter_url, "thread")
+      thread = nil if thread.nil? or thread.empty?
+      
       uri = URI.parse(chapter_url)
       save_path = "output/epub/#{group}"
       save_file = uri.host.sub(".dreamwidth.org", "").sub("vast-journey-9935.herokuapp.com", "constellation")
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?("/")
-      save_file += "-" + uri_path.sub(".html", "") + ".html"
+      save_file += "-" + uri_path.sub(".html", "") + (thread ? "-#{thread}" : "") + ".html"
       save_path = File.join(save_path, "html", save_file.gsub("/", "-"))
     end
     
