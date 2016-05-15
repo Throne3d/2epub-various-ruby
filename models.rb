@@ -394,7 +394,7 @@ module GlowficEpub
         uri.query = (query.empty?) ? nil : query
       end
       uri.host = uri.host.sub(/\.dreamwidth\.org$/, ".dreamwidth")
-      uri.to_s.sub(/^https?\:\/\//, "").sub(/\.html$/, "")
+      uri.to_s.sub(/^https?\:\/\//, "").sub(/\.html($|(?=\?))/, "")
     end
     def to_s
       str = "\"#{title}\""
