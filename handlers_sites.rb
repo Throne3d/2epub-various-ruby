@@ -209,17 +209,16 @@
         prev_chain = prev_chain.drop(prev_chain.length - 3) if prev_chain.length > 3
         
         comm_depth = 0
-        comment[:class].split(/\s+/).each do |klass|
-          next unless klass["comment-depth-"]
-          comm_depth = klass.split("comment-depth-").last.to_i
-        end
-        (LOG.error "Error: failed comment depth" and next) if comm_depth == 0
+        (LOG.error "Error: failed comment depth" and next) unless comment[:class]["comment-depth-"]
+        comm_depth = comment[:class].split('comment-depth-').last.split(/\s+/).first.to_i
         
         if comm_depth > prev_depth
           prev_chain << comment
           prev_depth = comm_depth
           next
         end
+        
+        LOG.debug "depth (#{comm_depth}) was lower than prev_depth (#{prev_depth}), therefore new branch, let's track the previous one."
         
         upper_comment = prev_chain.first
         @cont = false
