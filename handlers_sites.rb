@@ -234,6 +234,7 @@
         LOG.debug "Added to chapter check_pages: #{comm_link}"
         
         prev_chain = [comment]
+        prev_depth = comm_depth
       end
       
       upper_comment = prev_chain.first
