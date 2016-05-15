@@ -646,22 +646,34 @@ module GlowficIndexHandlers
           sections: ["Theotrics"]},
           {url: "https://theotrics.dreamwidth.org/682.html?thread=9642#cmt9642",
           title: "test post please ignore pt 2",
-          sections: ["Theotrics"]}#,
-          #{url: "https://vast-journey-9935.herokuapp.com/posts/43",
-          #title: "Book of Discovery",
-          #sections: ["Book of the Moon"]},
-          #{url: "https://vast-journey-9935.herokuapp.com/posts/50",
-          #title: "Book of Experience",
-          #sections: ["Book of the Moon"]},
-          #{url: "https://vast-journey-9935.herokuapp.com/posts/53",
-          #title: "A fresh start",
-          #sections: ["Sandboxes & Oneshots"]},
-          #{url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
-          #title: "Double Witch",
-          #sections: ["Bluebell Flames"]},
-          #{url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
-          #title: "Clannish",
-          #sections: ["Incandescence", "Chamomile"]}
+          sections: ["Theotrics"]},
+          {url: "https://vast-journey-9935.herokuapp.com/posts/43",
+          title: "Book of Discovery",
+          sections: ["Book of the Moon"]},
+          {url: "https://vast-journey-9935.herokuapp.com/posts/50",
+          title: "Book of Experience",
+          sections: ["Book of the Moon"]},
+          {url: "https://vast-journey-9935.herokuapp.com/posts/53",
+          title: "A fresh start",
+          sections: ["Sandboxes & Oneshots"]},
+          {url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
+          title: "Double Witch",
+          sections: ["Bluebell Flames"]},
+          {url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
+          title: "Clannish",
+          sections: ["Incandescence", "Chamomile"]},
+          {url: "https://alicornutopia.dreamwidth.org/6744.html?thread=2465368&style=site#cmt2465368",
+          title: "A Joker summons Demon Cam",
+          sections: ["Demon Cam"],
+          title_extras: "(with kappa)"},
+          {url: "https://alicornutopia.dreamwidth.org/6744.html?style=site&thread=2557272#cmt2557272",
+          title: "Ripper summons Demon Cam",
+          sections: ["Demon Cam"],
+          title_extras: "(with kappa)"},
+          {url: "https://alicornutopia.dreamwidth.org/6744.html?style=site&thread=2560344#cmt2560344",
+          title: "Darren summons Demon Cam",
+          sections: ["Demon Cam"],
+          title_extras: "(with Aestrix)"}
         ]
       elsif @group == :temp_starlight
         [
@@ -675,7 +687,7 @@ module GlowficIndexHandlers
       end
       
       list.each do |item|
-        chapter_details = chapter_from_toc(url: item[:url], title: item[:title], sections: item[:sections])
+        chapter_details = chapter_from_toc(url: item[:url], title: item[:title], sections: item[:sections], title_extras: item[:title_extras])
         if block_given?
           yield chapter_details
         end
