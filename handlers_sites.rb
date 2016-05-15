@@ -186,7 +186,9 @@
       comments = main_page_content.css('.comment-thread')
       prev_chain = []
       prev_depth = 0
+      comment_count = 0
       comments.each do |comment|
+        comment_count += 1
         prev_chain = prev_chain.drop(prev_chain.length - 3) if prev_chain.length > 3
         
         comm_depth = 0
@@ -223,7 +225,8 @@
         page_new_data = down_or_cache(check_page, where: @group_folder)
       end
       
-      LOG.info "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify and @success
+      page_count = (comment_count < 50) ? 1 : (comment_count * 1.0 / 25).ceil
+      LOG.info "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{page_count} page#{page_count != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify and @success
       LOG.error "ERROR: #{chapter.title}: #{@error}" unless @success
       return chapter
     end
