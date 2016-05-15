@@ -60,6 +60,23 @@
       @downcache = {}
     end
     
+    def get_comment_link(comment)
+      @partial = comment.at_css('> .dwexpcomment > .partial')
+      @full = comment.at_css('> .dwexpcomment > .full') unless @partial
+      if @partial
+        comm_link = @partial.at_css('.comment-title').try(:at_css, 'a').try(:[], :href)
+      else
+        comm_link = @full.try(:at_css, '.commentpermalink').try(:at_css, 'a').try(:[], :href)
+      end
+      LOG.error "partial and no comm_link" if @partial and not comm_link
+      LOG.error "no partial, no full" if not @partial and not @full
+      LOG.error "#{(not @full) ? 'not ' : ''}full and no comm_link" if not @partial and not comm_link
+      if block_given?
+        yield @partial, @full, comm_link
+      end
+      return comm_link
+    end
+    
     def down_or_cache(page, options = {})
       where = (options.key?(:where)) ? options[:where] : nil
       @downcache[where] = [] unless @downcache.key?(where)
@@ -187,6 +204,7 @@
       prev_chain = []
       prev_depth = 0
       comment_count = 0
+      comm_depth = 0
       comments.each do |comment|
         comment_count += 1
         prev_chain = prev_chain.drop(prev_chain.length - 3) if prev_chain.length > 3
@@ -205,23 +223,30 @@
         end
         
         upper_comment = prev_chain.first
-        partial = upper_comment.at_css('> .dwexpcomment > .partial')
-        if partial
-          comm_link = partial.at_css('.comment-title').try(:at_css, 'a').try(:[], :href)
-          LOG.error "partial and no comm_link" unless comm_link
-        else
-          full = upper_comment.at_css('> .dwexpcomment > .full')
-          comm_link = full.try(:at_css, '.commentpermalink').try(:at_css, 'a').try(:[], :href)
-          LOG.error "no full" unless full
-          LOG.error "full? and no comm_link" unless comm_link
+        @cont = false
+        comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
+          unless comm_link
+            LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
+            @cont = true
+          end
         end
-        (LOG.error "Error: failed upper comment link (for depth #{comm_depth})" and next) unless comm_link
+        next if @cont
         
         chapter.check_pages << comm_link
         LOG.debug "Added to chapter check_pages: #{comm_link}"
         
         prev_chain = [comment]
       end
+      
+      upper_comment = prev_chain.first
+      comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
+        unless comm_link
+          LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
+        end
+      end
+      
+      chapter.check_pages << comm_link
+      LOG.debug "Added to chapter check_pages: #{comm_link}"
       
       chapter.pages = pages
       chapter.check_pages.each do |check_page|
