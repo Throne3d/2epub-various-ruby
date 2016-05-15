@@ -74,6 +74,11 @@
       if block_given?
         yield @partial, @full, comm_link
       end
+      if comm_link
+        params = {style: :site}
+        params[:thread] = get_url_param(comm_link, "thread")
+        comm_link = set_url_params(clear_url_params(comm_link), params)
+      end
       return comm_link
     end
     
