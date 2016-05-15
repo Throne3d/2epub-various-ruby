@@ -242,15 +242,16 @@
         prev_depth = comm_depth
       end
       
-      upper_comment = prev_chain.first
-      comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
-        unless comm_link
-          LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
+      unless prev_chain.empty?
+        upper_comment = prev_chain.first
+        comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
+          unless comm_link
+            LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
+          end
         end
+        chapter.check_pages << comm_link
+        LOG.debug "Added to chapter check_pages: #{comm_link}"
       end
-      
-      chapter.check_pages << comm_link
-      LOG.debug "Added to chapter check_pages: #{comm_link}"
       
       chapter.pages = pages
       chapter.check_pages.each do |check_page|
