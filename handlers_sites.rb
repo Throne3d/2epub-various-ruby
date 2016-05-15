@@ -475,7 +475,9 @@
       @replies = []
       @reply_ids = []
       @reply_ids << -1 unless chapter.thread
-      @reply_ids << "cmt#{chapter.thread}" if chapter.thread
+      threadcmt = (chapter.thread ? "cmt#{chapter.thread}" : "")
+      @reply_ids << threadcmt if chapter.thread
+      LOG.debug "Thread comment: \"#{threadcmt}\"" if chapter.thread
       
       pages.each do |page_url|
         page_data = get_page_data(page_url, replace: false, where: @group_folder)
@@ -502,6 +504,13 @@
         comments.each do |comment|
           comment_element = comment.at_css('.comment')
           
+          comment_link = comment_element.at_css('.link.commentpermalink').try(:at_css, 'a')
+          comment_id = -1
+          if comment_link
+            comment_href = comment_link[:href]
+            comment_id = "cmt" + get_url_param(comment_href, "thread")
+          end
+          
           parent_link = comment_element.at_css('.link.commentparent').try(:at_css, 'a')
           parent_id = -1
           if parent_link
@@ -509,10 +518,15 @@
             parent_id = "cmt" + get_url_param(parent_href, "thread")
           end
           
-          if (@reply_ids.include?(parent_id))
+          if (@reply_ids.include?(parent_id) or @reply_ids.include?(comment_id))
             reply = make_message(comment_element)
+            if chapter.thread and reply.id == threadcmt
+              LOG.debug "chapter.thread: '#{chapter.thread}'; reply.id: '#{reply.id}'; threadcmt: '#{threadcmt}'; comment_id: '#{comment_id}'; reply_ids.include?(comment_id): #{@reply_ids.include?(comment_id)}"
+              LOG.debug "Found the chapter thread comment #{reply}. Setting its parent to the entry #{chapter.entry}."
+              reply.parent = chapter.entry
+            end
             @replies << reply
-            @reply_ids << reply.id
+            @reply_ids << reply.id unless @reply_ids.include?(reply.id)
           end
         end
       end
