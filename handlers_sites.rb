@@ -88,7 +88,6 @@
       data
     end
     
-    #TODO: Make sure to set the check_pages! Set it to the 3rd-from-last comment in the thread or something!
     def get_full(chapter, options = {})
       if chapter.is_a?(GlowficEpub::Chapter)
         params = {style: :site}
