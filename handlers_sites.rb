@@ -207,12 +207,15 @@
         upper_comment = prev_chain.first
         partial = upper_comment.at_css('> .dwexpcomment > .partial')
         if partial
-          comm_link = partial.at_css('.comment-title').try(:at_css, 'a').try(:href)
+          comm_link = partial.at_css('.comment-title').try(:at_css, 'a').try(:[], :href)
+          LOG.error "partial and no comm_link" unless comm_link
         else
           full = upper_comment.at_css('> .dwexpcomment > .full')
-          comm_link = full.try(:at_css, '.commentpermalink').try(:at_css, 'a').try(:href)
+          comm_link = full.try(:at_css, '.commentpermalink').try(:at_css, 'a').try(:[], :href)
+          LOG.error "no full" unless full
+          LOG.error "full? and no comm_link" unless comm_link
         end
-        (LOG.error "Error: failed upper comment link" and next) unless comm_link
+        (LOG.error "Error: failed upper comment link (for depth #{comm_depth})" and next) unless comm_link
         
         chapter.check_pages << comm_link
         LOG.debug "Added to chapter check_pages: #{comm_link}"
