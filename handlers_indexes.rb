@@ -641,10 +641,10 @@ module GlowficIndexHandlers
       
       list = if @group == :test
         [
-          {url: "https://theotrics.dreamwidth.org/682.html",
+          {url: "https://theotrics.dreamwidth.org/682.html?style=site",
           title: "test post please ignore",
           sections: ["Theotrics"]},
-          {url: "https://theotrics.dreamwidth.org/682.html?thread=9642#cmt9642",
+          {url: "https://theotrics.dreamwidth.org/682.html?thread=9642&style=site#cmt9642",
           title: "test post please ignore pt 2",
           sections: ["Theotrics"]},
           {url: "https://vast-journey-9935.herokuapp.com/posts/43",
@@ -677,10 +677,10 @@ module GlowficIndexHandlers
         ]
       elsif @group == :temp_starlight
         [
-          {url: "https://alicornutopia.dreamwidth.org/29069.html",
+          {url: "https://alicornutopia.dreamwidth.org/29069.html?style=site",
           title: "and in my hands place honesty",
           sections: ["Starlight"]},
-          {url: "https://alicornutopia.dreamwidth.org/29401.html",
+          {url: "https://alicornutopia.dreamwidth.org/29401.html?style=site",
           title: "veritable",
           sections: ["Starlight"]}
         ]
