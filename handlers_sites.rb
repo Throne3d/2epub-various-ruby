@@ -1019,8 +1019,7 @@
         page = Nokogiri::HTML(page_data)
         LOG.debug "nokogiri'd"
         
-        page_content = page.at_css('#content')
-        error = page_content.at_css('.error.flash')
+        error = page.at_css('.error.flash')
         if error
           error_text = error.text
           if error_text["do not have permission"]
@@ -1028,8 +1027,11 @@
           elsif error_text["not be found"]
             (LOG.error('Post does not exist!') and break)
           end
+          LOG.error("Unknown post error: \"#{error_text.strip}\"")
+          break
         end
         
+        page_content = page.at_css('#content')
         @entry_title = page.at_css("#post-title").text.strip unless @entry_title
         
         @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip)
