@@ -569,6 +569,7 @@
       @moiety_cache = {}
       @author_pages_got = []
       @char_user_map = {}
+      @char_page_errors = []
     end
     
     def get_full(chapter, options = {})
@@ -702,7 +703,7 @@
       
       @icon_errors = [] unless @icon_errors
       
-      if character_id and not @char_page_cache.key?(character_id) and not character_id.start_with?("user#")
+      if character_id and not @char_page_cache.key?(character_id) and not @char_page_errors.include?(character_id) and not character_id.start_with?("user#")
         char_page_url = "https://vast-journey-9935.herokuapp.com/characters/#{character_id}/"
         char_page_data = get_page_data(char_page_url, replace: (not @author_pages_got.include?(char_page_url)))
         @author_pages_got << char_page_url unless @author_pages_got.include?(char_page_url)
@@ -728,6 +729,7 @@
         
         if icons.nil? or icons.empty?
           LOG.error "No icons for character ##{character_id}."
+          @char_page_errors << character_id
         else
           icon_hash = {}
           default_icon = char_page_c.at_css('> .character-icon')
