@@ -1032,7 +1032,9 @@
         end
         
         page_content = page.at_css('#content')
-        @entry_title = page.at_css("#post-title").text.strip unless @entry_title
+        post_title = page.at_css('#post-title')
+        (LOG.error("No post title; probably not a post") and break) unless post_title
+        @entry_title = post_title.text.strip unless @entry_title
         
         @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip)
         
