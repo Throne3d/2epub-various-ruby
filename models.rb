@@ -18,26 +18,30 @@ module GlowficEpub
     "Adalene" => ["lurkingkobold", "wish-i-may"],
     "Adiva" => ["gothamsheiress", "adivasheadvoices"],
     "Ajzira" => ["lost-in-translation", "hearing-shadows"],
-    "AndaisQ" => ["fortheliving", "quite-enchanted", "andomega", "in-like-a", "hemomancer", "white-ram", "power-in-the", "strangely-literal", "sonofsnow", "dontbelieveinfairies"],
+    "AndaisQ" => ["fortheliving", "quite-enchanted", "andomega", "in-like-a", "hemomancer", "white-ram", "power-in-the", "strangely-literal", "sonofsnow", "dontbelieveinfairies", "pavingstone"],
     "Anthusiasm" => ["queenoftrash"],
     "armokGoB" => ["armokgob"],
+    "atheistcanuck" => ["ambrovimvor"],
     "Benedict" => ["unblinkered", "penitencelost"],
     "Calima" => ["tenn-ambar-metta"],
     "Ceitfianna" => ["balancingminds", "mm-ceit"],
     "ChristyHotwater" => ["slgemp141"],
-    "CuriousDiscoverer" => ["mage-see-mage-do", "abodyinmotion", "superego-medico", "not-without-scars", "breeds-contempt", "curiousdiscoverer", "come-forth-winter", "copycast", "of-all-trades", "ignite-the-light", "there-is-no-such-thing-as", "unadalturedstrength", "tailedmonstrosity", "curiousbox"], #Bluelantern
+    "CuriousDiscoverer" => ["mage-see-mage-do", "abodyinmotion", "superego-medico", "not-without-scars", "breeds-contempt", "curiousdiscoverer", "come-forth-winter", "copycast", "of-all-trades", "ignite-the-light", "there-is-no-such-thing-as", "unadalturedstrength", "tailedmonstrosity", "curiousbox"],
     "Endovior" => ["withmanyfingers"],
     "ErinFlight" => ["thrown-in", "regards-the-possibilities", "back-from-nowhere", "vive-la-revolution"],
-    "Eva" => ["kaolinandbone", "evesystem", "all-the-worlds-have", "walksonmusic", "eternally-aggrieved"], #evenstar?
-    "Kel" => ["kelardry", "dotted-lines"], #BlueSkySprite
+    "Eva" => ["kaolinandbone", "evesystem", "all-the-worlds-have", "walksonmusic", "eternally-aggrieved"],
+    "Kel" => ["kelardry", "dotted-lines", "botanical-engineer"], #BlueSkySprite
     "kuuskytkolme" => ["can-i-help", "can-i-stay", "can-i-go"],
     "Link" => ["meletiti-entelecheiai", "chibisilian"], #chibisilian is assumed from "Location: Entelechy"
     "Liz" => ["sun-guided"],
     "Lynette" => ["darkeningofthelight", "princeofsalem"],
-    "Maggie" => ["maggie-of-the-owls", "whatamithinking", "iamnotpolaris", "amongstherpeers", "amongstthewinds", "asteptotheright", "jumptotheleft", "themainattraction", "swordofdamocles", "swordofeden", "feyfortune", "mutatis-mutandis", "mindovermagic", "ragexserenity"],
+    "Maggie" => ["maggie-of-the-owls", "whatamithinking", "iamnotpolaris", "amongstherpeers", "amongstthewinds", "asteptotheright", "jumptotheleft", "themainattraction", "swordofdamocles", "swordofeden", "feyfortune", "mutatis-mutandis", "mindovermagic", "ragexserenity", "here-together"],
+    "Marri" => ["revivificar"],
+    "Moriwen" => ["actualantichrist"],
     "Nemo" => ["magnifiedandeducated", "connecticut-yankee", "unprophesied-of-ages", "nemoconsequentiae", "wormcan", "off-to-be-the-wizard", "whole-new-can"],
+    "pdv" => ["against-all-trouble"],
     "roboticlin" => ["roboticlin"],
-    "Rockeye" => ["witchwatcher", "rockeye-stonetoe", "sturdycoldsteel", "characterquarry", "allforthehive", "neuroihive", "smallgod"],
+    "Rockeye" => ["witchwatcher", "rockeye-stonetoe", "sturdycoldsteel", "characterquarry", "allforthehive", "neuroihive", "smallgod", "magictechsupport"],
     "Sigma" => ["spiderzone"], #Ezra
     "Teceler" => ["scatteredstars", "onwhatwingswedareaspire"],
     "TheOneButcher" => ["theonebutcher"],
@@ -46,7 +50,7 @@ module GlowficEpub
     "Verdancy" => ["better-living", "forestsofthe"],
     "Yadal" => ["yorisandboxcharacter", "kamikosandboxcharacter"],
     "Zack" => ["intomystudies"]
-    #, "Unknown":["ambrovimvor", "hide-and-seek", "antiprojectionist", "vvvvvvibrant", "botanical-engineer", "fine-tuned"]
+    #, "Unknown":["hide-and-seek", "antiprojectionist", "vvvvvvibrant", "fine-tuned"]
   }
   
   def self.build_moieties()
