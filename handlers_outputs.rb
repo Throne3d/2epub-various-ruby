@@ -73,29 +73,30 @@
       chapter_url = options[:chapter_url] if options.key?(:chapter_url)
       group = options.key?(:group) ? options[:group] : @group
       
-      thread = get_url_param(chapter_url, "thread")
-      thread = nil if thread.nil? or thread.empty?
-      
-      uri = URI.parse(chapter_url)
-      save_path = "output/epub/#{group}"
-      save_file = uri.host.sub(".dreamwidth.org", "").sub("vast-journey-9935.herokuapp.com", "constellation")
-      uri_path = uri.path
-      uri_path = uri_path[1..-1] if uri_path.start_with?("/")
-      save_file += "-" + uri_path.sub(".html", "") + (thread ? "-#{thread}" : "") + ".html"
-      save_path = File.join(save_path, "html", save_file.gsub("/", "-"))
+      save_path = File.join("output/epub/#{group}", "html", get_chapter_path_bit(options))
     end
     
     def get_relative_chapter_path(options = {})
       chapter_url = options[:chapter].url if options.key?(:chapter)
       chapter_url = options[:chapter_url] if options.key?(:chapter_url)
       
+      File.join("EPUB", "html", get_chapter_path_bit(options))
+    end
+    
+    def get_chapter_path_bit(options = {})
+      chapter_url = options[:chapter].url if options.key?(:chapter)
+      chapter_url = options[:chapter_url] if options.key?(:chapter_url)
+      
+      thread = get_url_param(chapter_url, "thread")
+      thread = nil if thread.nil? or thread.empty?
+      
       uri = URI.parse(chapter_url)
       save_file = uri.host.sub(".dreamwidth.org", "").sub("vast-journey-9935.herokuapp.com", "constellation")
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?("/")
-      save_file += "-" + uri_path.sub(".html", "") + ".html"
+      save_file += "-" + uri_path.sub(".html", "") + (thread ? "-#{thread}" : "") + ".html"
       save_path = save_file.gsub("/", "-")
-      File.join("EPUB", "html", save_path)
+      File.join(save_path)
     end
     
     def navify_navbits(navbits)
