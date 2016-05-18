@@ -59,13 +59,13 @@
   end
   
   FIC_NAME_MAPPING = {
-    effulgence: [:effulgence],
-    incandescence: [:incandescence],
-    pixiethreads: [:pixiethreads],
+    effulgence: [:effulgence, :efful],
+    incandescence: [:incandescence, :incan],
+    pixiethreads: [:pixiethreads, :pix],
     radon: [:radon, :absinthe],
     glowfic: [:othersandbox, :sandbox2, :glowfic],
-    constellation: [:constellation],
-    sandbox: [:sandbox],
+    constellation: [:constellation, :const, :glowfic2, :sandbox3],
+    sandbox: [:sandbox, :alicorn],
     marri: [:marri, :marrinikari],
     peterverse: [:peter, :pedro, :peterverse],
     maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"],
