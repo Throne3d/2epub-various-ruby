@@ -33,6 +33,7 @@ module GlowficEpub
     "Kel" => ["kelardry", "dotted-lines", "botanical-engineer"], #BlueSkySprite
     "kuuskytkolme" => ["can-i-help", "can-i-stay", "can-i-go"],
     "Link" => ["meletiti-entelecheiai", "chibisilian"], #chibisilian is assumed from "Location: Entelechy"
+    "lintamande" => ["lintamande"],
     "Liz" => ["sun-guided"],
     "Lynette" => ["darkeningofthelight", "princeofsalem"],
     "Maggie" => ["maggie-of-the-owls", "whatamithinking", "iamnotpolaris", "amongstherpeers", "amongstthewinds", "asteptotheright", "jumptotheleft", "themainattraction", "swordofdamocles", "swordofeden", "feyfortune", "mutatis-mutandis", "mindovermagic", "ragexserenity", "here-together"],
