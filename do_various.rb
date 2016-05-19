@@ -176,7 +176,10 @@ def main(args)
     #things started by author
     
     stats = {}
-    stats[:_] = {entry_moiety: {}, msg_moiety: {}, msg_character: {}, msg_icons: {}}
+    stats[:_] = {entry_moiety: Hash.new(0), msg_moiety: Hash.new(0), msg_character: Hash.new(0), msg_icons: Hash.new(0), moiety_words: Hash.new(0), char_words: Hash.new(0), icons_words: Hash.new(0)}
+    
+    html_match = Regexp.compile(/\<[^\>]*?\>/)
+    word_match = Regexp.compile(/[\w']+/)
     
     chapter_list.each do |chapter|
       next unless chapter.entry
@@ -187,37 +190,37 @@ def main(args)
         msg_date = msg.time
         msg_mo_str = "#{msg_date.year}-#{msg_date.month}"
         
-        stats[msg_mo_str] = {entry_moiety: {}, msg_moiety: {}, msg_character: {}, msg_icons: {}} unless stats[msg_mo_str]
+        stats[msg_mo_str] = {entry_moiety: Hash.new(0), msg_moiety: Hash.new(0), msg_character: Hash.new(0), msg_icons: Hash.new(0), moiety_words: Hash.new(0), char_words: Hash.new(0), icons_words: Hash.new(0)} unless stats[msg_mo_str]
         
         msg_moiety = msg.author.moiety
         msg_char = msg.author.to_s
         msg_icon = msg.face.try(:to_s)
         
+        msg_text = msg.content.gsub(html_match, " ")
+        msg_wordcount = msg_text.scan(word_match).length
+        
         if msg.post_type == PostType::ENTRY 
-          stats[msg_mo_str][:entry_moiety][msg_moiety] = 0 unless stats[msg_mo_str][:entry_moiety].key?(msg_moiety)
           stats[msg_mo_str][:entry_moiety][msg_moiety] += 1
-          stats[:_][:entry_moiety][msg_moiety] = 0 unless stats[:_][:entry_moiety].key?(msg_moiety)
           stats[:_][:entry_moiety][msg_moiety] += 1
         end
         
-        stats[msg_mo_str][:msg_moiety][msg_moiety] = 0 unless stats[msg_mo_str][:msg_moiety].key?(msg_moiety)
         stats[msg_mo_str][:msg_moiety][msg_moiety] += 1
-        stats[:_][:msg_moiety][msg_moiety] = 0 unless stats[:_][:msg_moiety].key?(msg_moiety)
+        stats[msg_mo_str][:moiety_words][msg_moiety] += msg_wordcount
         stats[:_][:msg_moiety][msg_moiety] += 1
+        stats[:_][:moiety_words][msg_moiety] += msg_wordcount
         
-        stats[msg_mo_str][:msg_character][msg_char] = 0 unless stats[msg_mo_str][:msg_character].key?(msg_char)
         stats[msg_mo_str][:msg_character][msg_char] += 1
-        stats[:_][:msg_character][msg_char] = 0 unless stats[:_][:msg_character].key?(msg_char)
+        stats[msg_mo_str][:char_words][msg_moiety] += msg_wordcount
         stats[:_][:msg_character][msg_char] += 1
+        stats[:_][:char_words][msg_moiety] += msg_wordcount
         
         if msg_icon
-          stats[msg_mo_str][:msg_icons][msg_icon] = 0 unless stats[msg_mo_str][:msg_icons].key?(msg_icon)
           stats[msg_mo_str][:msg_icons][msg_icon] += 1
-          stats[:_][:msg_icons][msg_icon] = 0 unless stats[:_][:msg_icons].key?(msg_icon)
+          stats[msg_mo_str][:icons_words][msg_moiety] += msg_wordcount
           stats[:_][:msg_icons][msg_icon] += 1
+          stats[:_][:icons_words][msg_moiety] += msg_wordcount
         end
       end
-      
     end
     
     p stats
