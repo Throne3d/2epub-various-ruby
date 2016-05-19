@@ -70,9 +70,9 @@
     peterverse: [:peter, :pedro, :peterverse],
     maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"],
     throne: [:throne, :throne3d, :theotrics],
-    lintamande: [:lintamande, :elves]
+    lintamande: [:lintamande, :elves],
     test: [:test],
-    temp_starlight: [:temp_starlight, :starlight],
+    temp_starlight: [:temp_starlight, :starlight]
   }
   FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie, :throne]
   FIC_TOCS = {
