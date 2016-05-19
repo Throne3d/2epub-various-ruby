@@ -223,7 +223,7 @@ def main(args)
       end
     end
     
-    p stats
+    LOG.info stats.inspect
   else
     LOG.info "Not yet implemented."
   end
