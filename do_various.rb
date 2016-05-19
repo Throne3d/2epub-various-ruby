@@ -210,15 +210,15 @@ def main(args)
         stats[:_][:moiety_words][msg_moiety] += msg_wordcount
         
         stats[msg_mo_str][:msg_character][msg_char] += 1
-        stats[msg_mo_str][:char_words][msg_moiety] += msg_wordcount
+        stats[msg_mo_str][:char_words][msg_char] += msg_wordcount
         stats[:_][:msg_character][msg_char] += 1
-        stats[:_][:char_words][msg_moiety] += msg_wordcount
+        stats[:_][:char_words][msg_char] += msg_wordcount
         
         if msg_icon
           stats[msg_mo_str][:msg_icons][msg_icon] += 1
-          stats[msg_mo_str][:icons_words][msg_moiety] += msg_wordcount
+          stats[msg_mo_str][:icons_words][msg_icon] += msg_wordcount
           stats[:_][:msg_icons][msg_icon] += 1
-          stats[:_][:icons_words][msg_moiety] += msg_wordcount
+          stats[:_][:icons_words][msg_icon] += msg_wordcount
         end
       end
     end
