@@ -632,7 +632,7 @@ module GlowficIndexHandlers
   end
   
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight
+    handles :test, :temp_starlight, :lintamande
     def initialize(options = {})
       super(options)
     end
@@ -684,10 +684,46 @@ module GlowficIndexHandlers
           title: "veritable",
           sections: ["Starlight"]}
         ]
+      elsif @group == :lintamande
+        [
+          {url: "https://vast-journey-9935.herokuapp.com/posts/84",
+          title: "Let Me Tell You What I Wish I'd Known",
+          sections: ["Constellation"]},
+          {url: "https://vast-journey-9935.herokuapp.com/posts/111",
+          title: "you know what they say about the young",
+          sections: ["Constellation"]},
+          {url: "https://vast-journey-9935.herokuapp.com/posts/99",
+          title: "No one really knows how the parties get to yes",
+          sections: ["Constellation"]},
+          {url: "https://vast-journey-9935.herokuapp.com/posts/96",
+          title: "the world turned upside down",
+          sections: ["Constellation"]},
+          {url: "https://vast-journey-9935.herokuapp.com/posts/101",
+          title: "I'm Glad I'm Not Back There But Where Did You Take Us",
+          sections: ["Constellation"]},
+          {url: "https://vast-journey-9935.herokuapp.com/posts/100",
+          title: "New neighbors. Just as frustrating.",
+          sections: ["Constellation"]},
+          {url: "https://vast-journey-9935.herokuapp.com/posts/97",
+          title: "I Asked The World For Elsewhere But I Never Imagined This",
+          sections: ["Constellation"]},
+          {url: "http://alicornutopia.dreamwidth.org/29664.html",
+          title: "leave of absence",
+          sections: ["Elentári"]},
+          {url: "http://lintamande.dreamwidth.org/381.html",
+          title: "halls of stone",
+          sections: ["Elentári"]},
+          {url: "http://alicornutopia.dreamwidth.org/29954.html",
+          title: "interplanar studies",
+          sections: ["Telperion"]},
+          {url: "http://alicornutopia.dreamwidth.org/30387.html",
+          title: "applied theology",
+          sections: ["Telperion"]}
+        ]
       end
       
       list.each do |item|
-        chapter_details = chapter_from_toc(url: item[:url], title: item[:title], sections: item[:sections], title_extras: item[:title_extras])
+        chapter_details = chapter_from_toc(item)
         if block_given?
           yield chapter_details
         end

@@ -70,8 +70,9 @@
     peterverse: [:peter, :pedro, :peterverse],
     maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"],
     throne: [:throne, :throne3d, :theotrics],
+    lintamande: [:lintamande, :elves]
     test: [:test],
-    temp_starlight: [:temp_starlight, :starlight]
+    temp_starlight: [:temp_starlight, :starlight],
   }
   FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie, :throne]
   FIC_TOCS = {
@@ -91,6 +92,7 @@
     peterverse: "http://peterverse.dreamwidth.org/1643.html?style=site",
     maggie: "http://maggie-of-the-owls.dreamwidth.org/454.html?style=site",
     throne: "https://theotrics.dreamwidth.org/268.html?style=site",
+    lintamande: "https://lintamande.dreamwidth.org/", #hardcoded
     
     #Test
     test: "https://vast-journey-9935.herokuapp.com/boards/7",
