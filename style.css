@@ -103,7 +103,7 @@ div[data-type] {
     background-color: rgba(192, 128, 255, 0.3);
     color: inherit;
 }
-.atheistcanuck .user {
+.atheistcanuck .user, .andygal .user {
     background-color: #fdc1e8;
     background-color: rgba(125, 5, 82, 0.3);
     color: inherit;
@@ -113,7 +113,7 @@ div[data-type] {
     background-color: rgba(105, 105, 105, 0.7);
     color: #dddddd;
 }
-.curiousdiscoverer .user {
+.curiousdiscoverer .user, .bluelantern .user, .faceless .user {
     background-color: #a0a0a0; /*hsl(0, 0%, 63%)*/
     background-color: rgba(160, 160, 160, 0.7);
     color: #111111;
@@ -148,12 +148,17 @@ div[data-type] {
     background-color: rgba(0, 128, 128, 0.3);
     color: inherit;
 }
-.link .user {
+.link .user, .linkhyrule5 .user {
     background-color: #d5aaff; /*hsl(270, 100%, 83%)*/
     background-color: rgba(127, 0, 255, 0.3);
     color: inherit;
 }
-.maggie .user {
+.lintamande .user {
+    background-color: #ffbfbf; /*hsl(0, 100%, 87%)*/
+    background-color: rgba(255, 0, 0, 0.3);
+    color: inherit;
+}
+.maggie .user, .maggieoftheowls .user {
     background-color: #ffffff; /*hsl(0, 0%, 100%)*/
     background-color: rgba(255, 255, 255, 0.7);
     color: #111111;
@@ -173,7 +178,7 @@ div[data-type] {
     background-color: rgba(255, 191, 0, 0.3);
     color: inherit;
 }
-.pdv .user {
+.pdv .user, .plaindealingvillain .user {
     background-color: #efdfcf; /*hsl(30, 50%, 87%)*/
     background-color: rgba(191, 128, 64, 0.3);
     color: inherit;
@@ -192,6 +197,11 @@ div[data-type] {
     background-color: #000000; /*hsl(0, 0%, 0%)*/
     background-color: rgba(0, 0, 0, 0.7);
     color: #dddddd;
+}
+.teceler .user {
+    background-color: #ccf2cc;
+    background-color: rgba(34, 139, 34, 0.3);
+    color: inherit;
 }
 .throne3d .user {
     background-color: #ffbfc9; /*hsl(351, 100%, 87%)*/
