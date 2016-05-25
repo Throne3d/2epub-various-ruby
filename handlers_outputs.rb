@@ -21,7 +21,7 @@
     include ERB::Util
     def initialize(options={})
       super options
-      @group_folder = File.join('output', 'epub', @group)
+      @group_folder = File.join('output', 'epub', @group.to_s)
       @style_folder = File.join(@group_folder, 'style')
       @html_folder = File.join(@group_folder, 'html')
       @images_folder = File.join(@group_folder, 'images')
