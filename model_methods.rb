@@ -215,7 +215,8 @@
     LOG.debug "Downloaded page" if success
     LOG.error "Failed to load page (#{file_url})" unless success
     
-    save_path
+    save_path if success
+    nil unless success
   end
 
   def get_page_data(page_url, options={})
