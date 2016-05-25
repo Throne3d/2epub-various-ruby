@@ -219,7 +219,6 @@
       end
       
       nav_array = navify_navbits(nav_bits, contents_allowed: @rel_paths_used)
-      p nav_array
       
       @files.each do |thing|
         thing.keys.each do |key|
