@@ -159,12 +159,15 @@
       
       @show_authors = FIC_SHOW_AUTHORS.include?(@group)
       
+      @save_paths_used = []
       chapter_list.each do |chapter|
         @chapter = chapter
         #messages = [@chapter.entry] + @chapter.replies
         #messages.reject! {|element| element.nil? }
         (LOG.error "No entry for chapter." and next) unless chapter.entry
         (LOG.info "Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
+        save_path = get_chapter_path(chapter: chapter, group: @group)
+        (LOG.info "Duplicate chapter not added again" and next) if @save_paths_used.include?(save_path)
         
         @messages = []
         message = @chapter.entry
@@ -195,7 +198,6 @@
         b = binding
         page_data = erb.result b
         
-        save_path = get_chapter_path(chapter: chapter, group: @group)
         
         page = Nokogiri::HTML(page_data)
         page.css('img').each do |img_element|
@@ -209,6 +211,7 @@
           file.write page.to_s
         end
         @files << {save_path => File.dirname(get_relative_chapter_path(chapter: chapter))}
+        @save_paths_used << save_path
         LOG.info "Did chapter #{chapter}"
       end
       
