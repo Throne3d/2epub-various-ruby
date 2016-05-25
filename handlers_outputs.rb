@@ -208,7 +208,7 @@
         end
         
         open(save_path, 'w') do |file|
-          file.write page.to_s
+          file.write page.to_xhtml(indent_text: '', encoding: 'UTF-8')
         end
         @files << {save_path => File.dirname(get_relative_chapter_path(chapter: chapter))}
         @save_paths_used << save_path
