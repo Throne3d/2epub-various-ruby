@@ -1,26 +1,10 @@
 ﻿@namespace epub "http://www.idpf.org/2007/ops";
-@font-face {
-    font-family: "Symbola";
-    src: local("Symbola"), url("../fonts/Symbola.ttf");
-}
-@font-face {
-  font-family: "FreeSans";
-  src: local("FreeSans"), url("../fonts/FreeSans.woff");
-}
-@font-face {
-  font-family: "Lohit Telugu";
-  src: local("Lohit Telugu"), url("../fonts/Lohit-Telugu.woff");
-}
-@font-face {
-  font-family: "Droid Sans Fallback Full";
-  src: local("Droid Sans Fallback Full"), url("../fonts/DroidSansFallbackFull.ttf");
-}
 h3.entry-title {
     border-bottom: solid 1px #aaa;
     padding-bottom: 5px;
 }
 body {
-    font-family: sans-serif, "Symbola", "FreeSans", "Lohit Telugu", "Droid Sans Fallback Full";
+    font-family: sans-serif;
 }
 div[data-type] {
     padding-top: 10px;
