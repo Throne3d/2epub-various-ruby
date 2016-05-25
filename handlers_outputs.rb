@@ -65,8 +65,9 @@
         relative_file = sanitize_local_path(File.join('images', uri.host, temp_filename + test_ext))
         LOG.debug "There was an issue with the previous file. Trying alternate path: #{temp_filename + test_ext}"
       end
+      try_down = download_file(face_url, save_path: File.join(save_path, relative_file), replace: false)
+      return "" unless try_down
       @paths_used << relative_file
-      download_file(face_url, save_path: File.join(save_path, relative_file), replace: false)
       
       @files << {File.join(save_path, relative_file) => File.join('EPUB', File.dirname(relative_file))}
       @face_path_cache[face_url] = File.join("..", relative_file)
