@@ -56,7 +56,7 @@
       test_ext = filename.split('.').last
       test_ext = ".png" if test_ext == filename
       test_ext = "." + test_ext if test_ext and not test_ext.empty?
-      test_filename = 'img-' + filename.sub("#{test_ext}", "")
+      test_filename = 'img-' + filename.sub("#{test_ext}", "").gsub(/[^a-zA-Z0-9_\-]+/, "_")
       i = 0
       relative_file = sanitize_local_path(File.join('images', uri.host, test_filename + test_ext))
       while @paths_used.include?(relative_file)
