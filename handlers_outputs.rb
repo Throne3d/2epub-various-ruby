@@ -54,7 +54,7 @@
       end
       
       test_ext = filename.split('.').last
-      test_ext = "" if test_ext == filename
+      test_ext = ".png" if test_ext == filename
       test_ext = "." + test_ext if test_ext and not test_ext.empty?
       test_filename = 'img-' + filename.sub("#{test_ext}", "")
       i = 0
