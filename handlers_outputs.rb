@@ -103,17 +103,19 @@
       File.join(save_path)
     end
     
-    def navify_navbits(navbits)
+    def navify_navbits(navbits, options = {})
+      contents_allowed = (options.key?(:contents_allowed) ? options[:contents_allowed] : [])
       navified = []
       if navbits.key?(:_order)
         navbits[:_order].each do |section_name|
           thing = {label: section_name}
-          thing[:nav] = navify_navbits(navbits[section_name])
+          thing[:nav] = navify_navbits(navbits[section_name], options)
           navified << thing
         end
       end
       if navbits.key?(:_contents)
         navbits[:_contents].each do |thing|
+          (LOG.info "Ignoring NAV thing: #{thing.inspect}" and next) unless contents_allowed.empty? or contents_allowed.include?(thing[:content])
           navified << thing
         end
       end
@@ -153,13 +155,12 @@
         prev_bit[:_contents] << {label: chapter.title, content: get_relative_chapter_path(chapter: chapter)}
       end
       
-      nav_array = navify_navbits(nav_bits)
-      
       @files = [{style_path => 'EPUB/style'}]
       
       @show_authors = FIC_SHOW_AUTHORS.include?(@group)
       
       @save_paths_used = []
+      @rel_paths_used = []
       chapter_list.each do |chapter|
         @chapter = chapter
         #messages = [@chapter.entry] + @chapter.replies
@@ -168,6 +169,7 @@
         (LOG.info "Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
         save_path = get_chapter_path(chapter: chapter, group: @group)
         (LOG.info "Duplicate chapter not added again" and next) if @save_paths_used.include?(save_path)
+        rel_path = get_relative_chapter_path(chapter: chapter)
         
         @messages = []
         message = @chapter.entry
@@ -210,10 +212,14 @@
         open(save_path, 'w') do |file|
           file.write page.to_xhtml(indent_text: '', encoding: 'UTF-8')
         end
-        @files << {save_path => File.dirname(get_relative_chapter_path(chapter: chapter))}
+        @files << {save_path => File.dirname(rel_path)}
         @save_paths_used << save_path
+        @rel_paths_used << rel_path
         LOG.info "Did chapter #{chapter}"
       end
+      
+      nav_array = navify_navbits(nav_bits, contents_allowed: @rel_paths_used)
+      p nav_array
       
       @files.each do |thing|
         thing.keys.each do |key|
