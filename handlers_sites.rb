@@ -647,7 +647,7 @@
         open(page_url, 'w') do |file|
           file.write first_page_new_data
         end
-        pages = [set_url_params(clear_url_params(chapter.url), {per_page: 'all'}]
+        pages = [set_url_params(clear_url_params(chapter.url), {per_page: 'all'})]
         chapter.pages = pages
         LOG.info "Updated: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got 1 page)" if notify
         return chapter
