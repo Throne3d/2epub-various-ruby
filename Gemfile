@@ -5,3 +5,4 @@ source "https://rubygems.org"
 gem 'nokogiri'
 gem 'zip-zip'
 gem 'eeepub'
+gem 'open_uri_redirections'

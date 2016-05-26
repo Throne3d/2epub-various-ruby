@@ -202,7 +202,7 @@
     success = false
     has_retried = false
     begin
-      open(file_url, {ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE}) do |webpage| #EUGH UGLY HACK PLEASE FIX MAYBE?
+      open(file_url, {ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE, allow_redirections: :safe}) do |webpage| #EUGH UGLY HACK PLEASE FIX MAYBE?
         open(save_path, 'w') do |file|
           file.write webpage.read
         end
