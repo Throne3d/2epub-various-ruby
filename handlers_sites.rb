@@ -575,7 +575,7 @@
     
     def get_full(chapter, options = {})
       if chapter.is_a?(GlowficEpub::Chapter)
-        params = {per_page: 'all'}
+        params = {per_page: :all}
         chapter_url = set_url_params(clear_url_params(chapter.url), params)
       else
         chapter_url = chapter
@@ -599,7 +599,7 @@
       return nil unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
       
-      chapter.url = set_url_params(clear_url_params(chapter.url), {per_page: 'all'}) unless chapter.url["per_page=all"]
+      chapter.url = set_url_params(clear_url_params(chapter.url), {per_page: :all}) unless chapter.url["per_page=all"]
       is_new = true
       prev_pages = chapter.pages
       if prev_pages and not prev_pages.empty?
@@ -608,7 +608,7 @@
         first_page_url = prev_pages.first
         unless first_page_url["per_page=all"]
           LOG.error "Constellation page has no per_page=all! #{chapter}" 
-          first_page_url = set_url_params(clear_url_params(first_page_url), {per_page: 'all'})
+          first_page_url = set_url_params(clear_url_params(first_page_url), {per_page: :all})
           chapter.pages = [first_page_url]
         end
         

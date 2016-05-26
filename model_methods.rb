@@ -280,6 +280,10 @@
       params = {style: :site}
       params[:thread] = thread unless thread.nil? or thread.empty?
       set_url_params(clear_url_params(uri.to_s), params)
+    elsif uri.host.end_with?("vast-journey-9935.herokuapp.com")
+      uri.fragment = nil
+      params = {per_page: :all}
+      set_url_params(clear_url_params(uri.to_s), params)
     else
       url
     end
