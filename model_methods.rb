@@ -198,6 +198,7 @@
     end
     
     success = false
+    has_retried = false
     begin
       open(file_url, {ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE}) do |webpage| #EUGH UGLY HACK PLEASE FIX MAYBE?
         open(save_path, 'w') do |file|
@@ -210,9 +211,11 @@
       LOG.debug error
       
       retries -= 1
+      has_retried = true
       retry if retries >= 0
     end
     LOG.debug "Downloaded page" if success
+    LOG.info "Successfully loaded file (#{file_url})." if has_retried and success
     LOG.error "Failed to load page (#{file_url})" unless success
     
     return save_path if success
