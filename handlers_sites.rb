@@ -87,6 +87,7 @@
       @downcache[where] = [] unless @downcache.key?(where)
       
       downd = @downcache[where].include?(page)
+      options[:replace] = !downd
       data = get_page_data(page, options)
       @download_count+=1 unless downd
       @downcache[where] << page unless downd
