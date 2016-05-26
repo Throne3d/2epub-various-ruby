@@ -112,6 +112,7 @@
     peterverse: "Pedro & Misc",
     maggie: "Maggie & Misc",
     throne: "Throne3d & Misc",
+    lintamande: "Lintamande & Misc",
     
     test: "Pedro & Throne3d",
     temp_starlight: "Alicorn & Pedro"
@@ -130,6 +131,7 @@
     peterverse: "Peterverse",
     maggie: "Maggie's Sandboxes",
     throne: "Throne3d's Sandboxes",
+    lintamande: "Lintamande's Sandboxes",
     
     test: "Test EPUB",
     temp_starlight: "Starlight"

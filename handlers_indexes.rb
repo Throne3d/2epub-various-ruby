@@ -713,12 +713,18 @@ module GlowficIndexHandlers
           {url: "http://lintamande.dreamwidth.org/381.html",
           title: "halls of stone",
           sections: ["Elentári"]},
+          {url: "http://alicornutopia.dreamwidth.org/30911.html",
+          title: "spear of ice",
+          sections: ["Elentári"]},
           {url: "http://alicornutopia.dreamwidth.org/29954.html",
           title: "interplanar studies",
           sections: ["Telperion"]},
           {url: "http://alicornutopia.dreamwidth.org/30387.html",
           title: "applied theology",
-          sections: ["Telperion"]}
+          sections: ["Telperion"]},
+          {url: "http://lintamande.dreamwidth.org/513.html",
+          title: "don't touch me",
+          sections: ["Promise in Arda"]}
         ]
       end
       
