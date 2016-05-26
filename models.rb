@@ -395,10 +395,11 @@ module GlowficEpub
         query = CGI.parse(uri.query)
         query.delete("style")
         query.delete("view")
+        query.delete("per_page")
         query = URI.encode_www_form(query)
         uri.query = (query.empty?) ? nil : query
       end
-      uri.host = uri.host.sub(/\.dreamwidth\.org$/, ".dreamwidth")
+      uri.host = uri.host.sub(/\.dreamwidth\.org$/, ".dreamwidth").sub('vast-journey-9935.herokuapp.com', 'constellation')
       uri.to_s.sub(/^https?\:\/\//, "").sub(/\.html($|(?=\?))/, "")
     end
     def to_s
