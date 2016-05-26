@@ -599,6 +599,7 @@
       return nil unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
       
+      chapter.url = set_url_params(clear_url_params(chapter.url), {per_page: 'all'}) unless chapter.url["per_page=all"]
       is_new = true
       prev_pages = chapter.pages
       if prev_pages and not prev_pages.empty?
@@ -648,7 +649,7 @@
         open(page_url, 'w') do |file|
           file.write first_page_new_data
         end
-        pages = [set_url_params(clear_url_params(chapter.url), {per_page: 'all'})]
+        pages = [chapter.url]
         chapter.pages = pages
         LOG.info "Updated: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got 1 page)" if notify
         return chapter
