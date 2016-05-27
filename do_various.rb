@@ -36,7 +36,7 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", output_epub: :output_epub}
+  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", output_epub: :output_epub, report: :report, output_report: :output_report}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
       process = value
@@ -123,11 +123,11 @@ def main(args)
       
       set_chapters_data(chapter_list, group)
     end
-  elsif (process == :process)
-    GlowficEpub::build_moieties
+  elsif (process == :process or process == :report)
+    GlowficEpub::build_moieties if process == :process
     chapter_list = get_chapters_data(group, trash_messages: true)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
-    LOG.info "Processing '#{group}'"
+    LOG.info "Processing '#{group}'" + (process == :report ? " (daily report)" : "")
     LOG.info "Chapter count: #{chapter_list.length}"
     
     site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
@@ -152,7 +152,9 @@ def main(args)
       instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
       handler = instance_handlers[site_handler]
       
-      handler.get_replies(chapter, notify: true)
+      only_attrs = (process == :report ? [:time, :edittime] : nil)
+      
+      handler.get_replies(chapter, notify: true, only_attrs: only_attrs)
       
       set_chapters_data(chapter_list, group)
     end
@@ -163,6 +165,14 @@ def main(args)
     LOG.info "Processing '#{group}'"
     
     handler = GlowficOutputHandlers::EpubHandler
+    handler = handler.new(chapter_list: chapter_list, group: group)
+    handler.output
+  elsif (process == :output_report)
+    chapter_list = get_chapters_data(group)
+    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    LOG.info "Processing '#{group}'"
+    
+    handler = GlowficOutputHandlers::ReportHandler
     handler = handler.new(chapter_list: chapter_list, group: group)
     handler.output
   elsif (process == :stats)

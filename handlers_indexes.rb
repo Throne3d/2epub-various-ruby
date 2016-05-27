@@ -632,7 +632,7 @@ module GlowficIndexHandlers
   end
   
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight, :lintamande
+    handles :test, :temp_starlight, :lintamande, :report
     def initialize(options = {})
       super(options)
     end
@@ -726,6 +726,21 @@ module GlowficIndexHandlers
           title: "don't touch me",
           sections: ["Promise in Arda"]}
         ]
+      end
+      
+      if @group == :report
+        report_json = ""
+        open('toc_report.txt', 'r') do |report_toc|
+          report_json = report_toc.read
+        end
+        list = JSON.parse(report_json)
+        list.each do |thing|
+          thing.keys.each do |key|
+            next unless key.is_a?(String)
+            thing[key.to_sym] = thing[key]
+            thing.delete(key)
+          end
+        end
       end
       
       list.each do |item|

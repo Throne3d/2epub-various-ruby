@@ -252,4 +252,17 @@
       epub.save(epub_path)
     end
   end
+  
+  class ReportHandler < OutputHandler
+    def initialize(options={})
+      super options
+      
+    end
+    def output(chapter_list=nil)
+      chapter_list = @chapters if chapter_list.nil? and @chapters
+      (LOG.fatal "No chapters given!" and return) unless chapter_list
+      
+      raise("NOT YET IMPLEMENTED")
+    end
+  end
 end
