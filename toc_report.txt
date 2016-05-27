@@ -1,34 +1,34 @@
-﻿[
-{"title" => "A fresh start",
-"url" => "https://vast-journey-9935.herokuapp.com/posts/53",
-"title_extras" => "Theo and Sadde in Sunnyverse"
+[
+{"title": "A fresh start",
+"url": "https://vast-journey-9935.herokuapp.com/posts/53",
+"title_extras": "Theo and Sadde in Sunnyverse"
 },
-{"title" => "A hidden skill",
-"url" => "https://vast-journey-9935.herokuapp.com/posts/87",
-"title_extras" => "Theo, Eva and Sadde in Sunnyverse"
+{"title": "A hidden skill",
+"url": "https://vast-journey-9935.herokuapp.com/posts/87",
+"title_extras": "Theo, Eva and Sadde in Sunnyverse"
 },
-{"title" => "An unlikely ally",
-"url" => "https://vast-journey-9935.herokuapp.com/posts/90",
-"title_extras" => "Theo, Sadde and Willow in Sunnyverse"
+{"title": "An unlikely ally",
+"url": "https://vast-journey-9935.herokuapp.com/posts/90",
+"title_extras": "Theo, Sadde and Willow in Sunnyverse"
 },
-{"title" => "Book of Existence",
-"url" => "https://vast-journey-9935.herokuapp.com/posts/116",
-"title_extras" => "Tyler and Sadde in Cardcaptor Sakuraverse"
+{"title": "Book of Existence",
+"url": "https://vast-journey-9935.herokuapp.com/posts/116",
+"title_extras": "Tyler and Sadde in Cardcaptor Sakuraverse"
 },
-{"title" => "Book of Impact",
-"url" => "https://vast-journey-9935.herokuapp.com/posts/61",
-"title_extras" => "Theo and Sadde in Cardcaptor Sakuraverse"
+{"title": "Book of Impact",
+"url": "https://vast-journey-9935.herokuapp.com/posts/61",
+"title_extras": "Theo and Sadde in Cardcaptor Sakuraverse"
 },
-{"title" => "Geomertry",
-"url" => "https://vast-journey-9935.herokuapp.com/posts/117",
-"title_extras" => "Rachel and Sadde in the City of Angles"
+{"title": "Geometry",
+"url": "https://vast-journey-9935.herokuapp.com/posts/117",
+"title_extras": "Rachel and Sadde in the City of Angles"
 },
-{"title" => "obligation of good faith",
-"url" => "https://vast-journey-9935.herokuapp.com/posts/83",
-"title_extras" => "Sadde in Pactverse"
+{"title": "obligation of good faith",
+"url": "https://vast-journey-9935.herokuapp.com/posts/83",
+"title_extras": "Sadde in Pactverse"
 },
-{"title" => "don't touch me",
-"url" => "http://lintamande.dreamwidth.org/513.html",
-"title_extras" => "Promise and Elves"
+{"title": "don't touch me",
+"url": "http://lintamande.dreamwidth.org/513.html",
+"title_extras": "Promise and Elves"
 }
 ]
