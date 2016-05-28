@@ -215,7 +215,7 @@
 {"title": "pull the blackout curtains down",
 "url": "https://vast-journey-9935.herokuapp.com/posts/118",
 "title_extras": "[b][color=#8040BF]Miles[/color][/b] and [b][color=#8040BF]Zeke[/color][/b] in Sunnyverse",
-"time_completed": "2016-05-22T03:05+01:00"
+"time_completed": "2016-05-22T03:05:00+01:00"
 },
 {"title": "yeah that happens if you turn into a vampire",
 "url": "https://alicornutopia.dreamwidth.org/30604.html",
@@ -347,7 +347,7 @@
 {"title": "the child who never lived",
 "url": "https://vast-journey-9935.herokuapp.com/posts/104",
 "title_extras": "[b][color=#8040BF]Mark[/color][/b] in Nexus",
-"time_completed": "2016-05-06T21:04+01:00"
+"time_completed": "2016-05-06T21:04:00+01:00"
 },
 {"title": "A time and place for humor",
 "url": "https://vast-journey-9935.herokuapp.com/posts/70",
