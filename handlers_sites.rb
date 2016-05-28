@@ -991,11 +991,17 @@
       if message_attributes.include?(:time)
         create_date = date_element.at_css('.post-posted').try(:text).try(:strip)
         LOG.error "No create date for message ID ##{message_id}?" unless create_date
-        params[:time] = DateTime.strptime(create_date, "%b %d, %Y %l:%M %p") if create_date
+        if create_date
+          params[:time] = DateTime.strptime(create_date + " Eastern Time (US & Canada)", "%b %d, %Y %l:%M %p %Z")
+          params[:time] = (params[:time].to_time - 1.hour).to_datetime if params[:time].to_time.dst?
+        end
       end
       if message_attributes.include?(:edittime)
         edit_date = date_element.at_css('.post-updated').try(:text).try(:strip)
-        params[:edittime] = DateTime.strptime(edit_date, "%b %d, %Y %l:%M %p") if edit_date
+        if edit_date
+          params[:edittime] = DateTime.strptime(edit_date + " Eastern Time (US & Canada)", "%b %d, %Y %l:%M %p %Z")
+          params[:edittime] = (params[:edittime].to_time - 1.hour).to_datetime if params[:edittime].to_time.dst?
+        end
       end
       
       params[:content] = message_element.at_css('.post-content').inner_html.strip
