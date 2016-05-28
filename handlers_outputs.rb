@@ -275,10 +275,10 @@
         if days_ago == 2
           if upd_chapter_col[1]
             upd_chapter_col[1].each do |chapter_thing|
-              chapter = chapter_thing[0]
-              first_update = chapter_thing[1]
-              last_update = chapter_thing[2]
-              latest_update = chapter_thing[3]
+              chapter = chapter_thing[:chapter]
+              first_update = chapter_thing[:first_update]
+              last_update = chapter_thing[:last_update]
+              latest_update = chapter_thing[:latest_update]
               
               was_yesterday = false
               messages = [chapter.entry] + chapter.replies
@@ -286,7 +286,7 @@
                 was_yesterday = true if message.time.between?(early_time, late_time)
               end
               
-              chapter_thing[4] = was_yesterday
+              chapter_thing[:yesterday] = was_yesterday
             end
           end
         end
@@ -308,10 +308,13 @@
           end
           
           if first_update
-            upd_chapters << [chapter, first_update, last_update, latest_update]
+            upd_chapters << {chapter: chapter, first_update: first_update, last_update: last_update, latest_update: latest_update}
             done << chapter
           end
-          upd_chapters << [chapter, latest_update] if days_ago < 1
+          if days_ago < 1
+            upd_chapters << {chapter: chapter, latest_update: latest_update}
+            done << chapter
+          end
         end
         
         upd_chapter_col[days_ago] = upd_chapters
@@ -325,13 +328,13 @@
         if days_ago >= 1 and not upd_chapters.empty?
           LOG.info "#{days_ago == 1 ? 'New updates' : 'Last updated'} #{early_time.strftime('%m-%d')}:"
           LOG.info "[list#{days_ago==1 ? '=1' : ''}]"
-          upd_chapters.sort! { |x,y| y[1].time <=> x[1].time } if days_ago == 1
-          upd_chapters.sort! { |x,y| y[2].time <=> x[2].time } if days_ago > 1
+          upd_chapters.sort! { |x,y| y[:first_update].time <=> x[:first_update].time } if days_ago == 1
+          upd_chapters.sort! { |x,y| y[:last_update].time <=> x[:last_update].time } if days_ago > 1
           upd_chapters.each do |chapter_thing|
-            chapter = chapter_thing[0]
-            first_update = chapter_thing[1]
-            last_update = chapter_thing[2]
-            latest_update = chapter_thing[3]
+            chapter = chapter_thing[:chapter]
+            first_update = chapter_thing[:first_update]
+            last_update = chapter_thing[:last_update]
+            latest_update = chapter_thing[:latest_update]
             if days_ago == 1
               LOG.info "[*][url=#{first_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
             else
@@ -341,29 +344,29 @@
           LOG.info "[/list]"
           
           if days_ago == 1
-            dw_upd_chapters = upd_chapters.select {|chapter_thing| GlowficSiteHandlers::DreamwidthHandler.handles?(chapter_thing[0]) }
+            dw_upd_chapters = upd_chapters.select {|chapter_thing| GlowficSiteHandlers::DreamwidthHandler.handles?(chapter_thing[:chapter]) }
             if dw_upd_chapters and not dw_upd_chapters.empty?
               LOG.info "[spoiler-box=DW Only]New updates #{early_time.strftime('%m-%d')}:"
               LOG.info "[list]"
               dw_upd_chapters.each do |chapter_thing|
-                chapter = chapter_thing[0]
-                first_update = chapter_thing[1]
-                last_update = chapter_thing[2]
-                latest_update = chapter_thing[3]
+                chapter = chapter_thing[:chapter]
+                first_update = chapter_thing[:first_update]
+                last_update = chapter_thing[:last_update]
+                latest_update = chapter_thing[:latest_update]
                 LOG.info "[*][url=#{first_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
               end
               LOG.info "[/list]"
             end
             
-            not_yesterdays = upd_chapters.select {|chapter_thing| chapter_thing[4] == false}
+            not_yesterdays = upd_chapters.select {|chapter_thing| chapter_thing[:yesterday] == false}
             if not_yesterdays and not not_yesterdays.empty?
               LOG.info "[spoiler-box=Today, not yesterday]New updates #{early_time.strftime('%m-%d')}:"
               LOG.info "[list]"
               not_yesterdays.each do |chapter_thing|
-                chapter = chapter_thing[0]
-                first_update = chapter_thing[1]
-                last_update = chapter_thing[2]
-                latest_update = chapter_thing[3]
+                chapter = chapter_thing[:chapter]
+                first_update = chapter_thing[:first_update]
+                last_update = chapter_thing[:last_update]
+                latest_update = chapter_thing[:latest_update]
                 LOG.info "[*][url=#{first_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
               end
               LOG.info "[/list]"
@@ -372,10 +375,10 @@
         elsif not upd_chapters.empty?
           LOG.info "Earlier:"
           LOG.info "[list]"
-          upd_chapters.sort! { |x,y| y[1].time <=> x[1].time }
+          upd_chapters.sort! { |x,y| y[:latest_update].time <=> x[:latest_update].time }
           upd_chapters.each do |chapter_thing|
-            chapter = chapter_thing[0]
-            latest_update = chapter_thing[1]
+            chapter = chapter_thing[:chapter]
+            latest_update = chapter_thing[:latest_update]
             LOG.info "[*][url=#{latest_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras} (last updated #{latest_update.time.strftime('%m-%d %H:%M')})"
           end
           LOG.info "[/list]"
@@ -384,7 +387,7 @@
       
       done_msg = false
       chapter_list.each do |chapter|
-        next if chapter.entry
+        next if done.include?(chapter)
         unless done_msg
           LOG.error "---- ERROR:"
           done_msg = true
