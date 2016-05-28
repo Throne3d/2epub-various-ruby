@@ -294,7 +294,7 @@ module GlowficEpub
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties
     
     def allowed_params
-      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors]
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed]
     end
     
     def group
@@ -333,6 +333,21 @@ module GlowficEpub
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
       end
       @authors
+    end
+    
+    def time_completed
+      if @time_completed.is_a?(String)
+        @time_completed = Date.strptime(@time_completed)
+      else
+        @time_completed
+      end
+    end
+    def time_completed=(val)
+      if val.is_a?(String)
+        @time_completed = Date.strptime(val)
+      else
+        @time_completed = val
+      end
     end
     
     def moieties
