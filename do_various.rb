@@ -36,7 +36,7 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", output_epub: :output_epub, report: :report, output_report: :output_report}
+  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
       process = value
@@ -72,6 +72,11 @@ def main(args)
     main("tocs_#{group}")
     main("get_#{group}")
     main("process_#{group}")
+  elsif (process == :repdo)
+    main("tocs_#{group}")
+    main("get_#{group}")
+    main("report_#{group}")
+    main("output_report_#{group}")
   elsif (process == :tocs)
     chapter_list = GlowficEpub::Chapters.new(group: group)
     
