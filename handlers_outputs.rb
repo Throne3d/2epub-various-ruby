@@ -266,9 +266,30 @@
       today_time = DateTime.new(date.year, date.month, date.day, 10, 0, 0)
       
       done = []
-      [1,2,3,4,5,6,-1].each do |days_ago|
+      upd_chapter_col = {}
+      day_list = [1,2,3,4,5,6,-1]
+      day_list.each do |days_ago|
         early_time = today_time - days_ago
         late_time = early_time + 1
+        
+        if days_ago == 2
+          if upd_chapter_col[1]
+            upd_chapter_col[1].each do |chapter_thing|
+              chapter = chapter_thing[0]
+              first_update = chapter_thing[1]
+              last_update = chapter_thing[2]
+              latest_update = chapter_thing[3]
+              
+              was_yesterday = false
+              messages = [chapter.entry] + chapter.replies
+              messages.each do |message|
+                was_yesterday = true if message.time.between?(early_time, late_time)
+              end
+              
+              chapter_thing[4] = was_yesterday
+            end
+          end
+        end
         
         upd_chapters = []
         chapter_list.each do |chapter|
@@ -278,8 +299,8 @@
           first_update = nil
           last_update = nil
           latest_update = nil
-          @messages = [chapter.entry] + chapter.replies
-          @messages.each do |message|
+          messages = [chapter.entry] + chapter.replies
+          messages.each do |message|
             in_period = (days_ago > 0) ? message.time.between?(early_time, late_time) : false
             first_update = message if in_period and not first_update
             last_update = message if in_period
@@ -293,8 +314,16 @@
           upd_chapters << [chapter, latest_update] if days_ago < 1
         end
         
+        upd_chapter_col[days_ago] = upd_chapters
+      end
+      
+      day_list.each do |days_ago|
+        early_time = today_time - days_ago
+        late_time = early_time + 1
+        
+        upd_chapters = upd_chapter_col[days_ago]
         if days_ago >= 1 and not upd_chapters.empty?
-          LOG.info "Last updated #{early_time.strftime('%m-%d')}:"
+          LOG.info "#{days_ago == 1 ? 'New updates' : 'Last updated'} #{early_time.strftime('%m-%d')}:"
           LOG.info "[list#{days_ago==1 ? '=1' : ''}]"
           upd_chapters.sort! { |x,y| y[1].time <=> x[1].time } if days_ago == 1
           upd_chapters.sort! { |x,y| y[2].time <=> x[2].time } if days_ago > 1
@@ -310,6 +339,36 @@
             end
           end
           LOG.info "[/list]"
+          
+          if days_ago == 1
+            dw_upd_chapters = upd_chapters.select {|chapter_thing| GlowficSiteHandlers::DreamwidthHandler.handles?(chapter_thing[0]) }
+            if dw_upd_chapters and not dw_upd_chapters.empty?
+              LOG.info "[spoiler-box=DW Only]New updates #{early_time.strftime('%m-%d')}:"
+              LOG.info "[list]"
+              dw_upd_chapters.each do |chapter_thing|
+                chapter = chapter_thing[0]
+                first_update = chapter_thing[1]
+                last_update = chapter_thing[2]
+                latest_update = chapter_thing[3]
+                LOG.info "[*][url=#{first_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
+              end
+              LOG.info "[/list]"
+            end
+            
+            not_yesterdays = upd_chapters.select {|chapter_thing| chapter_thing[4] == false}
+            if not_yesterdays and not not_yesterdays.empty?
+              LOG.info "[spoiler-box=Today, not yesterday]New updates #{early_time.strftime('%m-%d')}:"
+              LOG.info "[list]"
+              not_yesterdays.each do |chapter_thing|
+                chapter = chapter_thing[0]
+                first_update = chapter_thing[1]
+                last_update = chapter_thing[2]
+                latest_update = chapter_thing[3]
+                LOG.info "[*][url=#{first_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
+              end
+              LOG.info "[/list]"
+            end
+          end
         elsif not upd_chapters.empty?
           LOG.info "Earlier:"
           LOG.info "[list]"
