@@ -708,7 +708,6 @@ module GlowficEpub
         end
       end
       
-      raise(ArgumentError, "Author must be given") unless (params.key?(:author) and not params[:author].nil?)
       raise(ArgumentError, "Content must be given") unless params.key?(:content)
       raise(ArgumentError, "Chapter must be given") unless params.key?(:chapter)
       allowed_params.each do |symbol|

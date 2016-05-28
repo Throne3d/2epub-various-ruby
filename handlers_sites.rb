@@ -36,7 +36,7 @@
       @chapter_list = GlowficEpub::Chapters.new if @chapter_list.is_a?(Array) and @chapter_list.empty?
     end
     def msg_attrs
-      @msg_attrs ||= [:content, :time, :edittime, :author, :face]
+      @msg_attrs ||= [:time, :edittime, :author, :face]
     end
   end
   
@@ -423,10 +423,8 @@
         end
       end
       
-      if message_attributes.include?(:content)
-        message_content = message_element.at_css('.comment-content, .entry-content')
-        params[:content] = message_content.inner_html
-      end
+      message_content = message_element.at_css('.comment-content, .entry-content')
+      params[:content] = message_content.inner_html
       params[:author] = get_author_by_id(author_id) if message_attributes.include?(:author)
       params[:id] = message_id
       params[:chapter] = @chapter
@@ -977,7 +975,7 @@
         params[:edittime] = DateTime.strptime(edit_date, "%b %d, %Y %l:%M %p") if edit_date
       end
       
-      params[:content] = message_element.at_css('.post-content').inner_html.strip if message_attributes.include?(:content)
+      params[:content] = message_element.at_css('.post-content').inner_html.strip
       params[:author] = get_author_by_id(character_id) if message_attributes.include?(:author)
       
       params[:id] = message_id
