@@ -1,15 +1,27 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    activesupport (4.2.6)
+      i18n (~> 0.7)
+      json (~> 1.7, >= 1.7.7)
+      minitest (~> 5.1)
+      thread_safe (~> 0.3, >= 0.3.4)
+      tzinfo (~> 1.1)
     builder (3.2.2)
     eeepub (0.8.1)
       builder
       rubyzip
+    i18n (0.7.0)
+    json (1.8.3)
     mini_portile2 (2.0.0)
+    minitest (5.8.3)
     nokogiri (1.6.7.2)
       mini_portile2 (~> 2.0.0.rc2)
     open_uri_redirections (0.2.1)
     rubyzip (1.2.0)
+    thread_safe (0.3.5)
+    tzinfo (1.2.2)
+      thread_safe (~> 0.1)
     zip-zip (0.3)
       rubyzip (>= 1.0.0)
 
@@ -17,10 +29,11 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  activesupport
   eeepub
   nokogiri
   open_uri_redirections
   zip-zip
 
 BUNDLED WITH
-   1.11.2
+   1.12.5
