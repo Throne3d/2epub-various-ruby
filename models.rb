@@ -540,7 +540,7 @@ module GlowficEpub
   end
   
   class Message < Model #post or entry
-    attr_accessor :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children
+    attr_accessor :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no
     @@date_format = "%Y-%m-%d %H:%M"
     
     def self.message_serialize_ignore
@@ -548,7 +548,7 @@ module GlowficEpub
     end
     
     def allowed_params
-      @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :entry_title]
+      @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :entry_title, :page_no]
     end
     
     @push_title = false

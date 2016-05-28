@@ -86,7 +86,15 @@
     end
     
     def get_permalink_for(message)
-      raise("NOT IMPLEMENTED: get_permalink_for(dreamwidth message)")
+      if message.post_type == "PostType::ENTRY"
+        set_url_params(clear_url_params(message.chapter.url), {view: :flat})
+      else
+        if message.page_no
+          set_url_params(clear_url_params(message.chapter.url), {view: :flat, page: message.page_no}) + "#comment-cmt#{message.id}"
+        else
+          set_url_params(clear_url_params(message.chapter.url), {thread: message.id}) + "#comment-cmt#{message.id}"
+        end
+      end
     end
     
     def down_or_cache(page, options = {})
@@ -537,6 +545,8 @@
           chapter.entry = entry
         end
         
+        page_no = get_url_param(page_url, 'page')
+        
         comments = page_content.css('.comment-wrapper.full')
         comments.each do |comment|
           comment_element = comment.at_css('.comment')
@@ -562,6 +572,7 @@
               LOG.debug "Found the chapter thread comment #{reply}. Setting its parent to the entry #{chapter.entry}."
               reply.parent = chapter.entry
             end
+            reply.page_no = page_no if page_no
             @replies << reply
             @reply_ids << reply.id unless @reply_ids.include?(reply.id)
           end
@@ -597,7 +608,11 @@
     end
     
     def get_permalink_for(message)
-      raise("NOT IMPLEMENTED: get_permalink_for(constellation message)")
+      if message.post_type == PostType::ENTRY
+        "https://vast-journey-9935.herokuapp.com/posts/#{message.id}"
+      else
+        "https://vast-journey-9935.herokuapp.com/replies/#{message.id}#reply-#{message.id}"
+      end
     end
     
     def get_full(chapter, options = {})
