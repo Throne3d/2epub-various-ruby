@@ -29,11 +29,11 @@
 },
 {"title": "the world turned upside down",
 "url": "https://vast-journey-9935.herokuapp.com/posts/96",
-"title_extras": "Carmen and [b][color=#FF0000]Gimlith[/color]"
+"title_extras": "Carmen and [b][color=#FF0000]Gimlith[/color][/b]"
 },
 {"title": "What strange things one can find in Milliways",
 "url": "https://vast-journey-9935.herokuapp.com/posts/77",
-"title_extras": "Milliways [b][color=#62371F]Lurker[/color][/b] in [b][color=#006000]The Old Republic[/color]"
+"title_extras": "Milliways [b][color=#62371F]Lurker[/color][/b] in [b][color=#006000]The Old Republic[/color][/b]"
 },
 {"title": "Let Me Tell You What I Wish I'd Known",
 "url": "https://vast-journey-9935.herokuapp.com/posts/84",
@@ -157,7 +157,7 @@
 },
 {"title": "Entwined in threads",
 "url": "https://vast-journey-9935.herokuapp.com/posts/72",
-"title_extras": "[b][color=#A0A0A0]Felix[/color][/]b lands in [b][color=#D5732A]Threads!Flynn's[/color][/b] world"
+"title_extras": "[b][color=#A0A0A0]Felix[/color][/b] lands in [b][color=#D5732A]Threads!Flynn's[/color][/b] world"
 },
 {"title": "finding the way",
 "url": "https://peterverse.dreamwidth.org/8931.html",
@@ -217,7 +217,7 @@
 },
 {"title": "Delightfully Strange",
 "url": "https://glowfic.dreamwidth.org/35726.html?thread=7050126",
-"title_extras": "[b][color=#000000]Terence[/b][/b] and eclipsed [b][color=#00BF80]Bell[/color][/b]"
+"title_extras": "[b][color=#000000]Terence[/color][/b] and eclipsed [b][color=#00BF80]Bell[/color][/b]"
 },
 {"title": "Aren't You a Little Short for a Sith?",
 "url": "https://vast-journey-9935.herokuapp.com/posts/98",
