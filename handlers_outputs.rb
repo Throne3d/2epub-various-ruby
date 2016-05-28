@@ -263,26 +263,75 @@
       date = options.include?(:date) ? options[:date] : DateTime.now.to_date
       (LOG.fatal "No chapters given!" and return) unless chapter_list
       
-      late_time = DateTime.new(date.year,date.month,date.day, 10, 0, 0)
-      early_time = late_time - 1
+      today_time = DateTime.new(date.year, date.month, date.day, 10, 0, 0)
       
-      chapter_list.each do |chapter|
-        (LOG.error "No entry for chapter." and next) unless chapter.entry
-        (LOG.info "Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
+      done = []
+      [1,2,3,4,5,6,-1].each do |days_ago|
+        early_time = today_time - days_ago
+        late_time = early_time + 1
         
-        first_update = nil
-        @messages = [chapter.entry] + chapter.replies
-        @messages.each do |message|
-          in_period = message.time.between?(early_time, late_time)
-          first_update = message.time if in_period and not first_update
+        upd_chapters = []
+        chapter_list.each do |chapter|
+          next if done.include?(chapter)
+          next unless chapter.entry
+          
+          first_update = nil
+          last_update = nil
+          latest_update = nil
+          @messages = [chapter.entry] + chapter.replies
+          @messages.each do |message|
+            in_period = (days_ago > 0) ? message.time.between?(early_time, late_time) : false
+            first_update = message if in_period and not first_update
+            last_update = message if in_period
+            latest_update = message if message.time < today_time
+          end
+          
+          if first_update
+            upd_chapters << [chapter, first_update, last_update, latest_update]
+            done << chapter
+          end
+          upd_chapters << [chapter, latest_update] if days_ago < 1
         end
         
-        puts "#{chapter} was updated at #{first_update}" if first_update
-        puts "--- Not: #{chapter}" unless first_update
-        
-        #LOG.info "Did chapter #{chapter}"
+        if days_ago >= 1 and not upd_chapters.empty?
+          LOG.info "Last updated #{early_time.strftime('%m-%d')}:"
+          LOG.info "[list#{days_ago==1 ? '=1' : ''}]"
+          upd_chapters.sort! { |x,y| y[1].time <=> x[1].time } if days_ago == 1
+          upd_chapters.sort! { |x,y| y[2].time <=> x[2].time } if days_ago > 1
+          upd_chapters.each do |chapter_thing|
+            chapter = chapter_thing[0]
+            first_update = chapter_thing[1]
+            last_update = chapter_thing[2]
+            latest_update = chapter_thing[3]
+            if days_ago == 1
+              LOG.info "[*][url=#{first_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
+            else
+              LOG.info "[*][url=#{latest_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
+            end
+          end
+          LOG.info "[/list]"
+        elsif not upd_chapters.empty?
+          LOG.info "Earlier:"
+          LOG.info "[list]"
+          upd_chapters.sort! { |x,y| y[1].time <=> x[1].time }
+          upd_chapters.each do |chapter_thing|
+            chapter = chapter_thing[0]
+            latest_update = chapter_thing[1]
+            LOG.info "[*][url=#{latest_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras} (last updated #{latest_update.time.strftime('%m-%d %H:%M')})"
+          end
+          LOG.info "[/list]"
+        end
       end
       
+      done_msg = false
+      chapter_list.each do |chapter|
+        next if chapter.entry
+        unless done_msg
+          LOG.error "---- ERROR:"
+          done_msg = true
+        end
+        LOG.error "#{chapter}"
+      end
     end
   end
 end
