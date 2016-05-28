@@ -258,7 +258,7 @@
       super options
       
     end
-    def display_chapterthing(chapterthing, options = {})
+    def chapterthing_displaytext(chapterthing, options = {})
       first_last = options.key?(:first) ? (options[:first] != false ? :first : :last) : (options.key?(:last) ? (options[:last] != false ? :last : :first) : (options.key?(:first_last) ? options[:first_last] : :first))
       show_completed_before = options.key?(:completed) ? options[:completed] : (options.key?(:completed_before) ? options[:completed_before] : (DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0) - 1))
       show_completed_before = 0 unless show_completed_before
@@ -348,7 +348,7 @@
           upd_chapters.sort! { |x,y| y[:first_update].time <=> x[:first_update].time } if days_ago == 1
           upd_chapters.sort! { |x,y| y[:last_update].time <=> x[:last_update].time } if days_ago > 1
           upd_chapters.each do |chapter_thing|
-            LOG.info display_chapterthing(chapter_thing, first_last: (days_ago == 1 ? :first : :last), completed_before: late_time, new_after: (days_ago == 1 ? early_time : today_time + 3))
+            LOG.info chapterthing_displaytext(chapter_thing, first_last: (days_ago == 1 ? :first : :last), completed_before: late_time, new_after: (days_ago == 1 ? early_time : today_time + 3))
           end
           LOG.info "[/list]"
           
@@ -358,7 +358,7 @@
               LOG.info "[spoiler-box=DW Only]New updates #{early_time.strftime('%m-%d')}:"
               LOG.info "[list]"
               dw_upd_chapters.each do |chapter_thing|
-                LOG.info display_chapterthing(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
+                LOG.info chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
               end
               LOG.info "[/list][/spoiler-box]"
             end
@@ -368,7 +368,7 @@
               LOG.info "[spoiler-box=Today, not yesterday]New updates #{early_time.strftime('%m-%d')}:"
               LOG.info "[list]"
               not_yesterdays.each do |chapter_thing|
-                LOG.info display_chapterthing(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
+                LOG.info chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
               end
               LOG.info "[/list][/spoiler-box]"
             end
@@ -386,7 +386,7 @@
                 end
               end
               sec_upd_chapters.each do |chapter_thing|
-                LOG.info display_chapterthing(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
+                LOG.info chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
               end
               LOG.info "[/list][/spoiler-box]"
             end
@@ -396,7 +396,7 @@
           LOG.info "[list]"
           upd_chapters.sort! { |x,y| y[:latest_update].time <=> x[:latest_update].time }
           upd_chapters.each do |chapter_thing|
-            LOG.info display_chapterthing(chapter_thing, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true)
+            LOG.info chapterthing_displaytext(chapter_thing, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true)
           end
           LOG.info "[/list]"
         end
