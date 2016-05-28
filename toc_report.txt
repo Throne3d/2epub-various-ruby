@@ -1,7 +1,8 @@
 [
 {"title": "A fresh start",
 "url": "https://vast-journey-9935.herokuapp.com/posts/53",
-"title_extras": "[b][color=#960018]Theo[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in Sunnyverse"
+"title_extras": "[b][color=#960018]Theo[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in Sunnyverse",
+"time_completed": "2016-04-16T22:38:00+01:00"
 },
 {"title": "A hidden skill",
 "url": "https://vast-journey-9935.herokuapp.com/posts/87",
@@ -13,7 +14,8 @@
 },
 {"title": "Book of Existence",
 "url": "https://vast-journey-9935.herokuapp.com/posts/116",
-"title_extras": "[b][color=#960018]Tyler[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in [b][color=#FF5C5C]Cardverse[/color][/b]"
+"title_extras": "[b][color=#960018]Tyler[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in [b][color=#FF5C5C]Cardverse[/color][/b]",
+"time_completed": "2016-05-20T00:43:00+01:00"
 },
 {"title": "Book of Impact",
 "url": "https://vast-journey-9935.herokuapp.com/posts/61",
@@ -53,11 +55,13 @@
 },
 {"title": "leave of absence",
 "url": "http://alicornutopia.dreamwidth.org/29664.html",
-"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] and [b][color=#FF0000]House of Fëanor[/color][/b]"
+"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] and [b][color=#FF0000]House of Fëanor[/color][/b]",
+"time_completed": "2016-05-12T12:42:00+01:00"
 },
 {"title": "halls of stone",
 "url": "https://lintamande.dreamwidth.org/381.html",
-"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] and [b][color=#FF0000]House of Fëanor[/color][/b]"
+"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] and [b][color=#FF0000]House of Fëanor[/color][/b]",
+"time_completed": "2016-05-23T18:59:00+01:00"
 },
 {"title": "spear of ice",
 "url": "https://alicornutopia.dreamwidth.org/30911.html",
@@ -69,11 +73,13 @@
 },
 {"title": "Out of the Blue",
 "url": "https://vast-journey-9935.herokuapp.com/posts/82",
-"title_extras": "[b][color=#960018]Theo[/color][/b] and [b][color=#960018]Everett[/color][/b] with [b][color=#6960EC]Grace[/color][/b], [b][color=#6960EC]Reubel[/color][/b] and [b][color=#6960EC]Mu[/color][/b] in Lapis"
+"title_extras": "[b][color=#960018]Theo[/color][/b] and [b][color=#960018]Everett[/color][/b] with [b][color=#6960EC]Grace[/color][/b], [b][color=#6960EC]Reubel[/color][/b] and [b][color=#6960EC]Mu[/color][/b] in Lapis",
+"time_completed": "2016-05-11T02:48:00+01:00"
 },
 {"title": "Drop in the Ocean",
 "url": "https://vast-journey-9935.herokuapp.com/posts/110",
-"title_extras": "[b][color=#960018]Theo[/color][/b], [b][color=#960018]Everett[/color][/b] and [b][color=#960018]Matt[/color][/b] with [b][color=#6960EC]Grace[/color][/b], [b][color=#6960EC]Reubel[/color][/b] and [b][color=#6960EC]Mu[/color][/b] in Lapis"
+"title_extras": "[b][color=#960018]Theo[/color][/b], [b][color=#960018]Everett[/color][/b] and [b][color=#960018]Matt[/color][/b] with [b][color=#6960EC]Grace[/color][/b], [b][color=#6960EC]Reubel[/color][/b] and [b][color=#6960EC]Mu[/color][/b] in Lapis",
+"time_completed": "2016-05-28T00:09:00+01:00"
 },
 {"title": "Fish out of Water",
 "url": "https://vast-journey-9935.herokuapp.com/posts/122",
@@ -113,11 +119,13 @@
 },
 {"title": "be discreet",
 "url": "http://peterverse.dreamwidth.org/7451.html",
-"title_extras": "eclipsed [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]"
+"title_extras": "eclipsed [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]",
+"time_completed": "2016-04-24T13:16:00+01:00"
 },
 {"title": "find gainful employment",
 "url": "https://peterverse.dreamwidth.org/8019.html",
-"title_extras": "eclipsed [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]"
+"title_extras": "eclipsed [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]",
+"time_completed": "2016-05-08T05:57:00+01:00"
 },
 {"title": "behave",
 "url": "https://peterverse.dreamwidth.org/8614.html",
@@ -141,7 +149,8 @@
 },
 {"title": "An unexpected arrival",
 "url": "https://vast-journey-9935.herokuapp.com/posts/73",
-"title_extras": "deva!fairy [b][color=#000000]Nick[/color][/b] and [b][color=#960018]Ev[/color][/b]"
+"title_extras": "deva!fairy [b][color=#000000]Nick[/color][/b] and [b][color=#960018]Ev[/color][/b]",
+"time_completed": "2016-04-23T20:01:00+01:00"
 },
 {"title": "worth an oat",
 "url": "https://alicornutopia.dreamwidth.org/29719.html",
@@ -161,7 +170,8 @@
 },
 {"title": "finding the way",
 "url": "https://peterverse.dreamwidth.org/8931.html",
-"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b] in [b][color=#00BF80]Names-Fairyland[/color][/b]"
+"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b] in [b][color=#00BF80]Names-Fairyland[/color][/b]",
+"time_completed": "2016-05-22T23:36:00+01:00"
 },
 {"title": "infiltrating the court",
 "url": "https://peterverse.dreamwidth.org/9404.html",
@@ -185,15 +195,18 @@
 },
 {"title": "blasto, meet official opinions on self-replicating minions",
 "url": "https://peterverse.dreamwidth.org/7844.html",
-"title_extras": "capes [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]"
+"title_extras": "capes [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]",
+"time_completed": "2016-04-30T17:28:00+01:00"
 },
 {"title": "lung, meet rewind",
 "url": "http://peterverse.dreamwidth.org/8317.html",
-"title_extras": "capes [b][color=#FF5C5C]Sadde[/color][/b], [b][color=#FF5C5C]Rewind[/color][/b] and [b][color=#00BF80]Bell[/color][/b]"
+"title_extras": "capes [b][color=#FF5C5C]Sadde[/color][/b], [b][color=#FF5C5C]Rewind[/color][/b] and [b][color=#00BF80]Bell[/color][/b]",
+"time_completed": "2016-05-17T14:28:00+01:00"
 },
 {"title": "pretoria, meet behemoth",
 "url": "https://peterverse.dreamwidth.org/9023.html",
-"title_extras": "capes [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]"
+"title_extras": "capes [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]",
+"time_completed": "2016-05-24T04:15:00+01:00"
 },
 {"title": "glam, meet your new best friend",
 "url": "https://peterverse.dreamwidth.org/9700.html",
@@ -201,7 +214,8 @@
 },
 {"title": "pull the blackout curtains down",
 "url": "https://vast-journey-9935.herokuapp.com/posts/118",
-"title_extras": "[b][color=#8040BF]Miles[/color][/b] and [b][color=#8040BF]Zeke[/color][/b] in Sunnyverse"
+"title_extras": "[b][color=#8040BF]Miles[/color][/b] and [b][color=#8040BF]Zeke[/color][/b] in Sunnyverse",
+"time_completed": "2016-05-22T03:05+01:00"
 },
 {"title": "yeah that happens if you turn into a vampire",
 "url": "https://alicornutopia.dreamwidth.org/30604.html",
@@ -209,7 +223,8 @@
 },
 {"title": "interplanar studies",
 "url": "https://alicornutopia.dreamwidth.org/29954.html",
-"title_extras": "[b][color=#00BF80]Aether[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]"
+"title_extras": "[b][color=#00BF80]Aether[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
+"time_completed": "2016-05-18T06:29:00+01:00"
 },
 {"title": "applied theology",
 "url": "https://alicornutopia.dreamwidth.org/30387.html",
@@ -233,7 +248,8 @@
 },
 {"title": "Dusty Corner Discards",
 "url": "https://vast-journey-9935.herokuapp.com/posts/102",
-"title_extras": "Young adult [b][color=#000000]Terence[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in [b][color=#FF5C5C]Cardverse[/color][/b]"
+"title_extras": "Young adult [b][color=#000000]Terence[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in [b][color=#FF5C5C]Cardverse[/color][/b]",
+"time_completed": "2016-05-22T22:40:00+01:00"
 },
 {"title": "Chaos Summoning Cards",
 "url": "https://vast-journey-9935.herokuapp.com/posts/119",
@@ -265,6 +281,11 @@
 },
 {"title": "i wasn't looking for this",
 "url": "http://alicornutopia.dreamwidth.org/22671.html?thread=12068239",
+"title_extras": "[b][color=#00BF80]Demon Cam[/color][/b] and [b][color=#D5732A]other demons[/color][/b] in [b][color=#D5732A]Bartimaeusverse[/color][/b]",
+"time_completed": "2016-05-19T06:43:00+01:00"
+},
+{"title": "where you think you're going",
+"url": "https://alicornutopia.dreamwidth.org/28223.html?thread=19412287",
 "title_extras": "[b][color=#00BF80]Demon Cam[/color][/b] and [b][color=#D5732A]other demons[/color][/b] in [b][color=#D5732A]Bartimaeusverse[/color][/b]"
 },
 {"title": "Searching Far and Wide",
@@ -325,7 +346,8 @@
 },
 {"title": "the child who never lived",
 "url": "https://vast-journey-9935.herokuapp.com/posts/104",
-"title_extras": "[b][color=#8040BF]Mark[/color][/b] in Nexus"
+"title_extras": "[b][color=#8040BF]Mark[/color][/b] in Nexus",
+"time_completed": "2016-05-06T21:04+01:00"
 },
 {"title": "A time and place for humor",
 "url": "https://vast-journey-9935.herokuapp.com/posts/70",
