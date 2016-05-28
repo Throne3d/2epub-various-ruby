@@ -337,14 +337,18 @@ module GlowficEpub
     
     def time_completed
       if @time_completed.is_a?(String)
-        @time_completed = Date.strptime(@time_completed)
+        @time_completed = DateTime.strptime(@time_completed)
+      elsif @time_completed.is_a?(Date)
+        @time_completed = @time_completed.to_datetime
       else
         @time_completed
       end
     end
     def time_completed=(val)
       if val.is_a?(String)
-        @time_completed = Date.strptime(val)
+        @time_completed = DateTime.strptime(val)
+      elsif val.is_a?(Date)
+        @time_completed = val.to_datetime
       else
         @time_completed = val
       end
