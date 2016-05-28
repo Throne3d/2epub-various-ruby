@@ -173,13 +173,26 @@ def main(args)
     handler = handler.new(chapter_list: chapter_list, group: group)
     handler.output
   elsif (process == :output_report)
+    date = option.sub("output_report","").sub("#{group}","")
+    date = date.gsub(/[^\d]/,' ').strip
+    date = nil if date.empty?
+    if date
+      date_bits = date.split(/\s+/)
+      day = date_bits.last.to_i
+      month = date_bits[date_bits.length-2].to_i
+      year = (date_bits.length > 2 ? date_bits[date_bits.length-3].to_i : DateTime.now.year)
+      date = Date.new(year, month, day)
+    end
+    
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Processing '#{group}'"
     
+    params = {}
+    params[:date] = date if date
     handler = GlowficOutputHandlers::ReportHandler
     handler = handler.new(chapter_list: chapter_list, group: group)
-    handler.output
+    handler.output(params)
   elsif (process == :stats)
     GlowficEpub::build_moieties
     chapter_list = get_chapters_data(group)

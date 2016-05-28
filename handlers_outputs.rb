@@ -258,11 +258,31 @@
       super options
       
     end
-    def output(chapter_list=nil)
-      chapter_list = @chapters if chapter_list.nil? and @chapters
+    def output(options = {})
+      chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : (@chapters ? @chapters : nil)
+      date = options.include?(:date) ? options[:date] : DateTime.now.to_date
       (LOG.fatal "No chapters given!" and return) unless chapter_list
       
-      raise("NOT YET IMPLEMENTED")
+      late_time = DateTime.new(date.year,date.month,date.day, 10, 0, 0)
+      early_time = late_time - 1
+      
+      chapter_list.each do |chapter|
+        (LOG.error "No entry for chapter." and next) unless chapter.entry
+        (LOG.info "Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
+        
+        first_update = nil
+        @messages = [chapter.entry] + chapter.replies
+        @messages.each do |message|
+          in_period = message.time.between?(early_time, late_time)
+          first_update = message.time if in_period and not first_update
+        end
+        
+        puts "#{chapter} was updated at #{first_update}" if first_update
+        puts "--- Not: #{chapter}" unless first_update
+        
+        #LOG.info "Did chapter #{chapter}"
+      end
+      
     end
   end
 end
