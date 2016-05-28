@@ -380,8 +380,6 @@ module GlowficEpub
       @sections = []
       @authors = []
       
-      raise(ArgumentError, "URL must be given") unless (params.key?(:url) and not params[:url].strip.empty?)
-      raise(ArgumentError, "Chapter Title must be given") unless (params.key?(:title) and not params[:title].strip.empty?)
       allowed_params.each do |symbol|
         public_send("#{symbol}=", params[symbol]) if params[symbol]
       end
@@ -390,6 +388,7 @@ module GlowficEpub
       Chapter.shortenURL(@url)
     end
     def self.shortenURL(longURL)
+      return "" if longURL.nil? or longURL.empty?
       uri = URI.parse(longURL)
       if uri.query and not uri.query.empty?
         query = CGI.parse(uri.query)
