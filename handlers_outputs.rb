@@ -264,14 +264,15 @@
       show_completed_before = 0 unless show_completed_before
       show_new_after = options.key?(:early) ? options[:early] : (options.key?(:new_after) ? options[:new_after] : (DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0) - 1))
       show_last_update_time = options.key?(:show_last_update_time) ? options[:show_last_update_time] : false
+      show_sections = options.key?(:show_sections) ? options[:show_sections] : false
       
       chapter = chapterthing[:chapter]
       first_update = chapterthing[:first_update]
-      last_update = chapter_thing[:last_update]
-      lastest_update = chapter_thing[:latest_update]
+      last_update = chapterthing[:last_update]
+      latest_update = chapterthing[:latest_update]
       completed = (chapter.time_completed and chapter.time_completed <= show_completed_before)
       
-      str = "[*][url=#{(first_last == :first ? first_update : (first_last == :last ? last_update : latest_update)).permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}#{chapter.entry.time >= show_new_after ? ', new' : ''}#{show_last_update_time ? ' (last updated ' + latest_update.time.strftime('%m-%d %H:%M') + ')' : ''}"
+      str = "[*][url=#{(first_last == :first ? first_update : (first_last == :last ? last_update : latest_update)).permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url]#{(show_sections and chapter.sections.present?) ? (' (' + chapter.sections * '>' + ')') : ''}, #{chapter.title_extras}#{chapter.entry.time >= show_new_after ? ', new' : ''}#{show_last_update_time ? ' (last updated ' + latest_update.time.strftime('%m-%d %H:%M') + ')' : ''}"
       return str
     end
     def output(options = {})
@@ -386,7 +387,7 @@
                 end
               end
               sec_upd_chapters.each do |chapter_thing|
-                LOG.info chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
+                LOG.info chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time, show_sections: true)
               end
               LOG.info "[/list][/spoiler-box]"
             end
