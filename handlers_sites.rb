@@ -90,9 +90,9 @@
         set_url_params(clear_url_params(message.chapter.url), {view: :flat})
       else
         if message.page_no
-          set_url_params(clear_url_params(message.chapter.url), {view: :flat, page: message.page_no}) + "#comment-cmt#{message.id}"
+          set_url_params(clear_url_params(message.chapter.url), {view: :flat, page: message.page_no}) + "#comment-#{message.id}"
         else
-          set_url_params(clear_url_params(message.chapter.url), {thread: message.id}) + "#comment-cmt#{message.id}"
+          set_url_params(clear_url_params(message.chapter.url), {thread: message.id}) + "#comment-#{message.id}"
         end
       end
     end
