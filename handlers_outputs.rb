@@ -271,7 +271,7 @@
       lastest_update = chapter_thing[:latest_update]
       completed = (chapter.time_completed and chapter.time_completed <= show_completed_before)
       
-      str = "[*][url=#{(first_last == :first ? first_update : (first_last == :last ? last_update : latest_update)).permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}#{chapter.entry.time >= show_new_after ? ', new' : ''}#{show_last_update_time ? ' (last updated ' + latest_update.time.strftime('%m-%d %H:%M') + ')'}"
+      str = "[*][url=#{(first_last == :first ? first_update : (first_last == :last ? last_update : latest_update)).permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}#{chapter.entry.time >= show_new_after ? ', new' : ''}#{show_last_update_time ? ' (last updated ' + latest_update.time.strftime('%m-%d %H:%M') + ')' : ''}"
       return str
     end
     def output(options = {})
