@@ -335,10 +335,11 @@
             first_update = chapter_thing[:first_update]
             last_update = chapter_thing[:last_update]
             latest_update = chapter_thing[:latest_update]
+            completed = (chapter.time_completed and chapter.time_completed <= late_time)
             if days_ago == 1
-              LOG.info "[*][url=#{first_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}" + (chapter.entry.time.between?(early_time, late_time) ? ', new' : '')
+              LOG.info "[*][url=#{first_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}" + (chapter.entry.time.between?(early_time, late_time) ? ', new' : '')
             else
-              LOG.info "[*][url=#{latest_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
+              LOG.info "[*][url=#{latest_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}"
             end
           end
           LOG.info "[/list]"
@@ -353,7 +354,8 @@
                 first_update = chapter_thing[:first_update]
                 last_update = chapter_thing[:last_update]
                 latest_update = chapter_thing[:latest_update]
-                LOG.info "[*][url=#{first_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
+                completed = (chapter.time_completed and chapter.time_completed <= late_time)
+                LOG.info "[*][url=#{first_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}" + (chapter.entry.time.between?(early_time, late_time) ? ', new' : '')
               end
               LOG.info "[/list][/spoiler-box]"
             end
@@ -367,7 +369,8 @@
                 first_update = chapter_thing[:first_update]
                 last_update = chapter_thing[:last_update]
                 latest_update = chapter_thing[:latest_update]
-                LOG.info "[*][url=#{first_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
+                completed = (chapter.time_completed and chapter.time_completed <= late_time)
+                LOG.info "[*][url=#{first_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}" + (chapter.entry.time.between?(early_time, late_time) ? ', new' : '')
               end
               LOG.info "[/list][/spoiler-box]"
             end
@@ -379,7 +382,8 @@
           upd_chapters.each do |chapter_thing|
             chapter = chapter_thing[:chapter]
             latest_update = chapter_thing[:latest_update]
-            LOG.info "[*][url=#{latest_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras} (last updated #{latest_update.time.strftime('%m-%d %H:%M')})"
+            completed = (chapter.time_completed and chapter.time_completed <= late_time)
+            LOG.info "[*][url=#{latest_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras} (last updated #{latest_update.time.strftime('%m-%d %H:%M')})"
           end
           LOG.info "[/list]"
         end
