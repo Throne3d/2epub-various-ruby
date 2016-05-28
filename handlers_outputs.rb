@@ -355,7 +355,7 @@
                 latest_update = chapter_thing[:latest_update]
                 LOG.info "[*][url=#{first_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
               end
-              LOG.info "[/list]"
+              LOG.info "[/list][/spoiler-box]"
             end
             
             not_yesterdays = upd_chapters.select {|chapter_thing| chapter_thing[:yesterday] == false}
@@ -369,7 +369,7 @@
                 latest_update = chapter_thing[:latest_update]
                 LOG.info "[*][url=#{first_update.permalink}]#{chapter.entry_title}[/url], #{chapter.title_extras}"
               end
-              LOG.info "[/list]"
+              LOG.info "[/list][/spoiler-box]"
             end
           end
         elsif not upd_chapters.empty?
