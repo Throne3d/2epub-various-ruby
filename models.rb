@@ -615,6 +615,10 @@ module GlowficEpub
       end
     end
     
+    def permalink
+      site_handler.get_permalink_for(self)
+    end
+    
     def parent=(newparent)
       if newparent.is_a?(Array)
         @parent = newparent

@@ -85,6 +85,10 @@
       return comm_link
     end
     
+    def get_permalink_for(message)
+      raise("NOT IMPLEMENTED: get_permalink_for(dreamwidth message)")
+    end
+    
     def down_or_cache(page, options = {})
       where = (options.key?(:where)) ? options[:where] : nil
       @downcache[where] = [] unless @downcache.key?(where)
@@ -590,6 +594,10 @@
       @author_pages_got = []
       @char_user_map = {}
       @char_page_errors = []
+    end
+    
+    def get_permalink_for(message)
+      raise("NOT IMPLEMENTED: get_permalink_for(constellation message)")
     end
     
     def get_full(chapter, options = {})
