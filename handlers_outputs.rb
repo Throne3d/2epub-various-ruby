@@ -252,4 +252,153 @@
       epub.save(epub_path)
     end
   end
+  
+  class ReportHandler < OutputHandler
+    def initialize(options={})
+      super options
+      
+    end
+    def output(options = {})
+      chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : (@chapters ? @chapters : nil)
+      date = options.include?(:date) ? options[:date] : DateTime.now.to_date
+      (LOG.fatal "No chapters given!" and return) unless chapter_list
+      
+      today_time = DateTime.new(date.year, date.month, date.day, 10, 0, 0)
+      
+      done = []
+      upd_chapter_col = {}
+      day_list = [1,2,3,4,5,6,-1]
+      day_list.each do |days_ago|
+        early_time = today_time - days_ago
+        late_time = early_time + 1
+        
+        if days_ago == 2
+          if upd_chapter_col[1]
+            upd_chapter_col[1].each do |chapter_thing|
+              chapter = chapter_thing[:chapter]
+              first_update = chapter_thing[:first_update]
+              last_update = chapter_thing[:last_update]
+              latest_update = chapter_thing[:latest_update]
+              
+              was_yesterday = false
+              messages = [chapter.entry] + chapter.replies
+              messages.each do |message|
+                was_yesterday = true if message.time.between?(early_time, late_time)
+              end
+              
+              chapter_thing[:yesterday] = was_yesterday
+            end
+          end
+        end
+        
+        upd_chapters = []
+        chapter_list.each do |chapter|
+          next if done.include?(chapter)
+          next unless chapter.entry
+          
+          first_update = nil
+          last_update = nil
+          latest_update = nil
+          messages = [chapter.entry] + chapter.replies
+          messages.each do |message|
+            in_period = (days_ago > 0) ? message.time.between?(early_time, late_time) : false
+            first_update = message if in_period and not first_update
+            last_update = message if in_period
+            latest_update = message if message.time < today_time
+          end
+          
+          if first_update
+            upd_chapters << {chapter: chapter, first_update: first_update, last_update: last_update, latest_update: latest_update}
+            done << chapter
+          end
+          if days_ago < 1
+            upd_chapters << {chapter: chapter, latest_update: latest_update}
+            done << chapter
+          end
+        end
+        
+        upd_chapter_col[days_ago] = upd_chapters
+      end
+      
+      day_list.each do |days_ago|
+        early_time = today_time - days_ago
+        late_time = early_time + 1
+        
+        upd_chapters = upd_chapter_col[days_ago]
+        if days_ago >= 1 and not upd_chapters.empty?
+          LOG.info "#{days_ago == 1 ? 'New updates' : 'Last updated'} #{early_time.strftime('%m-%d')}:"
+          LOG.info "[list#{days_ago==1 ? '=1' : ''}]"
+          upd_chapters.sort! { |x,y| y[:first_update].time <=> x[:first_update].time } if days_ago == 1
+          upd_chapters.sort! { |x,y| y[:last_update].time <=> x[:last_update].time } if days_ago > 1
+          upd_chapters.each do |chapter_thing|
+            chapter = chapter_thing[:chapter]
+            first_update = chapter_thing[:first_update]
+            last_update = chapter_thing[:last_update]
+            latest_update = chapter_thing[:latest_update]
+            completed = (chapter.time_completed and chapter.time_completed <= late_time)
+            if days_ago == 1
+              LOG.info "[*][url=#{first_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}" + (chapter.entry.time.between?(early_time, late_time) ? ', new' : '')
+            else
+              LOG.info "[*][url=#{latest_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}"
+            end
+          end
+          LOG.info "[/list]"
+          
+          if days_ago == 1
+            dw_upd_chapters = upd_chapters.select {|chapter_thing| GlowficSiteHandlers::DreamwidthHandler.handles?(chapter_thing[:chapter]) }
+            if dw_upd_chapters and not dw_upd_chapters.empty?
+              LOG.info "[spoiler-box=DW Only]New updates #{early_time.strftime('%m-%d')}:"
+              LOG.info "[list]"
+              dw_upd_chapters.each do |chapter_thing|
+                chapter = chapter_thing[:chapter]
+                first_update = chapter_thing[:first_update]
+                last_update = chapter_thing[:last_update]
+                latest_update = chapter_thing[:latest_update]
+                completed = (chapter.time_completed and chapter.time_completed <= late_time)
+                LOG.info "[*][url=#{first_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}" + (chapter.entry.time.between?(early_time, late_time) ? ', new' : '')
+              end
+              LOG.info "[/list][/spoiler-box]"
+            end
+            
+            not_yesterdays = upd_chapters.select {|chapter_thing| chapter_thing[:yesterday] == false}
+            if not_yesterdays and not not_yesterdays.empty?
+              LOG.info "[spoiler-box=Today, not yesterday]New updates #{early_time.strftime('%m-%d')}:"
+              LOG.info "[list]"
+              not_yesterdays.each do |chapter_thing|
+                chapter = chapter_thing[:chapter]
+                first_update = chapter_thing[:first_update]
+                last_update = chapter_thing[:last_update]
+                latest_update = chapter_thing[:latest_update]
+                completed = (chapter.time_completed and chapter.time_completed <= late_time)
+                LOG.info "[*][url=#{first_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}" + (chapter.entry.time.between?(early_time, late_time) ? ', new' : '')
+              end
+              LOG.info "[/list][/spoiler-box]"
+            end
+          end
+        elsif not upd_chapters.empty?
+          LOG.info "Earlier:"
+          LOG.info "[list]"
+          upd_chapters.sort! { |x,y| y[:latest_update].time <=> x[:latest_update].time }
+          upd_chapters.each do |chapter_thing|
+            chapter = chapter_thing[:chapter]
+            latest_update = chapter_thing[:latest_update]
+            completed = (chapter.time_completed and chapter.time_completed <= late_time)
+            LOG.info "[*][url=#{latest_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras} (last updated #{latest_update.time.strftime('%m-%d %H:%M')})"
+          end
+          LOG.info "[/list]"
+        end
+      end
+      LOG.info "[url=http://alicorn.elcenia.com/board/viewtopic.php?f=12&t=191#p4841]Official moiety list[/url] (see [url=http://alicorn.elcenia.com/board/viewtopic.php?f=6&t=124&start=1180#p24135]bottom of this[/url] for rainbow)"
+      
+      done_msg = false
+      chapter_list.each do |chapter|
+        next if done.include?(chapter)
+        unless done_msg
+          LOG.error "---- ERROR:"
+          done_msg = true
+        end
+        LOG.error "#{chapter}"
+      end
+    end
+  end
 end

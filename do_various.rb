@@ -10,6 +10,12 @@ require 'open_uri_redirections'
 require 'openssl'
 require 'cgi'
 require 'date'
+require 'active_support'
+require 'active_support/core_ext/object/blank'
+require 'active_support/core_ext/object/try'
+require 'active_support/core_ext/time/calculations'
+require 'active_support/core_ext/date_time/calculations'
+require 'active_support/core_ext/numeric/time'
 
 $LOAD_PATH << '.'
 require 'models'
@@ -36,7 +42,7 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", output_epub: :output_epub}
+  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
       process = value
@@ -72,6 +78,11 @@ def main(args)
     main("tocs_#{group}")
     main("get_#{group}")
     main("process_#{group}")
+  elsif (process == :repdo)
+    main("tocs_#{group}")
+    main("get_#{group}")
+    main("report_#{group}")
+    main("output_report_#{group}")
   elsif (process == :tocs)
     chapter_list = GlowficEpub::Chapters.new(group: group)
     
@@ -123,11 +134,11 @@ def main(args)
       
       set_chapters_data(chapter_list, group)
     end
-  elsif (process == :process)
-    GlowficEpub::build_moieties
+  elsif (process == :process or process == :report)
+    GlowficEpub::build_moieties if process == :process
     chapter_list = get_chapters_data(group, trash_messages: true)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
-    LOG.info "Processing '#{group}'"
+    LOG.info "Processing '#{group}'" + (process == :report ? " (daily report)" : "")
     LOG.info "Chapter count: #{chapter_list.length}"
     
     site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
@@ -152,7 +163,9 @@ def main(args)
       instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
       handler = instance_handlers[site_handler]
       
-      handler.get_replies(chapter, notify: true)
+      only_attrs = (process == :report ? [:time, :edittime] : nil)
+      
+      handler.get_replies(chapter, notify: true, only_attrs: only_attrs)
       
       set_chapters_data(chapter_list, group)
     end
@@ -165,6 +178,27 @@ def main(args)
     handler = GlowficOutputHandlers::EpubHandler
     handler = handler.new(chapter_list: chapter_list, group: group)
     handler.output
+  elsif (process == :output_report)
+    date = option.sub("output_report","").sub("#{group}","")
+    date = date.gsub(/[^\d]/,' ').strip
+    date = nil if date.empty?
+    if date
+      date_bits = date.split(/\s+/)
+      day = date_bits.last.to_i
+      month = date_bits[date_bits.length-2].to_i
+      year = (date_bits.length > 2 ? date_bits[date_bits.length-3].to_i : DateTime.now.year)
+      date = Date.new(year, month, day)
+    end
+    
+    chapter_list = get_chapters_data(group)
+    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    LOG.info "Processing '#{group}'"
+    
+    params = {}
+    params[:date] = date if date
+    handler = GlowficOutputHandlers::ReportHandler
+    handler = handler.new(chapter_list: chapter_list, group: group)
+    handler.output(params)
   elsif (process == :stats)
     GlowficEpub::build_moieties
     chapter_list = get_chapters_data(group)

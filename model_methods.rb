@@ -73,7 +73,8 @@
     throne: [:throne, :throne3d, :theotrics],
     lintamande: [:lintamande, :elves],
     test: [:test],
-    temp_starlight: [:temp_starlight, :starlight]
+    temp_starlight: [:temp_starlight, :starlight],
+    report: [:report, :daily]
   }
   FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie, :throne]
   FIC_TOCS = {
@@ -97,7 +98,8 @@
     
     #Test
     test: "https://vast-journey-9935.herokuapp.com/boards/7",
-    temp_starlight: "https://alicornutopia.dreamwidth.org/29069.html"
+    temp_starlight: "https://alicornutopia.dreamwidth.org/29069.html",
+    report: "https://vast-journey-9935.herokuapp.com/boards"
   }
   FIC_AUTHORSTRINGS = {
     effulgence: "Alicorn & Kappa",

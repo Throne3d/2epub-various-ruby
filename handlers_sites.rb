@@ -35,6 +35,9 @@
       @chapter_list = options[:chapter_list] if options.key?(:chapter_list)
       @chapter_list = GlowficEpub::Chapters.new if @chapter_list.is_a?(Array) and @chapter_list.empty?
     end
+    def msg_attrs
+      @msg_attrs ||= [:time, :edittime, :author, :face]
+    end
   end
   
   class DreamwidthHandler < SiteHandler
@@ -80,6 +83,18 @@
         comm_link = set_url_params(clear_url_params(comm_link), params)
       end
       return comm_link
+    end
+    
+    def get_permalink_for(message)
+      if message.post_type == "PostType::ENTRY"
+        set_url_params(clear_url_params(message.chapter.url), {view: :flat})
+      else
+        if message.page_no
+          set_url_params(clear_url_params(message.chapter.url), {view: :flat, page: message.page_no}) + "#comment-#{message.id}"
+        else
+          set_url_params(clear_url_params(message.chapter.url), {thread: message.id}) + "#comment-#{message.id}"
+        end
+      end
     end
     
     def down_or_cache(page, options = {})
@@ -403,60 +418,67 @@
     def make_message(message_element, options = {})
       #message_element is .comment
       in_context = (options.key?(:in_context) ? options[:in_context] : true)
+      message_attributes = options.key?(:message_attributes) ? options[:message_attributes] : msg_attrs
       
       message_id = message_element["id"].sub("comment-", "").sub("entry-", "")
       message_type = (message_element["id"]["entry"]) ? PostType::ENTRY : PostType::REPLY
       
-      userpic = message_element.at_css('.userpic').try(:at_css, 'img')
       author_id = message_element.at_css('span.ljuser').try(:[], "lj:user")
       
-      face_url = ""
-      face_name = "default"
-      if userpic and userpic["title"]
-        if userpic["title"] != author_id
-          face_name = userpic["title"].sub("#{author_id}: ", "").split(" (").first
-        end
-        if userpic["src"]
-          face_url = userpic["src"]
-        end
-      end
-      
       params = {}
-      edit_element = message_element.at_css('.edittime')
-      if edit_element
-        edit_text = edit_element.at_css(".datetime").text.strip
-        params[:edittime] = DateTime.strptime(edit_text, "%Y-%m-%d %H:%M (%Z)")
-        edit_element.remove
+      if message_attributes.include?(:edittime)
+        edit_element = message_element.at_css('.edittime')
+        if edit_element
+          edit_text = edit_element.at_css(".datetime").text.strip
+          params[:edittime] = DateTime.strptime(edit_text, "%Y-%m-%d %H:%M (%Z)")
+          edit_element.remove
+        end
       end
       
-      face_id = "#{author_id}##{face_name}"
       message_content = message_element.at_css('.comment-content, .entry-content')
       params[:content] = message_content.inner_html
-      params[:face] = get_face_by_id(face_id)
-      params[:author] = get_author_by_id(author_id)
+      params[:author] = get_author_by_id(author_id) if message_attributes.include?(:author)
       params[:id] = message_id
       params[:chapter] = @chapter
       
-      params[:face] = @chapter_list.get_face_by_id(face_id) if params[:face].nil?
-      
-      if params[:face].nil? and not face_url.empty?
-        face_params = {}
-        face_params[:imageURL] = face_url
-        face_params[:author] = get_author_by_id(author_id)
-        face_params[:keyword] = face_name
-        face_params[:unique_id] = face_id
-        face = Face.new(face_params)
-        @chapter_list.add_face(face)
-        LOG.debug "Face replaced by backup face '#{face}' with URL: #{face_url}"
-        params[:face] = face
+      if message_attributes.include?(:face)
+        userpic = message_element.at_css('.userpic').try(:at_css, 'img')
+        face_url = ""
+        face_name = "default"
+        if userpic and userpic["title"]
+          if userpic["title"] != author_id
+            face_name = userpic["title"].sub("#{author_id}: ", "").split(" (").first
+          end
+          if userpic["src"]
+            face_url = userpic["src"]
+          end
+        end
+        
+        face_id = "#{author_id}##{face_name}"
+        params[:face] = get_face_by_id(face_id)
+        params[:face] = @chapter_list.get_face_by_id(face_id) if params[:face].nil?
+        
+        if params[:face].nil? and not face_url.empty?
+          face_params = {}
+          face_params[:imageURL] = face_url
+          face_params[:author] = get_author_by_id(author_id) if message_attributes.include?(:author)
+          face_params[:keyword] = face_name
+          face_params[:unique_id] = face_id
+          face = Face.new(face_params)
+          @chapter_list.add_face(face)
+          LOG.debug "Face replaced by backup face '#{face}' with URL: #{face_url}"
+          params[:face] = face
+        end
       end
       
       if message_type == PostType::ENTRY
         params[:entry_title] = message_element.at_css('.entry-title').text.strip
         
-        time_text = message_element.at_css('.datetime').text.strip
-        time_text = time_text[1..-1].strip if time_text.start_with?("@")
-        params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P")
+        if message_attributes.include?(:time)
+          time_text = message_element.at_css('.datetime').text.strip
+          time_text = time_text[1..-1].strip if time_text.start_with?("@")
+          params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P")
+        end
         
         entry = Entry.new(params)
       else
@@ -471,16 +493,25 @@
           params[:parent] = @chapter.entry
         end
         
-        time_text = message_element.at_css('.datetime').text.strip
-        params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P (%Z)")
+        if message_attributes.include?(:time)
+          time_text = message_element.at_css('.datetime').text.strip
+          params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P (%Z)")
+        end
         
         reply = Reply.new(params)
       end
     end
-  
+    
     def get_replies(chapter, options = {})
       return nil unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
+      
+      only_attrs = options.key?(:attributes) ? options[:attributes] : (options.key?(:only) ? options[:only] : (options.key?(:only_attrs) ? options[:only_attrs] : nil))
+      except_attrs = options.key?(:except) ? options[:except] : (options.key?(:except_attrs) ? options[:except_attrs] : nil)
+      raise("Not allowed both :only and :expect on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs and except_attrs
+      
+      message_attributes = (only_attrs ? only_attrs : msg_attrs)
+      message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
@@ -510,9 +541,11 @@
         
         if @replies.empty?
           entry_element = page_content.at_css('.entry')
-          entry = make_message(entry_element)
+          entry = make_message(entry_element, message_attributes: message_attributes)
           chapter.entry = entry
         end
+        
+        page_no = get_url_param(page_url, 'page')
         
         comments = page_content.css('.comment-wrapper.full')
         comments.each do |comment|
@@ -533,12 +566,13 @@
           end
           
           if (@reply_ids.include?(parent_id) or @reply_ids.include?(comment_id))
-            reply = make_message(comment_element)
+            reply = make_message(comment_element, message_attributes: message_attributes)
             if chapter.thread and reply.id == threadcmt
               LOG.debug "chapter.thread: '#{chapter.thread}'; reply.id: '#{reply.id}'; threadcmt: '#{threadcmt}'; comment_id: '#{comment_id}'; reply_ids.include?(comment_id): #{@reply_ids.include?(comment_id)}"
               LOG.debug "Found the chapter thread comment #{reply}. Setting its parent to the entry #{chapter.entry}."
               reply.parent = chapter.entry
             end
+            reply.page_no = page_no if page_no
             @replies << reply
             @reply_ids << reply.id unless @reply_ids.include?(reply.id)
           end
@@ -571,6 +605,14 @@
       @author_pages_got = []
       @char_user_map = {}
       @char_page_errors = []
+    end
+    
+    def get_permalink_for(message)
+      if message.post_type == PostType::ENTRY
+        "https://vast-journey-9935.herokuapp.com/posts/#{message.id}"
+      else
+        "https://vast-journey-9935.herokuapp.com/replies/#{message.id}#reply-#{message.id}"
+      end
     end
     
     def get_full(chapter, options = {})
@@ -915,6 +957,8 @@
     
     def make_message(message_element, options = {})
       #message_element is the ".post-container"
+      message_attributes = options.key?(:message_attributes) ? options[:message_attributes] : msg_attrs
+      
       message_anchor = message_element.at_css("> a[name]")
       if message_anchor
         message_id = message_anchor[:name].split("reply-").last
@@ -927,7 +971,6 @@
         message_type = PostType::ENTRY
       end
       
-      userpic = message_element.at_css(".post-icon img")
       author_element = message_element.at_css(".post-author a")
       author_name = author_element.text.strip
       author_id = author_element["href"].split("users/").last
@@ -941,55 +984,69 @@
         character_name = author_name
       end
       
-      face_url = ""
-      face_name = "none"
-      face_id = ""
-      if userpic
-        face_id = userpic.parent["href"].split("icons/").last
-        face_url = userpic["src"]
-        face_name = userpic["title"]
-      end
-      
       date_element = message_element.at_css('.post-footer')
       
       params = {}
-      create_date = date_element.at_css('.post-posted').try(:text).try(:strip)
-      LOG.error "No create date for message ID ##{message_id}?" unless create_date
-      params[:time] = DateTime.strptime(create_date, "%b %d, %Y %l:%M %p") if create_date
-      edit_date = date_element.at_css('.post-updated').try(:text).try(:strip)
-      params[:edittime] = DateTime.strptime(edit_date, "%b %d, %Y %l:%M %p") if edit_date
+      
+      if message_attributes.include?(:time)
+        create_date = date_element.at_css('.post-posted').try(:text).try(:strip)
+        LOG.error "No create date for message ID ##{message_id}?" unless create_date
+        if create_date
+          params[:time] = DateTime.strptime(create_date + " Eastern Time (US & Canada)", "%b %d, %Y %l:%M %p %Z")
+          params[:time] = (params[:time].to_time - 1.hour).to_datetime if params[:time].to_time.dst?
+        end
+      end
+      if message_attributes.include?(:edittime)
+        edit_date = date_element.at_css('.post-updated').try(:text).try(:strip)
+        if edit_date
+          params[:edittime] = DateTime.strptime(edit_date + " Eastern Time (US & Canada)", "%b %d, %Y %l:%M %p %Z")
+          params[:edittime] = (params[:edittime].to_time - 1.hour).to_datetime if params[:edittime].to_time.dst?
+        end
+      end
       
       params[:content] = message_element.at_css('.post-content').inner_html.strip
-      face_uniqid = [character_id, face_id].reject{|thing| thing.nil?} * '#'
-      face_uniqid = "#{face_id}" if character_id == "user##{author_id}"
-      params[:face] = get_face_by_id(face_uniqid) unless face_uniqid.empty?
-      params[:author] = get_author_by_id(character_id)
-      params[:face].author = params[:author] if params[:face]
+      params[:author] = get_author_by_id(character_id) if message_attributes.include?(:author)
+      
       params[:id] = message_id
       params[:chapter] = @chapter
       
-      params[:face] = @chapter_list.get_face_by_id(face_uniqid) if params[:face].nil?
+      if message_attributes.include?(:face)
+        userpic = message_element.at_css(".post-icon img")
+        face_url = ""
+        face_name = "none"
+        face_id = ""
+        if userpic
+          face_id = userpic.parent["href"].split("icons/").last
+          face_url = userpic["src"]
+          face_name = userpic["title"]
+        end
+        face_uniqid = [character_id, face_id].reject{|thing| thing.nil?} * '#'
+        face_uniqid = "#{face_id}" if character_id == "user##{author_id}"
+        params[:face] = get_face_by_id(face_uniqid) unless face_uniqid.empty?
+        params[:face].author = params[:author] if params[:face]
+        params[:face] = @chapter_list.get_face_by_id(face_uniqid) if params[:face].nil?
+        
+        if params[:face].nil? and not face_url.empty?
+          face_params = {}
+          face_params[:imageURL] = face_url
+          face_params[:keyword] = face_name
+          face_params[:unique_id] = face_id
+          face_params[:author] = get_author_by_id(character_id)
+          face = Face.new(face_params)
+          @chapter_list.add_face(face)
+          params[:face] = face
+        end
       
-      if params[:face].nil? and not face_url.empty?
-        face_params = {}
-        face_params[:imageURL] = face_url
-        face_params[:keyword] = face_name
-        face_params[:unique_id] = face_id
-        face_params[:author] = get_author_by_id(character_id)
-        face = Face.new(face_params)
-        @chapter_list.add_face(face)
-        params[:face] = face
-      end
-      
-      if params[:face].nil? and face_url.empty?
-        face_params = {}
-        face_params[:imageURL] = nil
-        face_params[:keyword] = face_name
-        face_params[:unique_id] = "#{character_id}##{face_name}"
-        face_params[:author] = get_author_by_id(character_id)
-        face = Face.new(face_params)
-        @chapter_list.add_face(face)
-        params[:face] = face
+        if params[:face].nil? and face_url.empty?
+          face_params = {}
+          face_params[:imageURL] = nil
+          face_params[:keyword] = face_name
+          face_params[:unique_id] = "#{character_id}##{face_name}"
+          face_params[:author] = get_author_by_id(character_id)
+          face = Face.new(face_params)
+          @chapter_list.add_face(face)
+          params[:face] = face
+        end
       end
       
       if message_type == PostType::ENTRY
@@ -1008,6 +1065,13 @@
     def get_replies(chapter, options = {})
       return nil unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
+      
+      only_attrs = options.key?(:attributes) ? options[:attributes] : (options.key?(:only) ? options[:only] : (options.key?(:only_attrs) ? options[:only_attrs] : nil))
+      except_attrs = options.key?(:except) ? options[:except] : (options.key?(:except_attrs) ? options[:except_attrs] : nil)
+      raise("Not allowed both :only and :expect on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs and except_attrs
+      
+      message_attributes = (only_attrs ? only_attrs : msg_attrs)
+      message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
@@ -1038,11 +1102,11 @@
         (LOG.error("No post title; probably not a post") and break) unless post_title
         @entry_title = post_title.text.strip unless @entry_title
         
-        @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip)
+        @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip) if not @chapter.title_extras or @chapter.title_extras.strip.empty?
         
         if @replies.empty?
           @entry_element = page_content.at_css('.post-container')
-          entry = make_message(@entry_element)
+          entry = make_message(@entry_element, message_attributes: message_attributes)
           chapter.entry = entry
         end
         
@@ -1050,7 +1114,7 @@
         comments.each do |comment_element|
           next if comment_element == @entry_element
           
-          reply = make_message(comment_element)
+          reply = make_message(comment_element, message_attributes: message_attributes)
           @replies << reply
         end
       end

@@ -1,14 +1,4 @@
-﻿class Object
-  def try(*params, &block)
-    if params.empty? && block_given?
-      yield self
-    else
-      public_send(*params, &block) if respond_to? params.first
-    end
-  end
-end
-
-module GlowficEpub
+﻿module GlowficEpub
   require 'model_methods'
   require 'json'
   require 'date'
@@ -294,7 +284,7 @@ module GlowficEpub
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties
     
     def allowed_params
-      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors]
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed]
     end
     
     def group
@@ -333,6 +323,25 @@ module GlowficEpub
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
       end
       @authors
+    end
+    
+    def time_completed
+      if @time_completed.is_a?(String)
+        @time_completed = DateTime.strptime(@time_completed)
+      elsif @time_completed.is_a?(Date)
+        @time_completed = @time_completed.to_datetime
+      else
+        @time_completed
+      end
+    end
+    def time_completed=(val)
+      if val.is_a?(String)
+        @time_completed = DateTime.strptime(val)
+      elsif val.is_a?(Date)
+        @time_completed = val.to_datetime
+      else
+        @time_completed = val
+      end
     end
     
     def moieties
@@ -380,8 +389,6 @@ module GlowficEpub
       @sections = []
       @authors = []
       
-      raise(ArgumentError, "URL must be given") unless (params.key?(:url) and not params[:url].strip.empty?)
-      raise(ArgumentError, "Chapter Title must be given") unless (params.key?(:title) and not params[:title].strip.empty?)
       allowed_params.each do |symbol|
         public_send("#{symbol}=", params[symbol]) if params[symbol]
       end
@@ -390,6 +397,7 @@ module GlowficEpub
       Chapter.shortenURL(@url)
     end
     def self.shortenURL(longURL)
+      return "" if longURL.nil? or longURL.empty?
       uri = URI.parse(longURL)
       if uri.query and not uri.query.empty?
         query = CGI.parse(uri.query)
@@ -541,7 +549,7 @@ module GlowficEpub
   end
   
   class Message < Model #post or entry
-    attr_accessor :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children
+    attr_accessor :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no
     @@date_format = "%Y-%m-%d %H:%M"
     
     def self.message_serialize_ignore
@@ -549,7 +557,7 @@ module GlowficEpub
     end
     
     def allowed_params
-      @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :entry_title]
+      @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :entry_title, :page_no]
     end
     
     @push_title = false
@@ -614,6 +622,10 @@ module GlowficEpub
       else
         "unknown"
       end
+    end
+    
+    def permalink
+      site_handler.get_permalink_for(self)
     end
     
     def parent=(newparent)
@@ -708,7 +720,6 @@ module GlowficEpub
         end
       end
       
-      raise(ArgumentError, "Author must be given") unless (params.key?(:author) and not params[:author].nil?)
       raise(ArgumentError, "Content must be given") unless params.key?(:content)
       raise(ArgumentError, "Chapter must be given") unless params.key?(:chapter)
       allowed_params.each do |symbol|
