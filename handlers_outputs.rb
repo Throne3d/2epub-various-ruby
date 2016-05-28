@@ -258,12 +258,29 @@
       super options
       
     end
+    def display_chapterthing(chapterthing, options = {})
+      first_last = options.key?(:first) ? (options[:first] != false ? :first : :last) : (options.key?(:last) ? (options[:last] != false ? :last : :first) : (options.key?(:first_last) ? options[:first_last] : :first))
+      show_completed_before = options.key?(:completed) ? options[:completed] : (options.key?(:completed_before) ? options[:completed_before] : (DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0) - 1))
+      show_completed_before = 0 unless show_completed_before
+      show_new_after = options.key?(:early) ? options[:early] : (options.key?(:new_after) ? options[:new_after] : (DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0) - 1))
+      show_last_update_time = options.key?(:show_last_update_time) ? options[:show_last_update_time] : false
+      
+      chapter = chapterthing[:chapter]
+      first_update = chapterthing[:first_update]
+      last_update = chapter_thing[:last_update]
+      lastest_update = chapter_thing[:latest_update]
+      completed = (chapter.time_completed and chapter.time_completed <= show_completed_before)
+      
+      str = "[*][url=#{(first_last == :first ? first_update : (first_last == :last ? last_update : latest_update)).permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}#{chapter.entry.time >= show_new_after ? ', new' : ''}#{show_last_update_time ? " (last updated " + latest_update.time.strftime('%m-%d %H:%M') + ")"}"
+      return str
+    end
     def output(options = {})
       chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : (@chapters ? @chapters : nil)
       date = options.include?(:date) ? options[:date] : DateTime.now.to_date
+      @date = date
       (LOG.fatal "No chapters given!" and return) unless chapter_list
       
-      today_time = DateTime.new(date.year, date.month, date.day, 10, 0, 0)
+      today_time = DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0)
       
       done = []
       upd_chapter_col = {}
@@ -331,16 +348,7 @@
           upd_chapters.sort! { |x,y| y[:first_update].time <=> x[:first_update].time } if days_ago == 1
           upd_chapters.sort! { |x,y| y[:last_update].time <=> x[:last_update].time } if days_ago > 1
           upd_chapters.each do |chapter_thing|
-            chapter = chapter_thing[:chapter]
-            first_update = chapter_thing[:first_update]
-            last_update = chapter_thing[:last_update]
-            latest_update = chapter_thing[:latest_update]
-            completed = (chapter.time_completed and chapter.time_completed <= late_time)
-            if days_ago == 1
-              LOG.info "[*][url=#{first_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}" + (chapter.entry.time.between?(early_time, late_time) ? ', new' : '')
-            else
-              LOG.info "[*][url=#{latest_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}"
-            end
+            LOG.info display_chapterthing(chapter_thing, first_last: (days_ago == 1 ? :first : :last), completed_before: late_time, new_after: (days_ago == 1 ? early_time : today_time + 3))
           end
           LOG.info "[/list]"
           
@@ -350,12 +358,7 @@
               LOG.info "[spoiler-box=DW Only]New updates #{early_time.strftime('%m-%d')}:"
               LOG.info "[list]"
               dw_upd_chapters.each do |chapter_thing|
-                chapter = chapter_thing[:chapter]
-                first_update = chapter_thing[:first_update]
-                last_update = chapter_thing[:last_update]
-                latest_update = chapter_thing[:latest_update]
-                completed = (chapter.time_completed and chapter.time_completed <= late_time)
-                LOG.info "[*][url=#{first_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}" + (chapter.entry.time.between?(early_time, late_time) ? ', new' : '')
+                LOG.info display_chapterthing(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
               end
               LOG.info "[/list][/spoiler-box]"
             end
@@ -365,12 +368,25 @@
               LOG.info "[spoiler-box=Today, not yesterday]New updates #{early_time.strftime('%m-%d')}:"
               LOG.info "[list]"
               not_yesterdays.each do |chapter_thing|
-                chapter = chapter_thing[:chapter]
-                first_update = chapter_thing[:first_update]
-                last_update = chapter_thing[:last_update]
-                latest_update = chapter_thing[:latest_update]
-                completed = (chapter.time_completed and chapter.time_completed <= late_time)
-                LOG.info "[*][url=#{first_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras}" + (chapter.entry.time.between?(early_time, late_time) ? ', new' : '')
+                LOG.info display_chapterthing(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
+              end
+              LOG.info "[/list][/spoiler-box]"
+            end
+            
+            sec_upd_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].sections.present? }
+            if sec_upd_chapters.present?
+              LOG.info "[spoiler-box=Continuities]New updates #{early_time.strftime('%m-%d')}:"
+              LOG.info "[list]"
+              sec_upd_chapters.sort! do |chapter_thing1, chapter_thing2|
+                sect_diff = chapter_thing1[:chapter].sections <=> chapter_thing2[:chapter].sections
+                if sect_diff == 0
+                  chapter_thing2[:first_update].time <=> chapter_thing1[:first_update].time
+                else
+                  sect_diff
+                end
+              end
+              sec_upd_chapters.each do |chapter_thing|
+                LOG.info display_chapterthing(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
               end
               LOG.info "[/list][/spoiler-box]"
             end
@@ -380,10 +396,7 @@
           LOG.info "[list]"
           upd_chapters.sort! { |x,y| y[:latest_update].time <=> x[:latest_update].time }
           upd_chapters.each do |chapter_thing|
-            chapter = chapter_thing[:chapter]
-            latest_update = chapter_thing[:latest_update]
-            completed = (chapter.time_completed and chapter.time_completed <= late_time)
-            LOG.info "[*][url=#{latest_update.permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url], #{chapter.title_extras} (last updated #{latest_update.time.strftime('%m-%d %H:%M')})"
+            LOG.info display_chapterthing(chapter_thing, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true)
           end
           LOG.info "[/list]"
         end
