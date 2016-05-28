@@ -1,6 +1,7 @@
 ﻿module GlowficEpubMethods
   class FileLogIO
     def initialize(defaultFile=nil)
+      FileUtils::mkdir_p(File.dirname(defaultFile)) if defaultFile
       @file = File.open(defaultFile, 'a+') unless defaultFile.nil?
     end
     
