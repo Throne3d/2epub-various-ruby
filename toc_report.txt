@@ -319,5 +319,17 @@
 {"title": "two kinds of (immortal) people",
 "url": "https://vast-journey-9935.herokuapp.com/posts/49",
 "title_extras": "[b][color=#FF5C5C]Sparkles[/color][/b] in [b][color=#696969]Dreamshard[/color][/b]"
+},
+{"title": "Chance to socialize with new students",
+"url": "https://vast-journey-9935.herokuapp.com/posts/123",
+"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b], [b][color=#A0A0A0]Fenris[/color][/b], [b][color=#A0A0A0]Felix[/color][/b] and [b][color=#A0A0A0]Trevor[/color][/b] in Eclipse"
+},
+{"title": "An Unreasonable Reaction",
+"url": "https://vast-journey-9935.herokuapp.com/posts/124",
+"title_extras": "[spoiler][b][color=#FFFFFF]Korafen[/color][/b][/spoiler] and [spoiler][b][color=#FFFFFF]Ikrifiss[/color][/b][/spoiler] in [b][color=#8040BF]Imbria[/color][/b]"
+},
+{"title": "this is the road to ruin",
+"url": "https://vast-journey-9935.herokuapp.com/posts/114",
+"title_extras": "[b][color=#8040BF]Stalas[/color][/b] on the [b][color=#6960EC]Path[/color][/b]"
 }
 ]
