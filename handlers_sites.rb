@@ -715,11 +715,13 @@
       if breadcrumb1 and breadcrumb1.text.strip == "Characters"
         user_info = char_page.at_css('#header #user-info')
         user_info.at_css('img').try(:remove)
-        return user_info.text.strip
+        username = user_info.text.strip
+      else
+        username = breadcrumb1.text.split("Characters").first.strip
+        username = username[0..-3] if username.end_with?("'s")
       end
-      username = breadcrumb1.text.split("Characters").first.strip
-      username = username[0..-3] if username.end_with?("'s")
-      username
+      moiety = username.downcase.gsub(/[^\w]/, '_')
+      moiety
     end
     
     def get_face_by_id(face_id, default=nil)
