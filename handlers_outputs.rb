@@ -402,7 +402,7 @@
           LOG.info "[/list]"
         end
       end
-      LOG.info "[url=http://alicorn.elcenia.com/board/viewtopic.php?f=12&t=191#p4841]Official moiety list[/url] (see [url=http://alicorn.elcenia.com/board/viewtopic.php?f=6&t=124&start=1180#p24135]bottom of this[/url] for rainbow)"
+      LOG.info "[url=http://alicorn.elcenia.com/board/viewtopic.php?f=12&t=191#p4841]Official moiety list[/url] ([url=http://alicorn.elcenia.com/board/viewtopic.php?f=12&t=191&p=24749#p24749]rainbow[/url])"
       
       done_msg = false
       chapter_list.each do |chapter|
