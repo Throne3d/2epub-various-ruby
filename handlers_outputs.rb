@@ -285,7 +285,7 @@
       
       done = []
       upd_chapter_col = {}
-      day_list = [1,2,3,4,5,6,-1]
+      day_list = [1,2,3,4,5,6,7,-1]
       day_list.each do |days_ago|
         early_time = today_time - days_ago
         late_time = early_time + 1
