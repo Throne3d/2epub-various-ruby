@@ -22,7 +22,7 @@
     "Eva" => ["kaolinandbone", "evesystem", "all-the-worlds-have", "walksonmusic", "eternally-aggrieved"],
     "Kel" => ["kelardry", "dotted-lines", "botanical-engineer"], #BlueSkySprite
     "kuuskytkolme" => ["can-i-help", "can-i-stay", "can-i-go"],
-    "Link" => ["meletiti-entelecheiai", "chibisilian"], #chibisilian is assumed from "Location: Entelechy"
+    "Link" => ["meletiti-entelecheiai", "chibisilian"],
     "lintamande" => ["lintamande"],
     "Liz" => ["sun-guided"],
     "Lynette" => ["darkeningofthelight", "princeofsalem"],
@@ -34,7 +34,7 @@
     "roboticlin" => ["roboticlin"],
     "Rockeye" => ["witchwatcher", "rockeye-stonetoe", "sturdycoldsteel", "characterquarry", "allforthehive", "neuroihive", "smallgod", "magictechsupport"],
     "Sigma" => ["spiderzone"], #Ezra
-    "Teceler" => ["scatteredstars", "onwhatwingswedareaspire"],
+    "Teceler" => ["scatteredstars", "onwhatwingswedareaspire", "space-between"],
     "TheOneButcher" => ["theonebutcher"],
     "Timepoof" => ["timepoof"],
     "Unbitwise" => ["unbitwise", "wind-on-my-face", "synchrosyntheses"],
