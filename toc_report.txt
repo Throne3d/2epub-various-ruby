@@ -348,5 +348,9 @@
 "url": "https://glowfic.dreamwidth.org/37008.html?thread=7203728",
 "title_extras": "[spoiler][b][color=#FFFFFF]Illia[/color][/b][/spoiler] in [b][color=#00BF80]Elcenia[/color][/b]",
 "sections": ["Z2-Unknown Continuity"]
+},
+{"title": "Intended Purpose",
+"url": "https://vast-journey-9935.herokuapp.com/posts/126",
+"title_extras": "[b][color=#006000]Ellie[/color][/b] in [b][color=#0080FF]Arabek[/color][/b]"
 }
 ]
