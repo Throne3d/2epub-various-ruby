@@ -331,5 +331,9 @@
 {"title": "this is the road to ruin",
 "url": "https://vast-journey-9935.herokuapp.com/posts/114",
 "title_extras": "[b][color=#8040BF]Stalas[/color][/b] on the [b][color=#6960EC]Path[/color][/b]"
+},
+{"title": "There's no rulebook",
+"url": "https://vast-journey-9935.herokuapp.com/posts/125",
+"title_extras": "[b][color=#D5732A]Glen[/color][/b] and [b][color=#000000]Mountain[/color][/b] in [b][color=#000000]Tileworld[/color][/b]"
 }
 ]
