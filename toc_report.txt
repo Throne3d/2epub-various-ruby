@@ -338,5 +338,15 @@
 {"title": "There's no rulebook",
 "url": "https://vast-journey-9935.herokuapp.com/posts/125",
 "title_extras": "[b][color=#D5732A]Glen[/color][/b] and [b][color=#000000]Mountain[/color][/b] in [b][color=#000000]Tileworld[/color][/b]"
+},
+{"title": "I can't fix you, but maybe I can still help",
+"url": "https://glowfic.dreamwidth.org/37008.html?thread=7203984",
+"title_extras": "[spoiler][b][color=#FFFFFF]Odette[/color][/b][/spoiler] in [b][color=#00BF80]Elcenia[/color][/b]",
+"sections": ["Z2-Unknown Continuity"]
+},
+{"title": "I can't fix you, but maybe I can still help",
+"url": "https://glowfic.dreamwidth.org/37008.html?thread=7203728",
+"title_extras": "[spoiler][b][color=#FFFFFF]Illia[/color][/b][/spoiler] in [b][color=#00BF80]Elcenia[/color][/b]",
+"sections": ["Z2-Unknown Continuity"]
 }
 ]
