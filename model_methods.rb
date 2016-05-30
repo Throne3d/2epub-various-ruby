@@ -211,7 +211,7 @@
         end
       end
       success = true
-    rescue OpenURI::HTTPError, SocketError => error
+    rescue OpenURI::HTTPError, SocketError, Net::OpenTimeout => error
       LOG.error "Error loading file (#{file_url}); #{retries == 0 ? 'No' : retries} retr#{retries==1 ? 'y' : 'ies'} left"
       LOG.debug error
       
