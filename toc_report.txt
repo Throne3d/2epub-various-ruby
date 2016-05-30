@@ -202,7 +202,8 @@
 },
 {"title": "Delightfully Strange",
 "url": "https://glowfic.dreamwidth.org/35726.html?thread=7050126",
-"title_extras": "[b][color=#000000]Terence[/color][/b] and eclipsed [b][color=#00BF80]Bell[/color][/b]"
+"title_extras": "[b][color=#000000]Terence[/color][/b] and eclipsed [b][color=#00BF80]Bell[/color][/b]",
+"time_completed": "2016-05-01T08:22:00+01:00"
 },
 {"title": "Aren't You a Little Short for a Sith?",
 "url": "https://vast-journey-9935.herokuapp.com/posts/98",
