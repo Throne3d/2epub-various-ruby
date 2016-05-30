@@ -89,9 +89,11 @@
 "title_extras": "[b][color=#0080FF]Yvette[/color][/b] in [b][color=#000080]Shadopolis[/color][/b]",
 "sections": "Pair of Pawns"
 },
-{"title": "Shouldn't You Be Dead",
+{"title": "II. Shouldn't You Be Dead",
 "url": "https://vast-journey-9935.herokuapp.com/posts/88",
-"title_extras": "Jedi [b][color=#006000]Ana[/color][/b] and [b][color=#0080FF]Revan[/color][/b] in the Old Republic"
+"title_extras": "Jedi [b][color=#006000]Ana[/color][/b] and [b][color=#0080FF]Revan[/color][/b] in the Old Republic",
+"time_completed": "2016-05-29T23:09:00+01:00",
+"sections": ["Stars Ascendant"]
 },
 {"title": "morning assembly",
 "url": "https://vast-journey-9935.herokuapp.com/posts/48",
