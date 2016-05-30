@@ -293,7 +293,7 @@
 },
 {"title": "The Nature of Reactions",
 "url": "https://vast-journey-9935.herokuapp.com/posts/75",
-"title_extras": "[b][color=#D5732A]Ryou[/color][/b] and [b][color=#960018]Eva (Evelyn)[/color][/b] in Worm"
+"title_extras": "[b][color=#D5732A]Ryou[/color][/b] and [b][color=#960018]Evelyn[/color][/b] in Worm"
 },
 {"title": "You'd Hate Me If You Knew Me",
 "url": "https://vast-journey-9935.herokuapp.com/posts/106",
