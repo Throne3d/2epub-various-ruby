@@ -203,7 +203,7 @@
 },
 {"title": "high-energy physics",
 "url": "https://alicornutopia.dreamwidth.org/31134.html",
-"title_extras": "[b][color=#00BF80]Bell[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
+"title_extras": "[b][color=#00BF80]Bella[/color][/b], [b][color=#FF0000]Fëanor[/color][/b] and [b][color=#FF0000]Rúmil[/color][/b]",
 "sections": ["Telperion"]
 },
 {"title": "Delightfully Strange",
