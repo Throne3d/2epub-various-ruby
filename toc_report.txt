@@ -28,7 +28,8 @@
 },
 {"title": "What strange things one can find in Milliways",
 "url": "https://vast-journey-9935.herokuapp.com/posts/77",
-"title_extras": "Milliways [b][color=#62371F]Lurker[/color][/b] in [b][color=#006000]The Old Republic[/color][/b]"
+"title_extras": "Milliways [b][color=#62371F]Lurker[/color][/b] in [b][color=#006000]The Old Republic[/color][/b]",
+"time_completed": "2016-05-31T22:45:00+01:00"
 },
 {"title": "Let Me Tell You What I Wish I'd Known",
 "url": "https://vast-journey-9935.herokuapp.com/posts/84",
