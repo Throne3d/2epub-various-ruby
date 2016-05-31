@@ -198,6 +198,12 @@
 {"title": "applied theology",
 "url": "https://alicornutopia.dreamwidth.org/30387.html",
 "title_extras": "[b][color=#00BF80]Aether[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
+"sections": ["Telperion"],
+"time_completed": "2016-05-31T05:05:00+01:00"
+},
+{"title": "high-energy physics",
+"url": "https://alicornutopia.dreamwidth.org/31134.html",
+"title_extras": "[b][color=#00BF80]Bell[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
 "sections": ["Telperion"]
 },
 {"title": "Delightfully Strange",
