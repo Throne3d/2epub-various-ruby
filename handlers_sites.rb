@@ -631,8 +631,6 @@
       current_page_data = get_page_data(chapter_url, replace: true, where: @group_folder)
       @download_count+=1
       LOG.debug "Got a page in get_full"
-      current_page = Nokogiri::HTML(current_page_data)
-      LOG.debug "Nokogiri processed a page in get_full"
       
       return page_urls
     end
