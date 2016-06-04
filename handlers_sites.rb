@@ -1117,6 +1117,16 @@
           reply = make_message(comment_element, message_attributes: message_attributes)
           @replies << reply
         end
+        
+        if page_url == pages.last
+          post_ender = page_content.at_css('.post-ender')
+          if post_ender
+            things = [chapter.entry] + @replies
+            old_time = (chapter.time_completed ? chapter.time_completed : nil)
+            chapter.time_completed = things.last.try(:time)
+            LOG.info "#{chapter.title}: completed on '#{chapter.time_completed.strftime('%Y-%m-%d %H:%M')}'" + (old_time ? " (old time: #{old_time.strftime('%Y-%m-%d %H:%M')})" : "")
+          end
+        end
       end
       
       pages_effectual = (@replies.length * 1.0 / 25).ceil
