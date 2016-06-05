@@ -37,7 +37,13 @@
 },
 {"title": "the magic field possesses a kind of inertia",
 "url": "https://vast-journey-9935.herokuapp.com/posts/78",
-"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b], [b][color=#A0A0A0]Felix[/color][/b], and [b][color=#A0A0A0]Fenris[/color][/b] in Resonance"
+"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b], [b][color=#A0A0A0]Felix[/color][/b], and [b][color=#A0A0A0]Fenris[/color][/b] in Resonance",
+"sections": ["Resonance"]
+},
+{"title": "the occurrence of natural gifts is determined by complex genetic and environmental factors",
+"url": "https://vast-journey-9935.herokuapp.com/posts/129",
+"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b], [b][color=#A0A0A0]Felix[/color][/b], [b][color=#A0A0A0]Fenris[/color][/b], and [b][color=#A0A0A0]Thor[/color][/b] in Resonance",
+"sections": ["Resonance"]
 },
 {"title": "Such a nice place",
 "url": "https://vast-journey-9935.herokuapp.com/posts/94",
