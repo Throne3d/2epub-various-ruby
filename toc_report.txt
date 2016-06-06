@@ -24,7 +24,7 @@
 },
 {"title": "the world turned upside down",
 "url": "https://vast-journey-9935.herokuapp.com/posts/96",
-"title_extras": "Carmen and [b][color=#FF0000]Gimlith[/color][/b]"
+"title_extras": "[spoiler][b][color=#00FFFF]Carmen[/color][/b][/spoiler] and [b][color=#FF0000]Gimlith[/color][/b]"
 },
 {"title": "What strange things one can find in Milliways",
 "url": "https://vast-journey-9935.herokuapp.com/posts/77",
