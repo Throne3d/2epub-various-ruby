@@ -94,7 +94,7 @@
 {"title": "IV. First-Move Advantage: Attempted Scholar's Mate",
 "url": "https://vast-journey-9935.herokuapp.com/posts/91",
 "title_extras": "[b][color=#0080FF]Yvette[/color][/b] in [b][color=#000080]Shadopolis[/color][/b]",
-"sections": "Pair of Pawns"
+"sections": ["Pair of Pawns"]
 },
 {"title": "II. Shouldn't You Be Dead",
 "url": "https://vast-journey-9935.herokuapp.com/posts/88",
@@ -113,7 +113,7 @@
 {"title": "Just West of Weird",
 "url": "https://vast-journey-9935.herokuapp.com/posts/67",
 "title_extras": "[b][color=#FF91BF]Zane[/color][/b] and [b][color=#A0A0A0]Francine[/color][/b] in Gravity Falls",
-"sections": "Rose Moon"
+"sections": ["Rose Moon"]
 },
 {"title": "behave",
 "url": "https://peterverse.dreamwidth.org/8614.html",
@@ -288,7 +288,12 @@
 {"title": "Uninvited Guests Are Welcome Here",
 "url": "https://vast-journey-9935.herokuapp.com/posts/108",
 "title_extras": "[b][color=#8040BF]Milan[/color][/b] and [spoiler][b][color=#FFFFFF]Odette[/color][/b][/spoiler] and [spoiler][b][color=#FFFFFF]Illia[/color][/b][/spoiler] in their as-yet-unnamed world",
-"sections": "Skylight Empire"
+"sections": ["Skylight Empire"]
+},
+{"title": "The Party Had Just Begun",
+"url": "https://glowfic.dreamwidth.org/27837.html",
+"title_extras": "[spoiler][b][color=#FFFFFF]Edie[/color][/b][/spoiler], [spoiler][b][color=#FFFFFF]Emily[/color][/b][/spoiler], [b][color=#8040BF]Sivath[/color][/b] and [b][color=#8040BF]Tialle's Demon[/color][/b]",
+"sections": ["Skylight Empire"]
 },
 {"title": "you know what they say about the young",
 "url": "https://vast-journey-9935.herokuapp.com/posts/111",
