@@ -384,5 +384,13 @@
 {"title": "the stork drops, the snake swallows",
 "url": "http://alicornutopia.dreamwidth.org/31354.html",
 "title_extras": "[b][color=#00BF80]Kib (Cam)[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]"
+},
+{"title": "The Interuniversal Connector",
+"url": "https://vast-journey-9935.herokuapp.com/posts/130",
+"title_extras": "[b][color=#006000]Anna[/color][/b] and [b][color=#D5732A]Vay[/color][/b] in Milliways"
+},
+{"title": "Do I want to steal you?",
+"url": "https://vast-journey-9935.herokuapp.com/posts/131",
+"title_extras": "Scott and [b][color=#D5732A]Ryou[/color][/b]"
 }
 ]
