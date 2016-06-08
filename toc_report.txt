@@ -33,7 +33,7 @@
 },
 {"title": "Let Me Tell You What I Wish I'd Known",
 "url": "https://vast-journey-9935.herokuapp.com/posts/84",
-"title_extras": "[b][color=#8040BF]Miles[/color][/b] and [b][color=#FF0000]House of Fëanor[/color][/b]"
+"title_extras": "[b][color=#8040BF]Miles[/color][/b] in [b][color=#FF0000]Arda[/color][/b]"
 },
 {"title": "the magic field possesses a kind of inertia",
 "url": "https://vast-journey-9935.herokuapp.com/posts/78",
@@ -55,13 +55,19 @@
 },
 {"title": "halls of stone",
 "url": "https://lintamande.dreamwidth.org/381.html",
-"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] and [b][color=#FF0000]House of Fëanor[/color][/b]",
+"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] in [b][color=#FF0000]Arda[/color][/b]",
 "time_completed": "2016-05-23T18:59:00+01:00",
 "sections": ["Elentári"]
 },
 {"title": "spear of ice",
 "url": "https://alicornutopia.dreamwidth.org/30911.html",
-"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] and [b][color=#FF0000]House of Fëanor[/color][/b]",
+"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] in [b][color=#FF0000]Arda[/color][/b]",
+"time_completed": "2016-06-08T01:13:00+01:00",
+"sections": ["Elentári"]
+},
+{"title": "galaxy of stars",
+"url": "https://alicornutopia.dreamwidth.org/31535.html",
+"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] in [b][color=#FF0000]Arda[/color][/b]",
 "sections": ["Elentári"]
 },
 {"title": "Time to sleep",
