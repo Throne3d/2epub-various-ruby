@@ -730,7 +730,7 @@ module GlowficIndexHandlers
       
       if @group == :report
         report_json = ""
-        open('toc_report.txt', 'r') do |report_toc|
+        open('toc_report.json', 'r') do |report_toc|
           report_json = report_toc.read
         end
         list = JSON.parse(report_json)
