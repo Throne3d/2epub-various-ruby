@@ -271,8 +271,20 @@
       last_update = chapterthing[:last_update]
       latest_update = chapterthing[:latest_update]
       completed = (chapter.time_completed and chapter.time_completed <= show_completed_before)
+      url_thing = (first_last == :first ? first_update : (first_last == :last ? last_update : latest_update))
+      @errors << "#{chapter} has no url_thing! (first_last: #{first_last})" unless url_thing
       
-      str = "[*][url=#{(first_last == :first ? first_update : (first_last == :last ? last_update : latest_update)).permalink}]#{completed ? '[color=goldenrod]' : ''}#{chapter.entry_title}#{completed ? '[/color]' : ''}[/url]#{(show_sections and chapter.sections.present?) ? (' (' + chapter.sections * '>' + ')') : ''}, #{chapter.title_extras}#{chapter.entry.time >= show_new_after ? ', new' : ''}#{show_last_update_time ? ' (last updated ' + latest_update.time.strftime('%m-%d %H:%M') + ')' : ''}"
+      str = "[*]"
+      str << "[url=#{url_thing.permalink}]" if url_thing
+      str << '[color=goldenrod]' if completed
+      str << "#{chapter.entry_title}"
+      str << '[/color]' if completed
+      str << '[/url]' if url_thing
+      str << ' (' + chapter.sections * '>' + ')' if show_sections and chapter.sections.present?
+      str << ', ' unless chapter.entry_title[/[?,.!;]$/] #ends with ? or , or . or ! or ;
+      str << "#{chapter.title_extras}"
+      str << ', new' if chapter.entry.time >= show_new_after
+      str << ' (last updated ' + latest_update.time.strftime('%m-%d %H:%M') + ')' if show_last_update_time
       return str
     end
     def output(options = {})
@@ -280,6 +292,7 @@
       date = options.include?(:date) ? options[:date] : DateTime.now.to_date
       @date = date
       (LOG.fatal "No chapters given!" and return) unless chapter_list
+      @errors = []
       
       today_time = DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0)
       
@@ -412,6 +425,13 @@
           done_msg = true
         end
         LOG.error "#{chapter}"
+      end
+      @errors.each do |error|
+        unless done_msg
+          LOG.error "---- ERROR:"
+          done_msg = true
+        end
+        LOG.error "#{error}"
       end
     end
   end
