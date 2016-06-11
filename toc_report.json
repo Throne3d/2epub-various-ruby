@@ -155,7 +155,13 @@
 },
 {"title": "dream of a better tomorrow",
 "url": "https://vast-journey-9935.herokuapp.com/posts/113",
-"title_extras": "[b][color=#6960EC]WWII!Jean[/color][/b] and [b][color=#A0A0A0]Dreamshaper!Felix[/color][/b]"
+"title_extras": "[b][color=#6960EC]WWII!Jean[/color][/b] and [b][color=#A0A0A0]Dreamshaper!Felix[/color][/b]",
+"sections": ["Dreams of Freedom"]
+},
+{"title": "dream a little dream of me",
+"url": "https://vast-journey-9935.herokuapp.com/posts/135",
+"title_extras": "[b][color=#6960EC]lotuses[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b] in Free France",
+"sections": ["Dreams of Freedom"]
 },
 {"title": "We weren't even testing for that",
 "url": "https://glowfic.dreamwidth.org/36602.html",
@@ -360,5 +366,9 @@
 {"title": "All werewolves go to heaven",
 "url": "https://vast-journey-9935.herokuapp.com/posts/133",
 "title_extras": "[b][color=#A0A0A0]Henry[/color][/b] and Scott in Milliways"
+},
+{"title": "A new normal",
+"url": "https://vast-journey-9935.herokuapp.com/posts/134",
+"title_extras": "[b][color=#960018]Thar[/color][/b] and Scott in Milliways"
 }
 ]
