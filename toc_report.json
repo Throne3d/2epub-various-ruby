@@ -33,8 +33,7 @@
 },
 {"title": "What strange things one can find in Milliways",
 "url": "https://vast-journey-9935.herokuapp.com/posts/77",
-"title_extras": "Milliways [b][color=#62371F]Lurker[/color][/b] in [b][color=#006000]The Old Republic[/color][/b]",
-"time_completed": "2016-05-31T22:45:00+01:00"
+"title_extras": "Milliways [b][color=#62371F]Lurker[/color][/b] in [b][color=#006000]The Old Republic[/color][/b]"
 },
 {"title": "Let Me Tell You What I Wish I'd Known",
 "url": "https://vast-journey-9935.herokuapp.com/posts/84",
@@ -82,7 +81,6 @@
 {"title": "Drop in the Ocean",
 "url": "https://vast-journey-9935.herokuapp.com/posts/110",
 "title_extras": "[b][color=#960018]Theo[/color][/b], [b][color=#960018]Everett[/color][/b] and [b][color=#960018]Matt[/color][/b] with [b][color=#6960EC]Grace[/color][/b], [b][color=#6960EC]Reubel[/color][/b] and [b][color=#6960EC]Mu[/color][/b] in Lapis",
-"time_completed": "2016-05-28T00:09:00+01:00",
 "sections": ["Opalescence"]
 },
 {"title": "Fish out of Water",
@@ -106,7 +104,6 @@
 {"title": "II. Shouldn't You Be Dead",
 "url": "https://vast-journey-9935.herokuapp.com/posts/88",
 "title_extras": "Jedi [b][color=#006000]Ana[/color][/b] and [b][color=#0080FF]Revan[/color][/b] in the Old Republic",
-"time_completed": "2016-05-29T23:09:00+01:00",
 "sections": ["Stars Ascendant"]
 },
 {"title": "morning assembly",
@@ -125,8 +122,7 @@
 {"title": "More cogs than the Steampunker could sell",
 "url": "https://vast-journey-9935.herokuapp.com/posts/24",
 "title_extras": "SCP-914 in Terraria with [b][color=#d5732a]coppers[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b]",
-"sections": ["Sterling Starlight", "Terraria SCP-914"],
-"time_completed": "2016-06-01T03:48:00+01:00"
+"sections": ["Sterling Starlight", "Terraria SCP-914"]
 },
 {"title": "Weird physics in, worst physics out.",
 "url": "https://vast-journey-9935.herokuapp.com/posts/127",
@@ -190,8 +186,7 @@
 },
 {"title": "pull the blackout curtains down",
 "url": "https://vast-journey-9935.herokuapp.com/posts/118",
-"title_extras": "[b][color=#8040BF]Miles[/color][/b] and [b][color=#8040BF]Zeke[/color][/b] in Sunnyverse",
-"time_completed": "2016-05-22T03:05:00+01:00"
+"title_extras": "[b][color=#8040BF]Miles[/color][/b] and [b][color=#8040BF]Zeke[/color][/b] in Sunnyverse"
 },
 {"title": "yeah that happens if you turn into a vampire",
 "url": "https://alicornutopia.dreamwidth.org/30604.html",
@@ -225,7 +220,6 @@
 {"title": "Dusty Corner Discards",
 "url": "https://vast-journey-9935.herokuapp.com/posts/102",
 "title_extras": "Young adult [b][color=#000000]Terence[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in [b][color=#FF5C5C]Cardverse[/color][/b]",
-"time_completed": "2016-05-22T22:40:00+01:00",
 "sections": ["Calibrilustrum"]
 },
 {"title": "Chaos Summoning Cards",
