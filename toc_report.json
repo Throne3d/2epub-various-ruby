@@ -165,7 +165,12 @@
 },
 {"title": "dream a little dream of me",
 "url": "https://vast-journey-9935.herokuapp.com/posts/135",
-"title_extras": "[b][color=#6960EC]lotuses[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b] in Free France",
+"title_extras": "[b][color=#6960EC]lotuses[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b] in WWII France",
+"sections": ["Dreams of Freedom"]
+},
+{"title": "they may say I am a dreamer",
+"url": "https://vast-journey-9935.herokuapp.com/posts/137",
+"title_extras": "[b][color=#6960EC]lotuses[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b] in WWII France",
 "sections": ["Dreams of Freedom"]
 },
 {"title": "We weren't even testing for that",
