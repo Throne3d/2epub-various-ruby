@@ -281,7 +281,8 @@
       str << '[/color]' if completed
       str << '[/url]' if url_thing
       str << ' (' + chapter.sections * '>' + ')' if show_sections and chapter.sections.present?
-      str << ', ' unless chapter.entry_title[/[?,.!;]$/] #ends with ? or , or . or ! or ;
+      str << ',' unless chapter.entry_title[/[?,.!;]$/] #ends with ? or , or . or ! or ;
+      str << ' '
       str << "#{chapter.title_extras}"
       str << ', new' if chapter.entry.time >= show_new_after
       str << ' (last updated ' + latest_update.time.strftime('%m-%d %H:%M') + ')' if show_last_update_time
