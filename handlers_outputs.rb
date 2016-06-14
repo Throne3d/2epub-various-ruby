@@ -256,9 +256,10 @@
   class ReportHandler < OutputHandler
     def initialize(options={})
       super options
-      @flag_scan = Regexp.new(/ (\(\[color=#([A-Z0-9]+)\]███\[\/color\]\)|\(\[color=#([A-Z0-9]+)\]██\[\/color\]\[color=#([A-Z0-9]+)\]█\[\/color\]\))/)
-      @flag_pri_scan = Regexp.new(/\[color=#([A-Z0-9]+)\](██|███)\[\/color\]/)
-      @flag_sec_scan = Regexp.new(/\[color=#([A-Z0-9]+)\](█|███)\[\/color\]/)
+      @flag_scan = Regexp.new(/ (\(\[color=#([A-F0-9]+)\]███\[\/color\]\)|\(\[color=#([A-F0-9]+)\]██\[\/color\]\[color=#([A-F0-9]+)\]█\[\/color\]\))/)
+      @col_scan = Regexp.new(/((^|(?<= ))#?[A-F0-9]{3}[A-F0-9]{3}?(#[A-F0-9]{3}[A-F0-9]{3}?)*($|(?= )))/)
+      @flag_pri_scan = Regexp.new(/\[color=#([A-F0-9]+)\](██|███)\[\/color\]/)
+      @flag_sec_scan = Regexp.new(/\[color=#([A-F0-9]+)\](█|███)\[\/color\]/)
       @hex = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
     end
     def csscol_to_rgb(csscol)
@@ -361,6 +362,22 @@
       completed = (chapter.time_completed and chapter.time_completed <= show_completed_before)
       url_thing = (first_last == :first ? first_update : (first_last == :last ? last_update : latest_update))
       @errors << "#{chapter} has no url_thing! (first_last: #{first_last})" unless url_thing
+      
+      if chapter.report_flags
+        chapter.report_flags = chapter.report_flags.scan(@col_scan).map{|thing| thing[0] }.uniq.map do |thing|
+          thing = thing[1..-1] if thing.start_with?('#')
+          things = thing.split('#')
+          if things.length == 1
+            "[color=##{things.first}]███[/color]"
+          elsif things.length == 2
+            "[color=##{things.first}]██[/color][color=##{things.last}]█[/color]"
+          else
+            temp = ''
+            things.each {|col| temp << "[color=##{col}]█[/color]"}
+            temp
+          end
+        end.sort{|thing1, thing2| rainbow_comp(thing1, thing2) }.join(' ').strip.gsub(/[\(\)]/, '')
+      end
       
       unless chapter.report_flags
         chapter.report_flags = chapter.title_extras.scan(@flag_scan).map{|thing| thing[0] }.uniq.sort{|thing1, thing2| rainbow_comp(thing1, thing2) }.join(' ').strip.gsub(/[\(\)]/, '')
