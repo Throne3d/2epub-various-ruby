@@ -256,7 +256,95 @@
   class ReportHandler < OutputHandler
     def initialize(options={})
       super options
+      @flag_scan = Regexp.new(/ (\(\[color=#([A-Z0-9]+)\]███\[\/color\]\)|\(\[color=#([A-Z0-9]+)\]██\[\/color\]\[color=#([A-Z0-9]+)\]█\[\/color\]\))/)
+      @flag_pri_scan = Regexp.new(/\[color=#([A-Z0-9]+)\](██|███)\[\/color\]/)
+      @flag_sec_scan = Regexp.new(/\[color=#([A-Z0-9]+)\](█|███)\[\/color\]/)
+      @hex = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+    end
+    def csscol_to_rgb(csscol)
+      csscol = csscol.strip.upcase
+      csscol = csscol[1..-1] if csscol.start_with?('#')
+      if csscol.length == 3
+        css_r = csscol[0]
+        css_g = csscol[1]
+        css_b = csscol[2]
+      elsif csscol.length == 6
+        css_r = csscol[0..1]
+        css_g = csscol[2..3]
+        css_b = csscol[4..5]
+      else
+        raise(ArgumentError, "csscol is not a CSS hex color")
+      end
+      r = @hex.index(css_r[0]) * 16 + @hex.index(css_r[-1])
+      g = @hex.index(css_g[0]) * 16 + @hex.index(css_g[-1])
+      b = @hex.index(css_b[0]) * 16 + @hex.index(css_b[-1])
+      [r,g,b]
+    end
+    def rgb_to_hsl(r, g=nil, b=nil)
+      if r.is_a?(Array)
+        g = r[1]
+        b = r[2]
+        r = r[0]
+      end
       
+      r = r.to_f / 255
+      g = g.to_f / 255
+      b = b.to_f / 255
+      max = [r,g,b].max
+      min = [r,g,b].min
+      l = s = h = (max + min) / 2.0
+      
+      if (max == min)
+        h = s = 1.0 #hack so gray gets sent to the end
+      else
+        d = max - min
+        s = (l > 0.5) ? d / (2.0 - max - min) : d / (max + min)
+        case (max)
+        when r
+          h = (g - b) / d + (g < b ? 6.0 : 0.0)
+        when g
+          h = (b - r) / d + 2.0
+        when b
+          h = (r - g) / d + 4.0
+        end
+        h = h / 6.0
+      end
+      
+      [h,s,l]
+    end
+    def hsl_comp(hsl1, hsl2)
+      if hsl1[0] == hsl2[0]
+        hsl1[2] <=> hsl2[2]
+      else
+        hsl1[0] <=> hsl2[0]
+      end
+    end
+    def rainbow_comp(thing1, thing2)
+      @thing1_pri = thing1.match(@flag_pri_scan)[1] if thing1[@flag_pri_scan]
+      @thing1_sec = thing1.match(@flag_sec_scan)[1] if thing1[@flag_sec_scan]
+      @thing2_pri = thing2.match(@flag_pri_scan)[1] if thing2[@flag_pri_scan]
+      @thing2_sec = thing2.match(@flag_sec_scan)[1] if thing2[@flag_sec_scan]
+      @thing1_pri ||= thing1
+      @thing1_sec ||= thing1
+      @thing2_pri ||= thing2
+      @thing2_sec ||= thing2
+      
+      #puts "#{thing1} #{thing2}"
+      #puts "#{@thing1_pri} #{@thing1_sec} #{@thing2_pri} #{@thing2_sec}"
+      
+      @thing1_pri = csscol_to_rgb(@thing1_pri)
+      @thing1_sec = csscol_to_rgb(@thing1_sec)
+      @thing2_pri = csscol_to_rgb(@thing2_pri)
+      @thing2_sec = csscol_to_rgb(@thing2_sec)
+      #puts "#{@thing1_pri} #{@thing1_sec} #{@thing2_pri} #{@thing2_sec}"
+      #puts "#{rgb_to_hsl(@thing1_pri)} #{rgb_to_hsl(@thing2_pri)}"
+      
+      comp = hsl_comp(rgb_to_hsl(@thing1_pri), rgb_to_hsl(@thing2_pri))
+      if comp == 0
+        comp = hsl_comp(rgb_to_hsl(@thing1_sec), rgb_to_hsl(@thing2_sec))
+      end
+      #puts "Compared #{thing1} and #{thing2} and got #{comp}"
+      comp
     end
     def chapterthing_displaytext(chapterthing, options = {})
       first_last = options.key?(:first) ? (options[:first] != false ? :first : :last) : (options.key?(:last) ? (options[:last] != false ? :last : :first) : (options.key?(:first_last) ? options[:first_last] : :first))
@@ -274,7 +362,13 @@
       url_thing = (first_last == :first ? first_update : (first_last == :last ? last_update : latest_update))
       @errors << "#{chapter} has no url_thing! (first_last: #{first_last})" unless url_thing
       
+      unless chapter.report_flags
+        chapter.report_flags = chapter.title_extras.scan(@flag_scan).map{|thing| thing[0] }.uniq.sort{|thing1, thing2| rainbow_comp(thing1, thing2) }.join(' ').strip.gsub(/[\(\)]/, '')
+        chapter.title_extras = chapter.title_extras.gsub(@flag_scan, '')
+      end
+      
       str = "[*]"
+      str << '[size=85]' + chapter.report_flags.strip + '[/size] ' if chapter.report_flags and not chapter.report_flags.strip.empty?
       str << "[url=#{url_thing.permalink}]" if url_thing
       str << '[color=goldenrod]' if completed
       str << "#{chapter.entry_title}"
@@ -416,7 +510,7 @@
           LOG.info "[/list]"
         end
       end
-      LOG.info "[url=http://alicorn.elcenia.com/board/viewtopic.php?f=12&t=191#p4841]Official moiety list[/url] ([url=http://alicorn.elcenia.com/board/viewtopic.php?f=12&t=191&p=24749#p24749]rainbow[/url])"
+      LOG.info "[url=http://alicorn.elcenia.com/board/viewtopic.php?f=10&t=498#p25059]Official moiety list[/url] ([url=http://alicorn.elcenia.com/board/viewtopic.php?f=10&t=498#p25060]rainbow[/url])"
       
       done_msg = false
       chapter_list.each do |chapter|

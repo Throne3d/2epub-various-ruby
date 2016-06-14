@@ -278,13 +278,13 @@
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url
+    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags
     
     param_transform :name => :title, :name_extras => :title_extras
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties
     
     def allowed_params
-      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed]
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :report_flags]
     end
     
     def group
