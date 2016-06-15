@@ -119,10 +119,6 @@ def main(args)
     LOG.info "Updating the data (of #{group}) with TOC data; will do stuff stupidly if there are duplicate chapters with the same URL."
     LOG.info "Parsing TOC (of #{group})"
     
-    oldify_chapters_data(group)
-    data = get_chapters_data(group, trash_messages: true)
-    set_chapters_data(data, group)
-    
     group_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
     group_handlers.select! {|c| c.is_a? Class and c < GlowficIndexHandlers::IndexHandler }
     
