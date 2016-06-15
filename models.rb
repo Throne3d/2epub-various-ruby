@@ -776,7 +776,7 @@
       json_hash.each do |var, val|
         varname = (var.start_with?("@")) ? var[1..-1] : var
         var = (var.start_with?("@") ? var : "@#{var}")
-        self.instance_variable_set var, val unless varname == "parent" or varname == "face"
+        self.instance_variable_set var, val unless varname == "parent" or varname == "face" or varname == "author"
       end
       
       chapter.entry = self if post_type == PostType::ENTRY
