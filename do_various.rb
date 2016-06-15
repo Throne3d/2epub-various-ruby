@@ -42,7 +42,7 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report}
+  processes = {tocs: :tocs, toc: :tocs, update_toc: :update_toc, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
       process = value
@@ -109,6 +109,50 @@ def main(args)
       LOG.info chapter.to_s
     end
     set_chapters_data(chapter_list, group)
+  elsif (process == :update_toc)
+    old_data = get_chapters_data(group)
+    
+    chapter_list = GlowficEpub::Chapters.new(group: group)
+    (LOG.fatal "Group #{group} has no TOC" and abort) unless FIC_TOCS.has_key? group and not FIC_TOCS[group].empty?
+    fic_toc_url = FIC_TOCS[group]
+    
+    LOG.info "Updating the data (of #{group}) with TOC data; will do stuff stupidly if there are duplicate chapters with the same URL."
+    LOG.info "Parsing TOC (of #{group})"
+    
+    oldify_chapters_data(group)
+    data = get_chapters_data(group, trash_messages: true)
+    set_chapters_data(data, group)
+    
+    group_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
+    group_handlers.select! {|c| c.is_a? Class and c < GlowficIndexHandlers::IndexHandler }
+    
+    group_handler = group_handlers.select {|c| c.handles? group }
+    (LOG.fatal "No index handlers for #{group}!" and abort) if group_handler.nil? or group_handler.empty?
+    (LOG.fatal "Too many index handlers for #{group}! [#{group_handler * ', '}]" and abort) if group_handler.length > 1
+    
+    group_handler = group_handler.first
+    
+    handler = group_handler.new(group: group)
+    chapter_list = handler.toc_to_chapterlist(fic_toc_url: fic_toc_url) do |chapter|
+      LOG.info chapter.to_s
+    end
+    
+    old_data.each do |chapter|
+      new_count = 0
+      chapter_list.each do |new_data|
+        next unless new_data.url == chapter.url
+        new_count += 1
+        (LOG.error "-- There is a duplicate chapter! #{chapter}" and next) if new_count > 1
+        
+        chapter.title = new_data.title if new_data.title and not new_data.title.strip.empty?
+        chapter.title_extras = new_data.title_extras if new_data.title_extras and not new_data.title_extras.strip.empty?
+        chapter.thread = new_data.thread if new_data.thread
+        chapter.sections = new_data.sections if new_data.sections
+        chapter.time_completed = new_data.time_completed if new_data.time_completed
+        chapter.report_flags = new_data.report_flags if new_data.report_flags
+      end
+    end
+    set_chapters_data(old_data, group)
   elsif (process == :get)
     chapter_list = get_chapters_data(group, trash_messages: true)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
