@@ -159,7 +159,8 @@
 },
 {"title": "Aren't You a Little Short for a Sith?",
 "url": "https://vast-journey-9935.herokuapp.com/posts/98",
-"title_extras": "[b][color=#000080]Sith!Isabella[/color][/b] ([color=#000080]███[/color]) and [b][color=#006000]Occlus[/color][/b] ([color=#006000]███[/color]) in [b][color=#006000]The Old Republic[/color][/b] ([color=#006000]███[/color])"
+"title_extras": "[b][color=#000080]Sith!Isabella[/color][/b] and [b][color=#006000]Occlus[/color][/b] in [b][color=#006000]The Old Republic[/color][/b]",
+"report_flags": "000080 006000#708090"
 },
 {"title": "I Asked The World For Elsewhere But I Never Imagined This",
 "url": "https://vast-journey-9935.herokuapp.com/posts/97",
@@ -299,7 +300,8 @@
 },
 {"title": "Intended Purpose",
 "url": "https://vast-journey-9935.herokuapp.com/posts/126",
-"title_extras": "[b][color=#006000]Ellie[/color][/b] ([color=#006000]███[/color]) in [b][color=#0080FF]Arabek[/color][/b] ([color=#0080FF]███[/color])"
+"title_extras": "[b][color=#006000]Ellie[/color][/b] in [b][color=#0080FF]Arabek[/color][/b]",
+"report_flags": "006000#708090 0080FF"
 },
 {"title": "call of the night",
 "url": "https://vast-journey-9935.herokuapp.com/posts/128",
@@ -311,7 +313,8 @@
 },
 {"title": "The Interuniversal Connector",
 "url": "https://vast-journey-9935.herokuapp.com/posts/130",
-"title_extras": "[b][color=#006000]Anna[/color][/b] ([color=#006000]███[/color]) and [b][color=#D5732A]Vay[/color][/b] ([color=#D5732A]███[/color]) in Milliways"
+"title_extras": "[b][color=#006000]Anna[/color][/b] and [b][color=#D5732A]Vay[/color][/b] in Milliways",
+"report_flags": "006000#708090 D5732A"
 },
 {"title": "Do I want to steal you?",
 "url": "https://vast-journey-9935.herokuapp.com/posts/131",
@@ -333,9 +336,19 @@
 "url": "https://vast-journey-9935.herokuapp.com/posts/139",
 "title_extras": "[b][color=#6960EC]Faith[/color][/b] ([color=#6960EC]███[/color]) and [b][color=#4F012E]Scott[/color][/b] ([color=#4F012E]███[/color]) in Sunnydale"
 },
+{"title": "The moon is out. Have sweet dreams.",
+"url": "https://vast-journey-9935.herokuapp.com/posts/140",
+"title_extras": "[b][color=#A0A0A0]Felix[/color][/b] in [b][color=#4F012E]Beacon Hills[/color][/b]",
+"report_flags": "4F012E#3F00FF A0A0A0"
+},
 {"title": "fire and ice",
 "url": "https://vast-journey-9935.herokuapp.com/posts/142",
 "title_extras": "[b][color=#00BF80]Kiri[/color][/b] in [b][color=#FF0000]Arda[/color][/b]",
+"report_flags": "00BF80#007BA7 FF0000"
+},
+{"title": "the nick of time",
+"url": "https://vast-journey-9935.herokuapp.com/posts/143",
+"title_extras": "Two [b][color=#FF0000]Fëanors[/color][/b] and a [b][color=#00BF80]Bella[/color][/b]",
 "report_flags": "00BF80#007BA7 FF0000"
 }
 ]
