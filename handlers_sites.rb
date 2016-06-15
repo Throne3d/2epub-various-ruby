@@ -382,6 +382,7 @@
     end
     
     def get_updated_face(face, default=nil)
+      return nil unless face
       get_face_by_id(face.unique_id, default)
     end
     
@@ -896,6 +897,7 @@
     end
     
     def get_updated_face(face, default=nil)
+      return nil unless face
       get_face_by_id(face.unique_id, default)
     end
     

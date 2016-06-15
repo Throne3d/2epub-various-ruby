@@ -553,11 +553,11 @@
     @@date_format = "%Y-%m-%d %H:%M"
     
     def self.message_serialize_ignore
-      serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_author, :face_id, :post_type
+      serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_author, :post_type
     end
     
     def allowed_params
-      @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face_id, :face, :entry_title, :page_no]
+      @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face, :entry_title, :page_no]
     end
     
     @push_title = false
@@ -664,35 +664,34 @@
     
     def face
       return @face if @face and not @face.is_a?(String)
-      @face_id = @face if @face_id.nil? and @face.is_a?(String)
-      return unless @face_id
-      @face ||= chapter_list.get_face_by_id(@face_id) if chapter_list
-      if @face
-        new_face = site_handler.get_updated_face(@face)
-        @face = new_face if new_face
-        chapter_list.replace_face(new_face) if new_face
+      return unless @face and @face.is_a?(String)
+      
+      if chapter_list
+        temp_face = chapter_list.get_face_by_id(@face)
+        new_face = site_handler.get_updated_face(temp_face)
+        if new_face
+          @face = new_face
+          chapter_list.replace_face(new_face)
+        end
       end
-      @face ||= site_handler.get_face_by_id(@face_id) if site_handler
-      @face.author = author if author and @face
+      
+      if site_handler and (not @face or @face.is_a?(String))
+        temp_face = site_handler.get_face_by_id(@face)
+        if temp_face
+          @face = temp_face
+          chapter_list.replace_face(temp_face)
+        end
+      end
+      
+      @face.author = author if author and @face and not @face.is_a?(String)
       @face
     end
     def face=(face)
-      if (face.is_a?(String))
-        @face_id = face
-        @face = nil
-      elsif (face.is_a?(Face))
-        @face_id = face.unique_id
+      if (face.is_a?(String) or face.is_a?(Face))
         @face = face
       else
         raise(ArgumentError, "Invalid face type. Face: #{face}")
       end
-    end
-    def face_id
-      @face_id
-    end
-    def face_id=(id)
-      @face = nil
-      @face_id = id
     end
     
     @push_author = false
@@ -792,11 +791,9 @@
       end
       if author
         self.author = author
-        self.author
       end
       if face
         self.face = face
-        self.face
       end
     end
   end
