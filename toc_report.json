@@ -1,315 +1,383 @@
 [
 {"title": "An unlikely ally",
 "url": "https://vast-journey-9935.herokuapp.com/posts/90",
-"title_extras": "[b][color=#960018]Theo[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]), [b][color=#FF5C5C]Willow[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) in Sunnyverse",
+"title_extras": "[b][color=#960018]Theo[/color][/b], [b][color=#FF5C5C]Willow[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in Sunnyverse",
+"report_flags": "960018#682860 FF5C5C#FFB25C",
 "sections": ["Apricum"]
 },
 {"title": "A wise mentor",
 "url": "https://vast-journey-9935.herokuapp.com/posts/138",
-"title_extras": "[b][color=#FF5C5C]salmons[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) and [b][color=#960018]carmines[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) in Sunnyverse",
+"title_extras": "[b][color=#FF5C5C]salmons[/color][/b] and [b][color=#960018]carmines[/color][/b] in Sunnyverse",
+"report_flags": "960018#682860 FF5C5C#FFB25C",
 "sections": ["Apricum"]
 },
 {"title": "Book of Impact",
 "url": "https://vast-journey-9935.herokuapp.com/posts/61",
-"title_extras": "[b][color=#960018]Theo[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) and [b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) in [b][color=#FF5C5C]Cardverse[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color])",
+"title_extras": "[b][color=#960018]Theo[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in [b][color=#FF5C5C]Cardverse[/color][/b]",
+"report_flags": "960018#682860 FF5C5C#FFB25C",
 "sections": ["Book of the Moon"]
 },
 {"title": "Book of Consequences",
 "url": "https://vast-journey-9935.herokuapp.com/posts/136",
-"title_extras": "[b][color=#960018]carmines[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) and [b][color=#FF5C5C]salmons[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) in [b][color=#FF5C5C]Cardverse[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color])",
+"title_extras": "[b][color=#960018]carmines[/color][/b] and [b][color=#FF5C5C]salmons[/color][/b] in [b][color=#FF5C5C]Cardverse[/color][/b]",
+"report_flags": "960018#682860 FF5C5C#FFB25C",
 "sections": ["Book of the Moon"]
 },
-{"title": "obligation of good faith",
-"url": "https://vast-journey-9935.herokuapp.com/posts/83",
-"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) in [b][color=#FFBF00]Pactverse[/color][/b] ([color=#FFBF00]███[/color])"
+{"title": "Geometry",
+"url": "https://vast-journey-9935.herokuapp.com/posts/117",
+"title_extras": "[b][color=#960018]Rachel[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in the City of Angles",
+"report_flags": "960018#682860 FF5C5C#FFB25C"
 },
-{"title": "the world turned upside down",
-"url": "https://vast-journey-9935.herokuapp.com/posts/96",
-"title_extras": "[spoiler][b][color=#00FFFF]Carmen[/color][/b][/spoiler] ([color=#00FFFF]███[/color]) and [b][color=#FF0000]Gimlith[/color][/b] ([color=#FF0000]███[/color])"
+{"title": "call of the night",
+"url": "https://vast-journey-9935.herokuapp.com/posts/128",
+"title_extras": "[b][color=#FF5C5C]salmons[/color][/b] and [b][color=#960018]carmines[/color][/b] in Azurite",
+"report_flags": "FF5C5C#FFB25C 960018#682860"
 },
-{"title": "Let Me Tell You What I Wish I'd Known",
-"url": "https://vast-journey-9935.herokuapp.com/posts/84",
-"title_extras": "[b][color=#8040BF]Miles[/color][/b] ([color=#8040BF]██[/color][color=#602080]█[/color]) in [b][color=#FF0000]Arda[/color][/b] ([color=#FF0000]███[/color])"
+{"title": "behave",
+"url": "https://peterverse.dreamwidth.org/8614.html",
+"title_extras": "(explicit) eclipsed [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]",
+"report_flags": "FF5C5C#FFB25C 00BF80#007BA7",
+"sections": ["Eclipse"]
+},
+{"title": "infiltrating the court",
+"url": "https://peterverse.dreamwidth.org/9404.html",
+"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b] in [b][color=#00BF80]Names-Fairyland[/color][/b]",
+"report_flags": "FF5C5C#FFB25C 00BF80#007BA7",
+"sections": ["Fairylights"]
+},
+{"title": "glam, meet your new best friend",
+"url": "https://peterverse.dreamwidth.org/9700.html",
+"title_extras": "capes [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]",
+"report_flags": "FF5C5C#FFB25C 00BF80",
+"sections": ["Coruscation"]
+},
+{"title": "More cogs than the Steampunker could sell",
+"url": "https://vast-journey-9935.herokuapp.com/posts/24",
+"title_extras": "SCP-914 in Terraria with [b][color=#D5732A]coppers[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b]",
+"report_flags": "D5732A A0A0A0",
+"sections": ["Sterling Starlight", "Terraria SCP-914"]
+},
+{"title": "Weird physics in, worst physics out.",
+"url": "https://vast-journey-9935.herokuapp.com/posts/127",
+"title_extras": "SCP-914 in Terraria with [b][color=#D5732A]coppers[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b]",
+"report_flags": "D5732A A0A0A0",
+"sections": ["Sterling Starlight", "Terraria SCP-914"]
+},
+{"title": "Entwined in threads",
+"url": "https://vast-journey-9935.herokuapp.com/posts/72",
+"title_extras": "[b][color=#A0A0A0]Felix[/color][/b] in [b][color=#D5732A]Threads!Flynn's world[/color][/b]",
+"report_flags": "D5732A A0A0A0",
+"sections": ["Sterling Starlight"]
+},
+{"title": "From the lowest of commoners to the highest of kings",
+"url": "https://vast-journey-9935.herokuapp.com/posts/105",
+"title_extras": "[b][color=#A0A0A0]Stephen[/color][/b] and [b][color=#D5732A]Will[/color][/b] in Milliways",
+"report_flags": "D5732A A0A0A0",
+"sections": ["Sterling Starlight"]
 },
 {"title": "the magic field possesses a kind of inertia",
 "url": "https://vast-journey-9935.herokuapp.com/posts/78",
-"title_extras": "(explicit) [b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]), [b][color=#A0A0A0]Felix[/color][/b], and [b][color=#A0A0A0]Fenris[/color][/b] ([color=#A0A0A0]███[/color]) in Resonance",
+"title_extras": "(explicit) [b][color=#FF5C5C]Sadde[/color][/b], [b][color=#A0A0A0]Felix[/color][/b], and [b][color=#A0A0A0]Fenris[/color][/b] in Resonance",
+"report_flags": "FF5C5C#FFB25C A0A0A0",
 "sections": ["Resonance"]
 },
 {"title": "the occurrence of natural gifts is determined by complex genetic and environmental factors",
 "url": "https://vast-journey-9935.herokuapp.com/posts/129",
 "title_extras": "[b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]), [b][color=#A0A0A0]Felix[/color][/b], [b][color=#A0A0A0]Fenris[/color][/b], and [b][color=#A0A0A0]Thor[/color][/b] ([color=#A0A0A0]███[/color]) in Resonance",
+"report_flags": "FF5C5C#FFB25C A0A0A0",
 "sections": ["Resonance"]
 },
-{"title": "Such a nice place",
-"url": "https://vast-journey-9935.herokuapp.com/posts/94",
-"title_extras": "[b][color=#960018]Theo[/color][/b], [b][color=#960018]Ev[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]), [b][color=#A0A0A0]Gabe[/color][/b] and [b][color=#A0A0A0]Henry[/color][/b] ([color=#A0A0A0]███[/color]) in [b][color=#960018]Proximal[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color])"
-},
-{"title": "yer a wizard (sort of)",
-"url": "https://vast-journey-9935.herokuapp.com/posts/86",
-"title_extras": "eclipsed [b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) and [b][color=#FF8000]Lu[/color][/b] ([color=#FF8000]███[/color])"
+{"title": "Chance to socialize with new students",
+"url": "https://vast-journey-9935.herokuapp.com/posts/123",
+"title_extras": "(explicit) [b][color=#FF5C5C]Sadde[/color][/b], [b][color=#A0A0A0]Fenris[/color][/b], [b][color=#A0A0A0]Felix[/color][/b] and [b][color=#A0A0A0]Trevor[/color][/b] in Eclipse",
+"report_flags": "FF5C5C#FFB25C A0A0A0"
 },
 {"title": "spear of ice",
 "url": "https://alicornutopia.dreamwidth.org/30911.html",
-"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color]) in [b][color=#FF0000]Arda[/color][/b] ([color=#FF0000]███[/color])",
+"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] in [b][color=#FF0000]Arda[/color][/b]",
+"report_flags": "00BF80#007BA7 FF0000",
 "time_completed": "2016-06-08T01:13:00+01:00",
 "sections": ["Elentári"]
 },
 {"title": "galaxy of stars",
 "url": "https://alicornutopia.dreamwidth.org/31535.html",
-"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color]) in [b][color=#FF0000]Arda[/color][/b] ([color=#FF0000]███[/color])",
+"title_extras": "Loki [b][color=#00BF80]Bell[/color][/b] in [b][color=#FF0000]Arda[/color][/b]",
+"report_flags": "00BF80#007BA7 FF0000",
 "sections": ["Elentári"]
 },
-{"title": "Time to sleep",
-"url": "https://vast-journey-9935.herokuapp.com/posts/47",
-"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) in [b][color=#000080]Shadopolis[/color][/b] ([color=#000080]███[/color])"
+{"title": "the stork drops, the snake swallows",
+"url": "http://alicornutopia.dreamwidth.org/31354.html",
+"title_extras": "(explicit) [b][color=#00BF80]Kib (Cam)[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
+"report_flags": "00BF80#007BA7 FF0000"
 },
 {"title": "Fish out of Water",
 "url": "https://vast-journey-9935.herokuapp.com/posts/122",
-"title_extras": "[b][color=#960018]Theo[/color][/b], [b][color=#960018]Everett[/color][/b] and [b][color=#960018]Matt[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) with [b][color=#6960EC]Grace[/color][/b], [b][color=#6960EC]Reubel[/color][/b] and [b][color=#6960EC]Mu[/color][/b] ([color=#6960EC]███[/color]) in Lapis",
+"title_extras": "[b][color=#960018]Theo[/color][/b], [b][color=#960018]Everett[/color][/b] and [b][color=#960018]Matt[/color][/b] with [b][color=#6960EC]Grace[/color][/b], [b][color=#6960EC]Reubel[/color][/b] and [b][color=#6960EC]Mu[/color][/b] in Lapis",
+"report_flags": "960018#682860 6960EC",
 "sections": ["Opalescence"]
 },
-{"title": "Taking a shortcut",
-"url": "https://vast-journey-9935.herokuapp.com/posts/93",
-"title_extras": "[b][color=#A0A0A0]Felix[/color][/b] ([color=#A0A0A0]███[/color]) and [b][color=#6960EC]Jean[/color][/b] ([color=#6960EC]███[/color]) on the [b][color=#6960EC]Path[/color][/b] ([color=#6960EC]███[/color])"
+{"title": "Incipio",
+"url": "https://vast-journey-9935.herokuapp.com/posts/120",
+"title_extras": "[b][color=#960018]Theo[/color][/b] and [b][color=#6960EC]Faith[/color][/b], [b][color=#6960EC]Reuben[/color][/b] and [b][color=#6960EC]Em[/color][/b] in Sunnyverse",
+"report_flags": "960018#682860 6960EC"
 },
-{"title": "selfless wisdom",
-"url": "https://vast-journey-9935.herokuapp.com/posts/57",
-"title_extras": "[b][color=#BF4040]reds[/color][/b] ([color=#BF4040]███[/color]) and [b][color=#FF8000]oranges[/color][/b] ([color=#FF8000]███[/color]) in Divergentverse"
+{"title": "Living on a dream",
+"url": "https://vast-journey-9935.herokuapp.com/posts/112",
+"title_extras": "[b][color=#6960EC]Jean[/color][/b], [b][color=#960018]Theo[/color][/b], [b][color=#960018]Ev[/color][/b] and [b][color=#960018]Rachel[/color][/b] in [b][color=#960018]Proximal[/color][/b]",
+"report_flags": "6960EC 960018#682860"
 },
 {"title": "IV. First-Move Advantage: Attempted Scholar's Mate",
 "url": "https://vast-journey-9935.herokuapp.com/posts/91",
-"title_extras": "[b][color=#0080FF]Yvette[/color][/b] ([color=#0080FF]███[/color]) in [b][color=#000080]Shadopolis[/color][/b] ([color=#000080]███[/color])",
+"title_extras": "[b][color=#0080FF]Yvette[/color][/b] in [b][color=#000080]Shadopolis[/color][/b]",
+"report_flags": "0080FF#1A2196 000080",
 "sections": ["Pair of Pawns"]
-},
-{"title": "morning assembly",
-"url": "https://vast-journey-9935.herokuapp.com/posts/48",
-"title_extras": "[b][color=#BF4040]Alli[/color][/b] ([color=#BF4040]███[/color]) and [b][color=#960018]Theo[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) in Sunnyverse"
-},
-{"title": "Id: The Demands",
-"url": "https://vast-journey-9935.herokuapp.com/posts/65",
-"title_extras": "[b][color=#960018]Thea[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) and [b][color=#728C00]Cynthia[/color][/b] ([color=#728C00]███[/color]) in Persona"
-},
-{"title": "behave",
-"url": "https://peterverse.dreamwidth.org/8614.html",
-"title_extras": "(explicit) eclipsed [b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) and [b][color=#00BF80]Bell[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color])",
-"sections": ["Eclipse"]
-},
-{"title": "More cogs than the Steampunker could sell",
-"url": "https://vast-journey-9935.herokuapp.com/posts/24",
-"title_extras": "SCP-914 in Terraria with [b][color=#D5732A]coppers[/color][/b] ([color=#D5732A]███[/color]) and [b][color=#A0A0A0]silvers[/color][/b] ([color=#A0A0A0]███[/color])",
-"sections": ["Sterling Starlight", "Terraria SCP-914"]
-},
-{"title": "Weird physics in, worst physics out.",
-"url": "https://vast-journey-9935.herokuapp.com/posts/127",
-"title_extras": "SCP-914 in Terraria with [b][color=#D5732A]coppers[/color][/b] ([color=#D5732A]███[/color]) and [b][color=#A0A0A0]silvers[/color][/b] ([color=#A0A0A0]███[/color])",
-"sections": ["Sterling Starlight", "Terraria SCP-914"]
-},
-{"title": "Entwined in threads",
-"url": "https://vast-journey-9935.herokuapp.com/posts/72",
-"title_extras": "[b][color=#A0A0A0]Felix[/color][/b] ([color=#A0A0A0]███[/color]) in [b][color=#D5732A]Threads!Flynn's world[/color][/b] ([color=#D5732A]███[/color])",
-"sections": ["Sterling Starlight"]
-},
-{"title": "From the lowest of commoners to the highest of kings",
-"url": "https://vast-journey-9935.herokuapp.com/posts/105",
-"title_extras": "[b][color=#A0A0A0]Stephen[/color][/b] ([color=#A0A0A0]███[/color]) and [b][color=#D5732A]Will[/color][/b] ([color=#D5732A]███[/color]) in Milliways",
-"sections": ["Sterling Starlight"]
-},
-{"title": "infiltrating the court",
-"url": "https://peterverse.dreamwidth.org/9404.html",
-"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) and [b][color=#00BF80]Bell[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color]) in [b][color=#00BF80]Names-Fairyland[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color])",
-"sections": ["Fairylights"]
-},
-{"title": "the fair lady and the high lord",
-"url": "https://vast-journey-9935.herokuapp.com/posts/109",
-"title_extras": "[spoiler][color=#FFFFFF]Alcallah[/color][/spoiler] ([color=#FFFFFF]███[/color]) and [b][color=#A0A0A0]Stephen[/color][/b] ([color=#A0A0A0]███[/color]) in Milliways"
 },
 {"title": "dream of a better tomorrow",
 "url": "https://vast-journey-9935.herokuapp.com/posts/113",
-"title_extras": "[b][color=#6960EC]WWII!Jean[/color][/b] ([color=#6960EC]███[/color]) and [b][color=#A0A0A0]Dreamshaper!Felix[/color][/b] ([color=#A0A0A0]███[/color])",
+"title_extras": "[b][color=#6960EC]WWII!Jean[/color][/b] and [b][color=#A0A0A0]Dreamshaper!Felix[/color][/b]",
+"report_flags": "6960EC A0A0A0",
 "sections": ["Dreams of Freedom"]
 },
 {"title": "dream a little dream of me",
 "url": "https://vast-journey-9935.herokuapp.com/posts/135",
-"title_extras": "[b][color=#6960EC]lotuses[/color][/b] ([color=#6960EC]███[/color]) and [b][color=#A0A0A0]silvers[/color][/b] ([color=#A0A0A0]███[/color]) in WWII France",
+"title_extras": "[b][color=#6960EC]lotuses[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b] in WWII France",
+"report_flags": "6960EC A0A0A0",
 "sections": ["Dreams of Freedom"]
 },
 {"title": "they may say I am a dreamer",
 "url": "https://vast-journey-9935.herokuapp.com/posts/137",
-"title_extras": "[b][color=#6960EC]lotuses[/color][/b] ([color=#6960EC]███[/color]) and [b][color=#A0A0A0]silvers[/color][/b] ([color=#A0A0A0]███[/color]) in WWII France",
+"title_extras": "[b][color=#6960EC]lotuses[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b] in WWII France",
+"report_flags": "6960EC A0A0A0",
 "sections": ["Dreams of Freedom"]
-},
-{"title": "We weren't even testing for that",
-"url": "https://glowfic.dreamwidth.org/36602.html",
-"title_extras": "Claimverse Teytis in [b][color=#FF5C5C]Portalverse[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color])"
-},
-{"title": "glam, meet your new best friend",
-"url": "https://peterverse.dreamwidth.org/9700.html",
-"title_extras": "capes [b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) and [b][color=#00BF80]Bell[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color])",
-"sections": ["Coruscation"]
-},
-{"title": "yeah that happens if you turn into a vampire",
-"url": "https://alicornutopia.dreamwidth.org/30604.html",
-"title_extras": "[b][color=#8040BF]Miles[/color][/b], [b][color=#8040BF]Mark[/color][/b] ([color=#8040BF]██[/color][color=#602080]█[/color]) and [b][color=#00BF80]Bell[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color]) in Sunnyverse"
 },
 {"title": "high-energy physics",
 "url": "https://alicornutopia.dreamwidth.org/31134.html",
-"title_extras": "[b][color=#00BF80]Bella[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color]), [b][color=#FF0000]Fëanor[/color][/b] and [b][color=#FF0000]Rúmil[/color][/b] ([color=#FF0000]███[/color])",
+"title_extras": "[b][color=#00BF80]Bella[/color][/b], [b][color=#FF0000]Fëanor[/color][/b] and [b][color=#FF0000]Rúmil[/color][/b]",
+"report_flags": "00BF80#007BA7 FF0000",
 "sections": ["Telperion"]
+},
+{"title": "I Asked The World For Elsewhere But I Never Imagined This",
+"url": "https://vast-journey-9935.herokuapp.com/posts/97",
+"title_extras": "[spoiler][b][color=#FFFFFF]Odette[/color][/b][/spoiler] in [b][color=#FF0000]Middle-earth[/color][/b]",
+"report_flags": "FFFFFF FF0000",
+"sections": ["Z1-Unknown Continuity"]
+},
+{"title": "I'm Glad I'm Not Back There But Where Did You Take Us",
+"url": "https://vast-journey-9935.herokuapp.com/posts/101",
+"title_extras": "[spoiler][b][color=#FFFFFF]Illia[/color][/b][/spoiler] in [b][color=#FF0000]Middle-earth[/color][/b]",
+"report_flags": "FFFFFF FF0000",
+"sections": ["Z1-Unknown Continuity"]
+},
+{"title": "I know you",
+"url": "https://vast-journey-9935.herokuapp.com/posts/141",
+"title_extras": "[spoiler][b][color=#FFFFFF]Edie[/color][/b][/spoiler] and [b][color=#FF0000]Celegorm[/color][/b]",
+"report_flags": "FFFFFF FF0000",
+"sections": ["Z1-Unknown Continuity"]
+},
+{"title": "I can't fix you, but maybe I can still help",
+"url": "https://glowfic.dreamwidth.org/37008.html?thread=7203984",
+"title_extras": "[spoiler][b][color=#FFFFFF]Odette[/color][/b][/spoiler] in [b][color=#00BF80]Elcenia[/color][/b]",
+"report_flags": "FFFFFF 00BF80#007BA7",
+"sections": ["Z2-Unknown Continuity"]
+},
+{"title": "I can't fix you, but maybe I can still help",
+"url": "https://glowfic.dreamwidth.org/37008.html?thread=7203728",
+"title_extras": "[spoiler][b][color=#FFFFFF]Illia[/color][/b][/spoiler] in [b][color=#00BF80]Elcenia[/color][/b]",
+"report_flags": "FFFFFF 00BF80#007BA7",
+"sections": ["Z2-Unknown Continuity"]
+},
+{"title": "Chaos Summoning Cards",
+"url": "https://vast-journey-9935.herokuapp.com/posts/119",
+"title_extras": "[b][color=#000000]Terry[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in [b][color=#FF5C5C]Cardverse[/color][/b]",
+"report_flags": "000000 FF5C5C#FFB25C",
+"sections": ["Calibrilustrum"]
+},
+{"title": "Uninvited Guests Are Welcome Here",
+"url": "https://vast-journey-9935.herokuapp.com/posts/108",
+"title_extras": "[b][color=#8040BF]Milan[/color][/b] and [spoiler][b][color=#FFFFFF]Odette[/color][/b][/spoiler] and [spoiler][b][color=#FFFFFF]Illia[/color][/b][/spoiler] in their as-yet-unnamed world",
+"report_flags": "8040BF#602080 FFFFFF",
+"sections": ["Skylight Empire"]
+},
+{"title": "The Party Had Just Begun",
+"url": "https://glowfic.dreamwidth.org/27837.html",
+"title_extras": "[spoiler][b][color=#FFFFFF]Edie[/color][/b][/spoiler], [spoiler][b][color=#FFFFFF]Emily[/color][/b][/spoiler], [b][color=#8040BF]Sivath[/color][/b] and [b][color=#8040BF]Tialle's Demon[/color][/b]",
+"report_flags": "8040BF#602080 FFFFFF",
+"sections": ["Skylight Empire"]
+},
+{"title": "obligation of good faith",
+"url": "https://vast-journey-9935.herokuapp.com/posts/83",
+"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b] in [b][color=#FFBF00]Pactverse[/color][/b]",
+"report_flags": "FF5C5C#FFB25C FFBF00"
+},
+{"title": "the world turned upside down",
+"url": "https://vast-journey-9935.herokuapp.com/posts/96",
+"title_extras": "[spoiler][b][color=#00FFFF]Carmen[/color][/b][/spoiler] and [b][color=#FF0000]Gimlith[/color][/b]",
+"report_flags": "00FFFF FF0000"
+},
+{"title": "Let Me Tell You What I Wish I'd Known",
+"url": "https://vast-journey-9935.herokuapp.com/posts/84",
+"title_extras": "[b][color=#8040BF]Miles[/color][/b] in [b][color=#FF0000]Arda[/color][/b]",
+"report_flags": "8040BF#602080 FF0000"
+},
+{"title": "Such a nice place",
+"url": "https://vast-journey-9935.herokuapp.com/posts/94",
+"title_extras": "[b][color=#960018]Theo[/color][/b], [b][color=#960018]Ev[/color][/b], [b][color=#A0A0A0]Gabe[/color][/b] and [b][color=#A0A0A0]Henry[/color][/b] in [b][color=#960018]Proximal[/color][/b]",
+"report_flags": "960018#682860 A0A0A0"
+},
+{"title": "yer a wizard (sort of)",
+"url": "https://vast-journey-9935.herokuapp.com/posts/86",
+"title_extras": "eclipsed [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#FF8000]Lu[/color][/b]",
+"report_flags": "FF5C5C#FFB25C FF8000"
+},
+{"title": "Time to sleep",
+"url": "https://vast-journey-9935.herokuapp.com/posts/47",
+"title_extras": "[b][color=#FF5C5C]Sadde[/color][/b] in [b][color=#000080]Shadopolis[/color][/b]",
+"report_flags": "FF5C5C#FFB25C 000080"
+},
+{"title": "Taking a shortcut",
+"url": "https://vast-journey-9935.herokuapp.com/posts/93",
+"title_extras": "[b][color=#A0A0A0]Felix[/color][/b] and [b][color=#6960EC]Jean[/color][/b] on the [b][color=#6960EC]Path[/color][/b]",
+"report_flags": "A0A0A0 6960EC"
+},
+{"title": "selfless wisdom",
+"url": "https://vast-journey-9935.herokuapp.com/posts/57",
+"title_extras": "[b][color=#BF4040]reds[/color][/b] and [b][color=#FF8000]oranges[/color][/b] in Divergentverse",
+"report_flags": "BF4040 FF8000"
+},
+{"title": "morning assembly",
+"url": "https://vast-journey-9935.herokuapp.com/posts/48",
+"title_extras": "[b][color=#BF4040]Alli[/color][/b] and [b][color=#960018]Theo[/color][/b] in Sunnyverse",
+"report_flags": "BF4040 960018#682860"
+},
+{"title": "Id: The Demands",
+"url": "https://vast-journey-9935.herokuapp.com/posts/65",
+"title_extras": "[b][color=#960018]Thea[/color][/b] and [b][color=#728C00]Cynthia[/color][/b] in Persona",
+"report_flags": "960018#682860 728C00"
+},
+{"title": "the fair lady and the high lord",
+"url": "https://vast-journey-9935.herokuapp.com/posts/109",
+"title_extras": "[spoiler][color=#FFFFFF]Alcallah[/color][/spoiler] and [b][color=#A0A0A0]Stephen[/color][/b] in Milliways",
+"report_flags": "FFFFFF A0A0A0"
+},
+{"title": "We weren't even testing for that",
+"url": "https://glowfic.dreamwidth.org/36602.html",
+"title_extras": "Claimverse Teytis in [b][color=#FF5C5C]Portalverse[/color][/b]",
+"report_flags": "FF5C5C#FFB25C"
+},
+{"title": "yeah that happens if you turn into a vampire",
+"url": "https://alicornutopia.dreamwidth.org/30604.html",
+"title_extras": "[b][color=#8040BF]Miles[/color][/b], [b][color=#8040BF]Mark[/color][/b] and [b][color=#00BF80]Bell[/color][/b] in Sunnyverse",
+"report_flags": "8040BF#602080 00BF80#007BA7"
 },
 {"title": "Aren't You a Little Short for a Sith?",
 "url": "https://vast-journey-9935.herokuapp.com/posts/98",
 "title_extras": "[b][color=#000080]Sith!Isabella[/color][/b] and [b][color=#006000]Occlus[/color][/b] in [b][color=#006000]The Old Republic[/color][/b]",
 "report_flags": "000080 006000#708090"
 },
-{"title": "I Asked The World For Elsewhere But I Never Imagined This",
-"url": "https://vast-journey-9935.herokuapp.com/posts/97",
-"title_extras": "[spoiler][b][color=#FFFFFF]Odette[/color][/b][/spoiler] ([color=#FFFFFF]███[/color]) in [b][color=#FF0000]Middle-earth[/color][/b] ([color=#FF0000]███[/color])",
-"sections": ["Z1-Unknown Continuity"]
-},
-{"title": "I'm Glad I'm Not Back There But Where Did You Take Us",
-"url": "https://vast-journey-9935.herokuapp.com/posts/101",
-"title_extras": "[spoiler][b][color=#FFFFFF]Illia[/color][/b][/spoiler] ([color=#FFFFFF]███[/color]) in [b][color=#FF0000]Middle-earth[/color][/b] ([color=#FF0000]███[/color])",
-"sections": ["Z1-Unknown Continuity"]
-},
-{"title": "I know you",
-"url": "https://vast-journey-9935.herokuapp.com/posts/141",
-"title_extras": "[spoiler][b][color=#FFFFFF]Edie[/color][/b][/spoiler] ([color=#FFFFFF]███[/color]) and [b][color=#FF0000]Celegorm[/color][/b] ([color=#FF0000]███[/color])",
-"sections": ["Z1-Unknown Continuity"]
-},
-{"title": "Chaos Summoning Cards",
-"url": "https://vast-journey-9935.herokuapp.com/posts/119",
-"title_extras": "[b][color=#000000]Terry[/color][/b] ([color=#000000]███[/color]) and [b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) in [b][color=#FF5C5C]Cardverse[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color])",
-"sections": ["Calibrilustrum"]
-},
 {"title": "New neighbors. Just as frustrating.",
 "url": "https://vast-journey-9935.herokuapp.com/posts/100",
-"title_extras": "[b][color=#000000]Mountain[/color][/b] ([color=#000000]███[/color]) and [b][color=#FF0000]Elves[/color][/b] ([color=#FF0000]███[/color])"
+"title_extras": "[b][color=#000000]Mountain[/color][/b] and [b][color=#FF0000]Elves[/color][/b]",
+"report_flags": "000000 FF0000"
 },
 {"title": "No one really knows how the parties get to yes",
 "url": "https://vast-journey-9935.herokuapp.com/posts/99",
-"title_extras": "[b][color=#FFBF00]Amber Atreides[/color][/b] ([color=#FFBF00]███[/color]) and [b][color=#FF0000]Elves[/color][/b] ([color=#FF0000]███[/color])"
+"title_extras": "[b][color=#FFBF00]Amber Atreides[/color][/b] and [b][color=#FF0000]Elves[/color][/b]",
+"report_flags": "FFBF00 FF0000"
 },
 {"title": "Fate and Fortune",
 "url": "https://vast-journey-9935.herokuapp.com/posts/103",
-"title_extras": "[b][color=#960018]Tyler[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) and [b][color=#228B22]Vital (Nicole)[/color][/b] ([color=#228B22]███[/color])"
+"title_extras": "[b][color=#960018]Tyler[/color][/b] and [b][color=#228B22]Vital (Nicole)[/color][/b]",
+"report_flags": "960018#682860 228B22"
 },
 {"title": "where the light won't find you",
 "url": "https://vast-journey-9935.herokuapp.com/posts/107",
-"title_extras": "[b][color=#228B22]Vital (Nicole)[/color][/b] ([color=#228B22]███[/color]) in [b][color=#00CFCF]Nightvale[/color][/b] ([color=#00CFCF]███[/color])"
-},
-{"title": "Living on a dream",
-"url": "https://vast-journey-9935.herokuapp.com/posts/112",
-"title_extras": "[b][color=#6960EC]Jean[/color][/b] ([color=#6960EC]███[/color]), [b][color=#960018]Theo[/color][/b], [b][color=#960018]Ev[/color][/b] and [b][color=#960018]Rachel[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) in [b][color=#960018]Proximal[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color])"
-},
-{"title": "Geometry",
-"url": "https://vast-journey-9935.herokuapp.com/posts/117",
-"title_extras": "[b][color=#960018]Rachel[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) and [b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) in the City of Angles"
+"title_extras": "[b][color=#228B22]Vital (Nicole)[/color][/b] in [b][color=#00CFCF]Nightvale[/color][/b]",
+"report_flags": "228B22 00CFCF"
 },
 {"title": "where you think you're going",
 "url": "https://alicornutopia.dreamwidth.org/28223.html?thread=19412287",
-"title_extras": "[b][color=#00BF80]Demon Cam[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color]) and [b][color=#D5732A]other demons[/color][/b] ([color=#D5732A]███[/color]) in [b][color=#D5732A]Bartimaeusverse[/color][/b] ([color=#D5732A]███[/color])"
+"title_extras": "[b][color=#00BF80]Demon Cam[/color][/b] and [b][color=#D5732A]other demons[/color][/b] in [b][color=#D5732A]Bartimaeusverse[/color][/b]",
+"report_flags": "00BF80#007BA7 D5732A"
 },
 {"title": "Searching Far and Wide",
 "url": "https://glowfic.dreamwidth.org/36312.html",
-"title_extras": "[b][color=#D5732A]Glen[/color][/b] ([color=#D5732A]███[/color]) and [b][color=#00BF80]Ace[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color])"
+"title_extras": "[b][color=#D5732A]Glen[/color][/b] and [b][color=#00BF80]Ace[/color][/b]",
+"report_flags": "D5732A 00BF80"
 },
 {"title": "A Sith Lord's Agenda",
 "url": "https://glowfic.dreamwidth.org/36782.html",
-"title_extras": "[b][color=#0080FF]Callida[/color][/b] ([color=#0080FF]███[/color]) and [b][color=#00BF80]Bell[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color]) in [b][color=#00BF80]Fairyland[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color])"
-},
-{"title": "Uninvited Guests Are Welcome Here",
-"url": "https://vast-journey-9935.herokuapp.com/posts/108",
-"title_extras": "[b][color=#8040BF]Milan[/color][/b] ([color=#8040BF]██[/color][color=#602080]█[/color]) and [spoiler][b][color=#FFFFFF]Odette[/color][/b][/spoiler] and [spoiler][b][color=#FFFFFF]Illia[/color][/b][/spoiler] ([color=#FFFFFF]███[/color]) in their as-yet-unnamed world",
-"sections": ["Skylight Empire"]
-},
-{"title": "The Party Had Just Begun",
-"url": "https://glowfic.dreamwidth.org/27837.html",
-"title_extras": "[spoiler][b][color=#FFFFFF]Edie[/color][/b][/spoiler], [spoiler][b][color=#FFFFFF]Emily[/color][/b][/spoiler] ([color=#FFFFFF]███[/color]), [b][color=#8040BF]Sivath[/color][/b] and [b][color=#8040BF]Tialle's Demon[/color][/b] ([color=#8040BF]██[/color][color=#602080]█[/color])",
-"sections": ["Skylight Empire"]
+"title_extras": "[b][color=#0080FF]Callida[/color][/b] and [b][color=#00BF80]Bell[/color][/b] in [b][color=#00BF80]Fairyland[/color][/b]",
+"report_flags": "0080FF#1A2196 00BF80#007BA7"
 },
 {"title": "you know what they say about the young",
 "url": "https://vast-journey-9935.herokuapp.com/posts/111",
-"title_extras": "[b][color=#8040BF]Matilda[/color][/b] ([color=#8040BF]██[/color][color=#602080]█[/color]) and [b][color=#FF0000]Fëanáro[/color][/b] ([color=#FF0000]███[/color]) in [b][color=#FF0000]Valinor[/color][/b] ([color=#FF0000]███[/color])"
+"title_extras": "[b][color=#8040BF]Matilda[/color][/b] and [b][color=#FF0000]Fëanáro[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
+"report_flags": "8040BF#602080 FF0000"
 },
 {"title": "The Eighth Day",
 "url": "https://vast-journey-9935.herokuapp.com/posts/121",
-"title_extras": "[b][color=#62371F]Portalbold[/color][/b] ([color=#62371F]███[/color]) and [b][color=#FF0000]Fëanáro[/color][/b] ([color=#FF0000]███[/color]) in [b][color=#FF0000]Valinor[/color][/b] ([color=#FF0000]███[/color])"
-},
-{"title": "Incipio",
-"url": "https://vast-journey-9935.herokuapp.com/posts/120",
-"title_extras": "[b][color=#960018]Theo[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) and [b][color=#6960EC]Faith[/color][/b], [b][color=#6960EC]Reuben[/color][/b] and [b][color=#6960EC]Em[/color][/b] ([color=#6960EC]███[/color]) in Sunnyverse"
+"title_extras": "[b][color=#62371F]Portalbold[/color][/b] and [b][color=#FF0000]Fëanáro[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
+"report_flags": "62371F FF0000"
 },
 {"title": "Between emergencies",
 "url": "https://vast-journey-9935.herokuapp.com/posts/42",
-"title_extras": "[b][color=#0080FF]Inavet[/color][/b] ([color=#0080FF]███[/color]) and [b][color=#000080]the OTC[/color][/b] ([color=#000080]███[/color])"
+"title_extras": "[b][color=#0080FF]Inavet[/color][/b] and [b][color=#000080]the OTC[/color][/b]",
+"report_flags": "0080FF#1A2196 000080"
 },
 {"title": "Hyperspace routes",
 "url": "https://vast-journey-9935.herokuapp.com/posts/81",
-"title_extras": "[b][color=#0080FF]Callida[/color][/b] ([color=#0080FF]███[/color]) and [b][color=#8040BF]Vorkosigans[/color][/b] ([color=#8040BF]██[/color][color=#602080]█[/color]) in Nexus"
+"title_extras": "[b][color=#0080FF]Callida[/color][/b] and [b][color=#8040BF]Vorkosigans[/color][/b] in Nexus",
+"report_flags": "0080FF#1A2196 8040BF#602080"
 },
 {"title": "The Nature of Reactions",
 "url": "https://vast-journey-9935.herokuapp.com/posts/75",
-"title_extras": "[b][color=#D5732A]Ryou[/color][/b] ([color=#D5732A]███[/color]) and [b][color=#960018]Evelyn[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) in Worm"
+"title_extras": "[b][color=#D5732A]Ryou[/color][/b] and [b][color=#960018]Evelyn[/color][/b] in Worm",
+"report_flags": "D5732A 960018#682860"
 },
 {"title": "You'd Hate Me If You Knew Me",
 "url": "https://vast-journey-9935.herokuapp.com/posts/106",
-"title_extras": "[spoiler][b][color=#FFFFFF]Kyrian[/color][/b][/spoiler] ([color=#FFFFFF]███[/color]) and [b][color=#D5732A]Will[/color][/b] ([color=#D5732A]███[/color]) in Milliways"
+"title_extras": "[spoiler][b][color=#FFFFFF]Kyrian[/color][/b][/spoiler] and [b][color=#D5732A]Will[/color][/b] in Milliways",
+"report_flags": "FFFFFF D5732A"
 },
 {"title": "Out of ether's view",
 "url": "https://vast-journey-9935.herokuapp.com/posts/115",
-"title_extras": "[b][color=#0080FF]Callida[/color][/b] ([color=#0080FF]███[/color]) and [b][color=#8040BF]Stalas[/color][/b] ([color=#8040BF]██[/color][color=#602080]█[/color]) in Thedas"
+"title_extras": "[b][color=#0080FF]Callida[/color][/b] and [b][color=#8040BF]Stalas[/color][/b] in Thedas",
+"report_flags": "0080FF#1A2196 8040BF#602080"
 },
 {"title": "The Methods of Narrative Causality",
 "url": "https://vast-journey-9935.herokuapp.com/posts/29",
-"title_extras": "[b][color=#D5732A]Glen[/color][/b] ([color=#D5732A]███[/color]) and [b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) in Discworld"
+"title_extras": "[b][color=#D5732A]Glen[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in Discworld",
+"report_flags": "D5732A FF5C5C#FFB25C"
 },
 {"title": "Full House, Blessings filled with Curses",
 "url": "https://vast-journey-9935.herokuapp.com/posts/35",
-"title_extras": "[b][color=#D5732A]Alex[/color][/b] ([color=#D5732A]███[/color]) in [b][color=#000080]Shadopolis[/color][/b] ([color=#000080]███[/color])"
+"title_extras": "[b][color=#D5732A]Alex[/color][/b] in [b][color=#000080]Shadopolis[/color][/b]",
+"report_flags": "D5732A 000080"
 },
 {"title": "search",
 "url": "https://vast-journey-9935.herokuapp.com/posts/28",
-"title_extras": "[b][color=#BF4040]reds[/color][/b] ([color=#BF4040]███[/color]) and [b][color=#D5732A]coppers[/color][/b] ([color=#D5732A]███[/color]) in Pern"
-},
-{"title": "Chance to socialize with new students",
-"url": "https://vast-journey-9935.herokuapp.com/posts/123",
-"title_extras": "(explicit) [b][color=#FF5C5C]Sadde[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]), [b][color=#A0A0A0]Fenris[/color][/b], [b][color=#A0A0A0]Felix[/color][/b] and [b][color=#A0A0A0]Trevor[/color][/b] ([color=#A0A0A0]███[/color]) in Eclipse"
+"title_extras": "[b][color=#BF4040]reds[/color][/b] and [b][color=#D5732A]coppers[/color][/b] in Pern",
+"report_flags": "BF4040 D5732A"
 },
 {"title": "An Unreasonable Reaction",
 "url": "https://vast-journey-9935.herokuapp.com/posts/124",
-"title_extras": "[spoiler][b][color=#FFFFFF]Korafen[/color][/b][/spoiler] and [spoiler][b][color=#FFFFFF]Ikrifiss[/color][/b][/spoiler] ([color=#FFFFFF]███[/color]) in [b][color=#8040BF]Imbria[/color][/b] ([color=#8040BF]██[/color][color=#602080]█[/color])"
+"title_extras": "[spoiler][b][color=#FFFFFF]Korafen[/color][/b][/spoiler] and [spoiler][b][color=#FFFFFF]Ikrifiss[/color][/b][/spoiler] in [b][color=#8040BF]Imbria[/color][/b]",
+"report_flags": "FFFFFF 8040BF#602080"
 },
 {"title": "this is the road to ruin",
 "url": "https://vast-journey-9935.herokuapp.com/posts/114",
-"title_extras": "[b][color=#8040BF]Stalas[/color][/b] ([color=#8040BF]██[/color][color=#602080]█[/color]) on the [b][color=#6960EC]Path[/color][/b] ([color=#6960EC]███[/color])"
+"title_extras": "[b][color=#8040BF]Stalas[/color][/b] on the [b][color=#6960EC]Path[/color][/b]",
+"report_flags": "8040BF#602080 6960EC"
 },
 {"title": "There's no rulebook",
 "url": "https://vast-journey-9935.herokuapp.com/posts/125",
-"title_extras": "[b][color=#D5732A]Glen[/color][/b] ([color=#D5732A]███[/color]) and [b][color=#000000]Mountain[/color][/b] ([color=#000000]███[/color]) in [b][color=#000000]Tileworld[/color][/b] ([color=#000000]███[/color])"
-},
-{"title": "I can't fix you, but maybe I can still help",
-"url": "https://glowfic.dreamwidth.org/37008.html?thread=7203984",
-"title_extras": "[spoiler][b][color=#FFFFFF]Odette[/color][/b][/spoiler] ([color=#FFFFFF]███[/color]) in [b][color=#00BF80]Elcenia[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color])",
-"sections": ["Z2-Unknown Continuity"]
-},
-{"title": "I can't fix you, but maybe I can still help",
-"url": "https://glowfic.dreamwidth.org/37008.html?thread=7203728",
-"title_extras": "[spoiler][b][color=#FFFFFF]Illia[/color][/b][/spoiler] ([color=#FFFFFF]███[/color]) in [b][color=#00BF80]Elcenia[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color])",
-"sections": ["Z2-Unknown Continuity"]
+"title_extras": "[b][color=#D5732A]Glen[/color][/b] and [b][color=#000000]Mountain[/color][/b] in [b][color=#000000]Tileworld[/color][/b]",
+"report_flags": "D5732A 000000"
 },
 {"title": "Intended Purpose",
 "url": "https://vast-journey-9935.herokuapp.com/posts/126",
 "title_extras": "[b][color=#006000]Ellie[/color][/b] in [b][color=#0080FF]Arabek[/color][/b]",
 "report_flags": "006000#708090 0080FF"
-},
-{"title": "call of the night",
-"url": "https://vast-journey-9935.herokuapp.com/posts/128",
-"title_extras": "[b][color=#FF5C5C]salmons[/color][/b] ([color=#FF5C5C]██[/color][color=#FFB25C]█[/color]) and [b][color=#960018]carmines[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) in Azurite"
-},
-{"title": "the stork drops, the snake swallows",
-"url": "http://alicornutopia.dreamwidth.org/31354.html",
-"title_extras": "(explicit) [b][color=#00BF80]Kib (Cam)[/color][/b] ([color=#00BF80]██[/color][color=#007BA7]█[/color]) in [b][color=#FF0000]Valinor[/color][/b] ([color=#FF0000]███[/color])"
 },
 {"title": "The Interuniversal Connector",
 "url": "https://vast-journey-9935.herokuapp.com/posts/130",
@@ -318,23 +386,28 @@
 },
 {"title": "Do I want to steal you?",
 "url": "https://vast-journey-9935.herokuapp.com/posts/131",
-"title_extras": "[b][color=#4F012E]Scott[/color][/b] ([color=#4F012E]███[/color]) and [b][color=#D5732A]Ryou[/color][/b] ([color=#D5732A]███[/color])"
+"title_extras": "[b][color=#4F012E]Scott[/color][/b] and [b][color=#D5732A]Ryou[/color][/b]",
+"report_flags": "4F012E#3F00FF D5732A"
 },
 {"title": "All I Have To Do Is Dream",
 "url": "https://vast-journey-9935.herokuapp.com/posts/132",
-"title_extras": "[b][color=#A0A0A0]Felix[/color][/b] ([color=#A0A0A0]███[/color]) and [b][color=#728C00]Vienne[/color][/b] ([color=#728C00]███[/color])"
+"title_extras": "[b][color=#A0A0A0]Felix[/color][/b] and [b][color=#728C00]Vienne[/color][/b]",
+"report_flags": "A0A0A0 728C00"
 },
 {"title": "All werewolves go to heaven",
 "url": "https://vast-journey-9935.herokuapp.com/posts/133",
-"title_extras": "[b][color=#A0A0A0]Henry[/color][/b] ([color=#A0A0A0]███[/color]) and [b][color=#4F012E]Scott[/color][/b] ([color=#4F012E]███[/color]) in Milliways"
+"title_extras": "[b][color=#A0A0A0]Henry[/color][/b] and [b][color=#4F012E]Scott[/color][/b] in Milliways",
+"report_flags": "A0A0A0 4F012E#3F00FF"
 },
 {"title": "A new normal",
 "url": "https://vast-journey-9935.herokuapp.com/posts/134",
-"title_extras": "[b][color=#960018]Thar[/color][/b] ([color=#960018]██[/color][color=#682860]█[/color]) and [b][color=#4F012E]Scott[/color][/b] ([color=#4F012E]███[/color]) in Milliways"
+"title_extras": "[b][color=#960018]Thar[/color][/b] and [b][color=#4F012E]Scott[/color][/b] in Milliways",
+"report_flags": "960018#682860 4F012E#3F00FF"
 },
 {"title": "Giggle at a funeral",
 "url": "https://vast-journey-9935.herokuapp.com/posts/139",
-"title_extras": "[b][color=#6960EC]Faith[/color][/b] ([color=#6960EC]███[/color]) and [b][color=#4F012E]Scott[/color][/b] ([color=#4F012E]███[/color]) in Sunnydale"
+"title_extras": "[b][color=#6960EC]Faith[/color][/b] and [b][color=#4F012E]Scott[/color][/b] in Sunnydale",
+"report_flags": "6960EC 4F012E#3F00FF"
 },
 {"title": "The moon is out. Have sweet dreams.",
 "url": "https://vast-journey-9935.herokuapp.com/posts/140",
