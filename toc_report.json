@@ -49,6 +49,13 @@
 "url": "https://peterverse.dreamwidth.org/9700.html",
 "title_extras": "capes [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]",
 "report_flags": "FF5C5C#FFB25C 00BF80#007BA7",
+"time_completed": "2016-06-15T20:29+01:00",
+"sections": ["Coruscation"]
+},
+{"title": "everybody, meet the slaughterhouse nine",
+"url": "https://vast-journey-9935.herokuapp.com/posts/144",
+"title_extras": "capes [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]",
+"report_flags": "FF5C5C#FFB25C 00BF80#007BA7",
 "sections": ["Coruscation"]
 },
 {"title": "More cogs than the Steampunker could sell",
@@ -423,5 +430,10 @@
 "url": "https://vast-journey-9935.herokuapp.com/posts/143",
 "title_extras": "Two [b][color=#FF0000]Fëanors[/color][/b] and a [b][color=#00BF80]Bella[/color][/b]",
 "report_flags": "00BF80#007BA7 FF0000"
+},
+{"title": "A Table for Two",
+"url": "https://vast-journey-9935.herokuapp.com/posts/145",
+"title_extras": "[b][color=#8040BF]Gregor[/color][/b] and [b][color=#D5732A]Hannibal[/color][/b]",
+"report_flags": "8040BF#602080 D5732A"
 }
 ]
