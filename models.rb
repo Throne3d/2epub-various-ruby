@@ -177,6 +177,7 @@
       @authors = []
       @group = (options.key?(:group)) ? options[:group] : nil
       @trash_messages = (options.key?(:trash_messages)) ? options[:trash_messages] : false
+      @unpacked = false
     end
     
     def site_handlers
@@ -191,6 +192,9 @@
       add_author(arg)
     end
     def get_author_by_id(author_id)
+      each {|chapter| chapter.unpack! } unless @unpacked
+      @unpacked = true
+      
       found_author = nil
       @authors.each do |author|
         found_author = author if author.unique_id == author_id
@@ -205,6 +209,9 @@
       add_face(arg)
     end
     def get_face_by_id(face_id)
+      each {|chapter| chapter.unpack! } unless @unpacked
+      @unpacked = true
+      
       found_face = nil
       @faces.each do |face|
         found_face = face if face.unique_id == face_id
@@ -285,6 +292,11 @@
     
     def allowed_params
       @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :report_flags]
+    end
+    
+    def unpack!
+      entry.unpack! if entry
+      replies.each {|reply| reply.unpack! } if replies
     end
     
     def group
@@ -560,6 +572,11 @@
       @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face, :entry_title, :page_no]
     end
     
+    def unpack!
+      author
+      face
+    end
+    
     @push_title = false
     def entry_title
       @chapter.entry_title
@@ -669,6 +686,7 @@
       if chapter_list
         temp_face = chapter_list.get_face_by_id(@face)
         new_face = site_handler.get_updated_face(temp_face)
+        new_face = temp_face unless new_face
         if new_face
           @face = new_face
           chapter_list.replace_face(new_face)
@@ -684,6 +702,7 @@
       end
       
       @face.author = author if author and @face and not @face.is_a?(String)
+      LOG.error "Failed to generate a face object, is still string; bad (#{@face})" if @face.is_a?(String)
       @face
     end
     def face=(face)
@@ -751,14 +770,14 @@
           parent = self.instance_variable_get(var)
           hash[var_sym] = [chapter.smallURL, chapter.entry.id, parent.id] if parent.post_type == PostType::REPLY
           hash[var_sym] = [chapter.smallURL, parent.id] if parent.post_type == PostType::ENTRY
-        elsif var_str["face"]
-          face = self.instance_variable_get(var)
-          hash[var_sym] = face if face.is_a?(String)
-          hash[var_sym] = face.unique_id if face.is_a?(Face)
         elsif var_str["author"]
           author = self.instance_variable_get(var)
           hash[var_sym] = author if author.is_a?(String)
           hash[var_sym] = author.unique_id if author.is_a?(Author)
+        elsif var_str["face"]
+          face = self.instance_variable_get(var)
+          hash[var_sym] = face if face.is_a?(String)
+          hash[var_sym] = face.unique_id if face.is_a?(Face)
         end
       end
       hash.to_json(options)
