@@ -114,7 +114,7 @@
 },
 {"title": "the stork drops, the snake swallows",
 "url": "http://alicornutopia.dreamwidth.org/31354.html",
-"title_extras": "(explicit) [b][color=#00BF80]Kib (Cam)[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
+"title_extras": "(explicit) [b][color=#00BF80]Kib (Bell)[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
 "report_flags": "00BF80#007BA7 FF0000"
 },
 {"title": "Fish out of Water",
@@ -444,11 +444,22 @@
 {"title": "the summer i was ten again",
 "url": "https://deepest-magic.dreamwidth.org/1631.html?thread=566111#cmt566111",
 "title_extras": "[b][color=#00BF80]Bell[/color][/b] and [b][color=#8040BF]James[/color][/b] not in Narnia",
-"report_flags": "00BF80#007BA7 8040BF#602080"
+"report_flags": "00BF80#007BA7 8040BF#602080",
+"sections": ["Effulgence"]
 },
 {"title": "May all your dreams come true",
 "url": "https://vast-journey-9935.herokuapp.com/posts/149",
 "title_extras": "[b][color=#4F012E]Cassie[/color][/b] and [b][color=#960018]Evelyn[/color][/b]",
 "report_flags": "960018#682860 4F012E#3F00FF"
+},
+{"title": "Throw the bookholder at them",
+"url": "https://vast-journey-9935.herokuapp.com/posts/147",
+"title_extras": "[b][color=#0080FF]Yvette[/color][/b] in [b][color=#4F012E]Beacon Hills[/color][/b]",
+"report_flags": "0080FF#1A2196 4F012E#3F00FF"
+},
+{"title": "A Familiar Bar",
+"url": "https://vast-journey-9935.herokuapp.com/posts/92",
+"title_extras": "[b][color=#000000]Terence[/color][/b] and [spoiler][b][color=#FFFFFF]Edie[/color][/b][/spoiler] in Milliways",
+"report_flags": "000000 FFFFFF"
 }
 ]
