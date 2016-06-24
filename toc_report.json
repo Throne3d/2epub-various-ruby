@@ -119,9 +119,32 @@
 "report_flags": "00BF80#007BA7 FF0000",
 "sections": ["Elentári"]
 },
+{"title": "high-energy physics",
+"url": "https://alicornutopia.dreamwidth.org/31134.html",
+"title_extras": "[b][color=#00BF80]Bella[/color][/b], [b][color=#FF0000]Fëanor[/color][/b] and [b][color=#FF0000]Rúmil[/color][/b]",
+"report_flags": "00BF80#007BA7 FF0000",
+"sections": ["Telperion"]
+},
 {"title": "the stork drops, the snake swallows",
 "url": "http://alicornutopia.dreamwidth.org/31354.html",
 "title_extras": "(explicit) [b][color=#00BF80]Kib (Bell)[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
+"report_flags": "00BF80#007BA7 FF0000"
+},
+{"title": "twilight of the idols, baby",
+"url": "https://vast-journey-9935.herokuapp.com/posts/153",
+"title_extras": "[b][color=#00BF80]Demon Cam[/color][/b] in the [b][color=#FF0000]Space Silmarillion[/color][/b]",
+"report_flags": "00BF80#007BA7 FF0000",
+"sections": ["Z3-Unknown Continuity"]
+},
+{"title": "we suffer greatly",
+"url": "https://vast-journey-9935.herokuapp.com/posts/157",
+"title_extras": "[b][color=#00BF80]Demon Cam[/color][/b] in the [b][color=#FF0000]Space Silmarillion[/color][/b]",
+"report_flags": "00BF80#007BA7 FF0000",
+"sections": ["Z3-Unknown Continuity"]
+},
+{"title": "mommy fix it",
+"url": "https://vast-journey-9935.herokuapp.com/posts/155",
+"title_extras": "[b][color=#00BF80]Lost Pen[/color][/b] in [b][color=#FF0000]Arda[/color][/b]",
 "report_flags": "00BF80#007BA7 FF0000"
 },
 {"title": "Fish out of Water",
@@ -164,12 +187,6 @@
 "report_flags": "6960EC A0A0A0",
 "sections": ["Dreams of Freedom"]
 },
-{"title": "high-energy physics",
-"url": "https://alicornutopia.dreamwidth.org/31134.html",
-"title_extras": "[b][color=#00BF80]Bella[/color][/b], [b][color=#FF0000]Fëanor[/color][/b] and [b][color=#FF0000]Rúmil[/color][/b]",
-"report_flags": "00BF80#007BA7 FF0000",
-"sections": ["Telperion"]
-},
 {"title": "I Asked The World For Elsewhere But I Never Imagined This",
 "url": "https://vast-journey-9935.herokuapp.com/posts/97",
 "title_extras": "[spoiler][b][color=#FFFFFF]Odette[/color][/b][/spoiler] in [b][color=#FF0000]Middle-earth[/color][/b]",
@@ -185,6 +202,12 @@
 {"title": "I know you",
 "url": "https://vast-journey-9935.herokuapp.com/posts/141",
 "title_extras": "[spoiler][b][color=#FFFFFF]Edie[/color][/b][/spoiler] and [b][color=#FF0000]Celegorm[/color][/b]",
+"report_flags": "FFFFFF FF0000",
+"sections": ["Z1-Unknown Continuity"]
+},
+{"title": "The Giving Trees",
+"url": "https://vast-journey-9935.herokuapp.com/posts/154",
+"title_extras": "[spoiler][b][color=#FFFFFF]Edie[/color][/b][/spoiler] and [spoiler][b][color=#FFFFFF]Emily[/color][/b][/spoiler] in [b][color=#FF0000]Valinor[/color][/b]",
 "report_flags": "FFFFFF FF0000",
 "sections": ["Z1-Unknown Continuity"]
 },
@@ -480,5 +503,10 @@
 "url": "https://vast-journey-9935.herokuapp.com/posts/150",
 "title_extras": "[b][color=#960018]Thar[/color][/b] and [b][color=#00BF80]Bell[/color][/b] in [b][color=#00BF80]Fairyland[/color][/b]",
 "report_flags": "960018#682860 00BF80#007BA7"
+},
+{"title": "The monsters got me",
+"url": "https://vast-journey-9935.herokuapp.com/posts/158",
+"title_extras": "Smol [b][color=#000000]Gren[/color][/b] and [b][color=#960018]Evelyn[/color][/b]",
+"report_flags": "000000 960018#682860"
 }
 ]
