@@ -142,6 +142,12 @@
 "report_flags": "00BF80#007BA7 FF0000",
 "sections": ["Defy Your Limitations"]
 },
+{"title": "obliterate me",
+"url": "https://vast-journey-9935.herokuapp.com/posts/160",
+"title_extras": "[b][color=#00BF80]Demon Cam[/color][/b] in the [b][color=#FF0000]Space Silmarillion[/color][/b]",
+"report_flags": "00BF80#007BA7 FF0000",
+"sections": ["Defy Your Limitations"]
+},
 {"title": "mommy fix it",
 "url": "https://vast-journey-9935.herokuapp.com/posts/155",
 "title_extras": "[b][color=#00BF80]Lost Pen[/color][/b] in [b][color=#FF0000]Arda[/color][/b]",
@@ -329,7 +335,7 @@
 {"title": "where the light won't find you",
 "url": "https://vast-journey-9935.herokuapp.com/posts/107",
 "title_extras": "[b][color=#228B22]Vital (Nicole)[/color][/b] in [b][color=#00CFCF]Nightvale[/color][/b]",
-"report_flags": "228B22 00CFCF"
+"report_flags": "228B22 00CFCF#007FFF"
 },
 {"title": "where you think you're going",
 "url": "https://alicornutopia.dreamwidth.org/28223.html?thread=19412287",
