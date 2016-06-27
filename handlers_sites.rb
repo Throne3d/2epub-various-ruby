@@ -167,7 +167,7 @@
         changed = false
         check_pages.each_with_index do |check_page, i|
           page_old_data = get_page_data(check_page, replace: false, where: @group_folder)
-          page_new_data = get_page_data(check_page, replace: true, where: 'temp')
+          page_new_data = down_or_cache(check_page, where: 'temp')
           
           LOG.debug "Got old last data, now nokogiri-ing"
           page_old = Nokogiri::HTML(page_old_data)
@@ -318,7 +318,7 @@
       unless @face_cache.key?(user_profile) or @face_cache.key?(user_profile.gsub('_', '-'))
         user_id = user_profile.gsub('_', '-')
         
-        icon_page_data = get_page_data("http://#{user_id}.dreamwidth.org/icons", replace: true)
+        icon_page_data = down_or_cache("http://#{user_id}.dreamwidth.org/icons")
         LOG.debug "got icon page for #{user_id}"
         icon_page = Nokogiri::HTML(icon_page_data)
         LOG.debug "nokogiri'd"
@@ -389,7 +389,7 @@
       author_id = author_id.gsub('_', '-')
       author_id = author_id.sub("dreamwidth#", "") if author_id.start_with?("dreamwidth#")
       return @author_id_cache[author_id] if @author_id_cache.key?(author_id)
-      char_page_data = get_page_data("http://#{author_id}.dreamwidth.org/profile", replace: true)
+      char_page_data = down_or_cache("http://#{author_id}.dreamwidth.org/profile")
       LOG.debug "got profile page for #{author_id}"
       char_page = Nokogiri::HTML(char_page_data)
       LOG.debug "nokogiri'd"
@@ -628,7 +628,7 @@
       
       page_urls = [chapter_url]
       
-      current_page_data = get_page_data(chapter_url, replace: true, where: @group_folder)
+      current_page_data = down_or_cache(chapter_url, where: @group_folder)
       @download_count+=1
       LOG.debug "Got a page in get_full"
       
@@ -871,7 +871,7 @@
       
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       
-      icon_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}/", replace: true)
+      icon_page_data = down_or_cache("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}/")
       LOG.debug "got a page for the icon #{icon_id}"
       icon_page = Nokogiri::HTML(icon_page_data)
       LOG.debug "nokogiri'd"
