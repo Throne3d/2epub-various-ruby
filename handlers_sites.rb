@@ -966,18 +966,18 @@
         message_id = message_anchor[:name].split("reply-").last
         message_type = PostType::REPLY
       else
-        entry_title = message_element.parent.at_css('#post-title a')
+        entry_title = message_element.parent.at_css('#post-title').try(:at_css, 'a')
         LOG.error "Couldn't find the post's title! Gah!" unless entry_title
         
         message_id = entry_title[:href].split('posts/').last
         message_type = PostType::ENTRY
       end
       
-      author_element = message_element.at_css(".post-author a")
+      author_element = message_element.at_css('.post-author').try(:at_css, 'a')
       author_name = author_element.text.strip
       author_id = author_element["href"].split("users/").last
       
-      character_element = message_element.at_css('.post-character a')
+      character_element = message_element.at_css('.post-character').try(:at_css, 'a')
       if character_element
         character_id = character_element["href"].split("characters/").last
         character_name = character_element.text.strip
@@ -1013,7 +1013,7 @@
       params[:chapter] = @chapter
       
       if message_attributes.include?(:face)
-        userpic = message_element.at_css(".post-icon img")
+        userpic = message_element.at_css('.post-icon').try(:at_css, 'img')
         face_url = ""
         face_name = "none"
         face_id = ""
