@@ -110,23 +110,23 @@
 {"title": "Fish out of Water",
 "url": "https://vast-journey-9935.herokuapp.com/posts/122",
 "title_extras": "[b][color=#960018]Theo[/color][/b], [b][color=#960018]Everett[/color][/b] and [b][color=#960018]Matt[/color][/b] with [b][color=#6960EC]Grace[/color][/b], [b][color=#6960EC]Reubel[/color][/b] and [b][color=#6960EC]Mu[/color][/b] in Lapis",
-"report_flags": "960018#682860 6960EC",
+"report_flags": "960018#682860 6960EC#800512",
 "sections": ["Opalescence"]
 },
 {"title": "Incipio",
 "url": "https://vast-journey-9935.herokuapp.com/posts/120",
 "title_extras": "[b][color=#960018]Theo[/color][/b] and [b][color=#6960EC]Faith[/color][/b], [b][color=#6960EC]Reuben[/color][/b] and [b][color=#6960EC]Em[/color][/b] in Sunnyverse",
-"report_flags": "960018#682860 6960EC"
+"report_flags": "960018#682860 6960EC#800512"
 },
 {"title": "Living on a dream",
 "url": "https://vast-journey-9935.herokuapp.com/posts/112",
 "title_extras": "[b][color=#6960EC]Jean[/color][/b], [b][color=#960018]Theo[/color][/b], [b][color=#960018]Ev[/color][/b] and [b][color=#960018]Rachel[/color][/b] in [b][color=#960018]Proximal[/color][/b]",
-"report_flags": "6960EC 960018#682860"
+"report_flags": "6960EC#800512 960018#682860"
 },
 {"title": "they may say I am a dreamer",
 "url": "https://vast-journey-9935.herokuapp.com/posts/137",
 "title_extras": "[b][color=#6960EC]lotuses[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b] in WWII France",
-"report_flags": "6960EC A0A0A0",
+"report_flags": "6960EC#800512 A0A0A0",
 "sections": ["Dreams of Freedom"]
 },
 {"title": "I Asked The World For Elsewhere But I Never Imagined This",
@@ -211,7 +211,7 @@
 {"title": "Taking a shortcut",
 "url": "https://vast-journey-9935.herokuapp.com/posts/93",
 "title_extras": "[b][color=#A0A0A0]Felix[/color][/b] and [b][color=#6960EC]Jean[/color][/b] on the [b][color=#6960EC]Path[/color][/b]",
-"report_flags": "A0A0A0 6960EC"
+"report_flags": "A0A0A0 6960EC#800512"
 },
 {"title": "We weren't even testing for that",
 "url": "https://glowfic.dreamwidth.org/36602.html",
@@ -281,7 +281,7 @@
 {"title": "this is the road to ruin",
 "url": "https://vast-journey-9935.herokuapp.com/posts/114",
 "title_extras": "[b][color=#8040BF]Stalas[/color][/b] on the [b][color=#6960EC]Path[/color][/b]",
-"report_flags": "8040BF#602080 6960EC"
+"report_flags": "8040BF#602080 6960EC#800512"
 },
 {"title": "There's no rulebook",
 "url": "https://vast-journey-9935.herokuapp.com/posts/125",
@@ -316,12 +316,12 @@
 {"title": "Giggle at a funeral",
 "url": "https://vast-journey-9935.herokuapp.com/posts/139",
 "title_extras": "[b][color=#6960EC]Faith[/color][/b] and [b][color=#4F012E]Scott[/color][/b] in Sunnydale",
-"report_flags": "6960EC 4F012E#3F00FF"
+"report_flags": "6960EC#800512 4F012E#3F00FF"
 },
 {"title": "Over the empty lands",
 "url": "https://vast-journey-9935.herokuapp.com/posts/159",
 "title_extras": "[b][color=#4F012E]Scott[/color][/b] on the [b][color=#6960EC]Path[/color][/b]",
-"report_flags": "6960EC 4F012E#3F00FF"
+"report_flags": "6960EC#800512 4F012E#3F00FF"
 },
 {"title": "The moon is out. Have sweet dreams.",
 "url": "https://vast-journey-9935.herokuapp.com/posts/140",
