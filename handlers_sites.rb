@@ -34,6 +34,19 @@
       @chapter_list = options[:chapters] if options.key?(:chapters)
       @chapter_list = options[:chapter_list] if options.key?(:chapter_list)
       @chapter_list = GlowficEpub::Chapters.new if @chapter_list.is_a?(Array) and @chapter_list.empty?
+      @download_count = 0
+      @downcache = {}
+    end
+    def down_or_cache(page, options = {})
+      where = (options.key?(:where)) ? options[:where] : nil
+      @downcache[where] = [] unless @downcache.key?(where)
+      
+      downd = @downcache[where].include?(page)
+      options[:replace] = !downd
+      data = get_page_data(page, options)
+      @download_count+=1 unless downd
+      @downcache[where] << page unless downd
+      data
     end
     def msg_attrs
       @msg_attrs ||= [:time, :edittime, :author, :face]
@@ -59,8 +72,6 @@
       @moiety_cache = {}
       
       @downloaded = []
-      @download_count = 0
-      @downcache = {}
     end
     
     def get_comment_link(comment)
@@ -95,18 +106,6 @@
           set_url_params(clear_url_params(message.chapter.url), {thread: message.id}) + "#comment-#{message.id}"
         end
       end
-    end
-    
-    def down_or_cache(page, options = {})
-      where = (options.key?(:where)) ? options[:where] : nil
-      @downcache[where] = [] unless @downcache.key?(where)
-      
-      downd = @downcache[where].include?(page)
-      options[:replace] = !downd
-      data = get_page_data(page, options)
-      @download_count+=1 unless downd
-      @downcache[where] << page unless downd
-      data
     end
     
     def get_full(chapter, options = {})
