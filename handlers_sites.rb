@@ -166,7 +166,14 @@
         
         changed = false
         check_pages.each_with_index do |check_page, i|
+          page_location = get_page_location(check_page, where: @group_folder)
+          was_file = File.file?(page_location)
+          
           page_old_data = get_page_data(check_page, replace: false, where: @group_folder)
+          unless was_file
+            changed = true
+            break
+          end
           page_new_data = down_or_cache(check_page, where: 'temp')
           
           LOG.debug "Got old last data, now nokogiri-ing"
@@ -640,41 +647,46 @@
       notify = options.key?(:notify) ? options[:notify] : true
       
       chapter.url = set_url_params(clear_url_params(chapter.url), {per_page: :all}) unless chapter.url["per_page=all"]
+      
       is_new = true
       prev_pages = chapter.pages
+      check_pages = chapter.check_pages
       if prev_pages and not prev_pages.empty?
         is_new = false
         
-        first_page_url = prev_pages.first
-        unless first_page_url["per_page=all"]
-          LOG.error "Constellation page has no per_page=all! #{chapter}" 
-          first_page_url = set_url_params(clear_url_params(first_page_url), {per_page: :all})
-          chapter.pages = [first_page_url]
+        changed = false
+        check_pages.each_with_index do |check_page, i|
+          page_location = get_page_location(check_page, where: @group_folder)
+          was_file = File.file?(page_location)
+          
+          page_old_data = get_page_data(check_page, replace: false, where: @group_folder)
+          unless was_file
+            changed = true
+            break
+          end
+          page_new_data = down_or_cache(check_page, where: 'temp')
+          
+          LOG.debug "Got old last data, now nokogiri-ing"
+          page_old = Nokogiri::HTML(page_old_data)
+          page_new = Nokogiri::HTML(page_new_data)
+          LOG.debug "nokogiri'd"
+          
+          old_content = page_old.at_css('#content')
+          new_content = page_new.at_css('#content')
+          
+          changed = (old_content.inner_html != new_content.inner_html)
+          break if changed
+          LOG.debug "check page #{i} was not different"
         end
         
-        first_page_old_data = get_page_data(first_page_url, replace: false, where: @group_folder)
-        first_page_new_data = get_page_data(first_page_url, replace: true, where: 'temp')
-        
-        LOG.debug "got old data for comparison"
-        first_page_old = Nokogiri::HTML(first_page_old_data)
-        first_page_new = Nokogiri::HTML(first_page_new_data)
-        LOG.debug "nokogiri'd"
-        
-        old_content = first_page_old.at_css('#content')
-        new_content = first_page_new.at_css('#content')
-        
-        old_html = old_content.inner_html
-        new_html = new_content.inner_html
-        
-        changed = (old_html != new_html)
-        LOG.debug "#{(not changed) ? 'not ' : ''}changed"
+        LOG.debug "#{(not changed) ? 'not ': ''}changed!"
         
         pages_exist = true
         prev_pages.each_with_index do |page_url, i|
           page_loc = get_page_location(page_url, where: @group_folder)
           if not File.file?(page_loc)
             pages_exist = false
-            LOG.debug "Failed to find a file (page #{i}) for chapter #{chapter}"
+            LOG.error "Failed to find a file (page #{i}) for chapter #{chapter}. Will get again."
             break
           end
         end #Check if all the pages exist, in case someone deleted them
@@ -685,10 +697,8 @@
           return chapter
         end
         
-        page_url = get_page_location(chapter.url, where: @group_folder)
-        open(page_url, 'w') do |file|
-          file.write first_page_new_data
-        end
+        first_page_new_data = down_or_cache(chapter.url, where: @group_folder)
+        
         pages = [chapter.url]
         chapter.pages = pages
         LOG.info "Updated: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got 1 page)" if notify
@@ -697,6 +707,12 @@
       
       #Hasn't been done before; get.
       @download_count = 0
+      
+      chapter.check_pages = chapter.check_pages
+      chapter.check_pages.each do |check_page|
+        down_or_cache(check_page, where: @group_folder)
+      end
+      
       pages = get_full(chapter, options.merge({new: (not changed)}))
       chapter.pages = pages
       LOG.info "New: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
