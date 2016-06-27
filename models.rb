@@ -322,6 +322,8 @@
           end
         elsif self.url['vast-journey-9935.herokuapp.com']
           [set_url_params(clear_url_params(self.url), {page: :last, per_page: 25})]
+        else
+          self.pages
         end
       else
         @check_pages
