@@ -314,10 +314,14 @@
     def check_pages
       @check_pages ||= []
       if @check_pages.empty? and not self.pages.empty?
-        if self.pages.length > 1
-          [self.pages.last, self.pages.first]
-        else
-          self.pages
+        if self.url[/\.dreamwidth\.org/]
+          if self.pages.length > 1
+            [self.pages.last, self.pages.first]
+          else
+            self.pages
+          end
+        elsif self.url['vast-journey-9935.herokuapp.com']
+          [set_url_params(clear_url_params(self.url), {page: :last, per_page: 25})]
         end
       else
         @check_pages
