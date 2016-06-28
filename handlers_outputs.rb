@@ -394,7 +394,7 @@
       str << '[/color]' if completed
       str << '[/url]' if url_thing
       str << ' (' + chapter.sections * '>' + ')' if show_sections and chapter.sections.present?
-      str << ',' unless chapter.entry_title[/[?,.!;]$/] #ends with ? or , or . or ! or ;
+      str << ',' unless chapter.entry_title and chapter.entry_title[/[?,.!;]$/] #ends with ? or , or . or ! or ;
       str << ' '
       str << "#{chapter.title_extras || '(no extras)'}"
       str << ', new' if chapter.entry.time >= show_new_after
