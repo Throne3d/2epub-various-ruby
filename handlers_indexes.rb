@@ -780,8 +780,7 @@ module GlowficIndexHandlers
                   url = url.split('&u=').last.gsub('%3A', ':').gsub('%3F', '?').gsub('%3D', '=').gsub('%26', '&')
                 end
                 name = li_a.text.strip
-                sections = ["Lioncourt's coronation party"]
-                list << {url: url, title: name, sections: sections}
+                list << {url: url, title: name}
               end
             end
           elsif @group == :mwf_lioncourt
