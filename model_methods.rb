@@ -115,7 +115,7 @@
     glowfic: "Misc",
     constellation: "Misc",
     
-    mwf_leaf: "MWF",
+    mwf_leaf: "Kappa & Misc",
     mwf_lioncourt: "MWF",
     
     sandbox: "Alicorn & Misc",
