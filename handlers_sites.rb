@@ -48,6 +48,22 @@
       @downcache[where] << page unless downd
       data
     end
+    def has_cache?(page, options={})
+      where = (options.key?(:where)) ? options[:where] : nil
+      @downcache[where] = [] unless @downcache.key?(where)
+      @downcache[where].include?(page)
+    end
+    def save_down(page, data, options={})
+      where = (options.key?(:where)) ? options[:where] : nil
+      @downcache[where] = [] unless @downcache.key?(where)
+      
+      @downcache[where] << page unless @downcache[where].include?(page)
+      loc = get_page_location(page, options)
+      open(loc, 'w') do |f|
+        f.write data
+      end
+      data
+    end
     def msg_attrs
       @msg_attrs ||= [:time, :edittime, :author, :face]
     end
@@ -288,7 +304,12 @@
       
       chapter.pages = pages
       chapter.check_pages.each do |check_page|
-        page_new_data = down_or_cache(check_page, where: @group_folder)
+        if has_cache(check_page, where: 'temp')
+          temp_data = down_or_cache(check_page, where: 'temp')
+          save_down(check_page, temp_data, where: @group_folder)
+        else
+          down_or_cache(check_page, where: @group_folder)
+        end
       end
       
       page_count = (comment_count < 50) ? 1 : (comment_count * 1.0 / 25).ceil
@@ -522,6 +543,7 @@
       
       message_attributes = (only_attrs ? only_attrs : msg_attrs)
       message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
+      return chapter.replies if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
       
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
@@ -591,8 +613,8 @@
       
       LOG.info "#{chapter.title}: parsed #{pages.length} page#{pages.length == 1 ? '' : 's'}" if notify
       
+      chapter.processed = message_attributes
       chapter.replies=@replies
-      chapter.processed = true
     end
   end
   
@@ -713,7 +735,12 @@
       
       chapter.check_pages = chapter.check_pages
       chapter.check_pages.each do |check_page|
-        down_or_cache(check_page, where: @group_folder)
+        if has_cache(check_page, where: 'temp')
+          temp_data = down_or_cache(check_page, where: 'temp')
+          save_down(check_page, temp_data, where: @group_folder)
+        else
+          down_or_cache(check_page, where: @group_folder)
+        end
       end
       
       pages = get_full(chapter, options.merge({new: (not changed)}))
@@ -1092,6 +1119,7 @@
       
       message_attributes = (only_attrs ? only_attrs : msg_attrs)
       message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
+      return chapter.replies if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
       
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
@@ -1154,8 +1182,8 @@
       
       LOG.info "#{chapter.title}: parsed #{pages_effectual} page#{pages_effectual == 1 ? '' : 's'}" if notify
       
+      chapter.processed = message_attributes
       chapter.replies=@replies
-      chapter.processed = true
     end
   end
 end
