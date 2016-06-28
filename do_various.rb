@@ -29,6 +29,14 @@ include GlowficEpub
 FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
 FileUtils.mkdir "logs" unless File.directory?("logs")
 
+class Array
+  def contains_all? other
+    other = other.dup
+    each {|e| if i = other.index(e) then other.delete_at(i) end }
+    other.empty?
+  end
+end
+
 def main(args)
   abort "Please input an argument (e.g. 'tocs_sandbox', 'get_sandbox', 'process_sandbox', 'output_sandbox')" unless args and args.size > 0
   
