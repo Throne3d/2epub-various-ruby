@@ -164,6 +164,7 @@
       if prev_pages and not prev_pages.empty?
         is_new = false
         
+        @download_count = 0
         changed = false
         check_pages.each_with_index do |check_page, i|
           page_location = get_page_location(check_page, where: @group_folder)
@@ -206,7 +207,7 @@
         
         LOG.debug "Content is different for #{chapter}" if changed
         if pages_exist and not changed
-          LOG.info "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''}" if notify
+          LOG.info "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (checked #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
           return chapter
         end
       end
@@ -654,6 +655,7 @@
       if prev_pages and not prev_pages.empty?
         is_new = false
         
+        @download_count = 0
         changed = false
         check_pages.each_with_index do |check_page, i|
           page_location = get_page_location(check_page, where: @group_folder)
@@ -693,7 +695,7 @@
         
         LOG.debug "Content is different for #{chapter}" if changed
         if pages_exist and not changed
-          LOG.info "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''}" if notify
+          LOG.info "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (checked #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
           return chapter
         end
         
