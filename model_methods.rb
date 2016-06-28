@@ -115,6 +115,9 @@
     glowfic: "Misc",
     constellation: "Misc",
     
+    mwf_leaf: "MWF",
+    mwf_lioncourt: "MWF",
+    
     sandbox: "Alicorn & Misc",
     marri: "Marri & Misc",
     peterverse: "Pedro & Misc",
@@ -133,6 +136,9 @@
     
     glowfic: "Glowfic Community",
     constellation: "Constellation",
+    
+    mwf_leaf: "Leafy Glowfic",
+    mwf_lioncourt: "Lioncourt Party",
     
     sandbox: "Alicorn's Sandboxes",
     marri: "Marri's Sandboxes",
