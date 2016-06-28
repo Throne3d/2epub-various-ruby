@@ -400,7 +400,7 @@
       str << "#{chapter.title_extras || '(no extras)'}"
       str << ', new' if chapter.entry.time >= show_new_after
       str << ' (' if show_last_author or show_last_update_time
-      str << 'last post by ' + latest_update.author.to_s if show_last_author
+      str << 'last post by ' + latest_update.author_str if show_last_author
       str << ', ' if show_last_author and show_last_update_time
       str << 'last updated ' + latest_update.time.strftime((latest_update.time.year != @date.year ? '%Y-' : '') + '%m-%d %H:%M') if show_last_update_time
       str << ')' if show_last_author or show_last_update_time

@@ -759,6 +759,12 @@
       @push_author = true unless chapter
     end
     
+    def author_str
+      return @author.to_s if @author and @author.is_a?(Author)
+      return @author.to_s if @author
+      return nil
+    end
+    
     def initialize(params={})
       return if params.empty?
       params = standardize_params(params)
