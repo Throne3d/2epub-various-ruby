@@ -478,10 +478,19 @@
         if days_ago >= 1 and not upd_chapters.empty?
           LOG.info "#{days_ago == 1 ? 'New updates' : 'Last updated'} #{early_time.strftime('%m-%d')}:"
           LOG.info "[list#{days_ago==1 ? '=1' : ''}]"
-          upd_chapters.sort! { |x,y| y[:first_update].time <=> x[:first_update].time } if days_ago == 1
-          upd_chapters.sort! { |x,y| y[:last_update].time <=> x[:last_update].time } if days_ago > 1
+          if days_ago == 1
+            upd_chapters.sort! { |x,y| y[:first_update].time <=> x[:first_update].time }
+            first_last = :first
+            new_after = early_time
+            show_last_author = false
+          else
+            upd_chapters.sort! { |x,y| y[:last_update].time <=> x[:last_update].time }
+            first_last = :last
+            new_after = today_time + 3
+            show_last_author = true
+          end
           upd_chapters.each do |chapter_thing|
-            LOG.info chapterthing_displaytext(chapter_thing, first_last: (days_ago == 1 ? :first : :last), completed_before: late_time, new_after: (days_ago == 1 ? early_time : today_time + 3))
+            LOG.info chapterthing_displaytext(chapter_thing, first_last: first_last, completed_before: late_time, new_after: new_after, show_last_author: show_last_author)
           end
           LOG.info "[/list]"
           
@@ -529,7 +538,7 @@
           LOG.info "[list]"
           upd_chapters.sort! { |x,y| y[:latest_update].time <=> x[:latest_update].time }
           upd_chapters.each do |chapter_thing|
-            LOG.info chapterthing_displaytext(chapter_thing, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true)
+            LOG.info chapterthing_displaytext(chapter_thing, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true, show_last_author: true)
           end
           LOG.info "[/list]"
         end
