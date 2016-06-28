@@ -283,6 +283,8 @@
         self.instance_variable_set var, val
       end
       
+      LOG.debug "Chapters.from_json! (group: #{group})"
+      
       authors = json_hash["authors"] or json_hash["@authors"]
       faces = json_hash["faces"] or json_hash["@faces"]
       chapters = json_hash["chapters"] or json_hash["@chapters"]
@@ -502,6 +504,8 @@
         var = (var.start_with?("@") ? var : "@#{var}")
         self.instance_variable_set var, val unless varname == "replies" or varname == "entry"
       end
+      
+      LOG.debug "Chapter.from_json! (title: '#{title}', url: '#{url}')"
       
       @authors = [] if @trash_messages
       self.authors
