@@ -182,8 +182,8 @@
   
   class Chapters < Model
     attr_reader :chapters, :faces, :authors, :group, :trash_messages
-    attr_accessor :group
-    serialize_ignore :site_handlers, :trash_messages
+    attr_accessor :group, :old_authors, :old_faces
+    serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces
     def initialize(options = {})
       @chapters = []
       @faces = []
@@ -212,6 +212,12 @@
       @authors.each do |author|
         found_author = author if author.unique_id == author_id
       end
+      if old_authors.present? and not found_author
+        old_authors.each do |author|
+          found_author = author if author.unique_id == author_id
+        end
+        add_author(found_author) if found_author
+      end
       found_author
     end
     def add_face(arg)
@@ -228,6 +234,12 @@
       found_face = nil
       @faces.each do |face|
         found_face = face if face.unique_id == face_id
+      end
+      if old_faces.present? and not found_face
+        old_faces.each do |face|
+          found_face = author if face.unique_id == face_id
+        end
+        add_face(found_face) if found_face
       end
       found_face
     end
@@ -357,7 +369,7 @@
     end
     def authors
       @authors ||= []
-      unless @authors.empty? or @authors.first.is_a?(Author)
+      if @authors.present? and @authors.select{|thing| thing.is_a?(String)}.present?
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
       end
       @authors
