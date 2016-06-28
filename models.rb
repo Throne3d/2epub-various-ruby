@@ -778,7 +778,7 @@
     end
     
     def author_str
-      return @author.to_s if @author and @author.is_a?(Author)
+      return @author.moiety if @author and @author.is_a?(Author)
       return @author.to_s if @author
       return nil
     end
