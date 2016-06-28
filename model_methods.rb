@@ -417,6 +417,12 @@
     end
   end
   
+  
+  def get_old_data(group)
+    @temp_data ||= {}
+    @temp_data[group] = get_chapters_data(group) unless @temp_data.key?(group)
+    @temp_data[group]
+  end
   def get_prev_chapter_detail(group, others={})
     if others.is_a?(Hash)
       detail = others[:detail]
@@ -427,7 +433,8 @@
     end
     remove_empty ||= false
     
-    chapters = get_chapters_data(group)
+    chapters = get_old_data(group)
+    
     prev_detail = {}
     chapters.each do |chapter|
       prev_detail[chapter.url] = chapter.try(detail)

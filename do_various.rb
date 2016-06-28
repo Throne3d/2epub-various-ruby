@@ -92,7 +92,7 @@ def main(args)
     LOG.info "Parsing TOC (of #{group})"
     
     oldify_chapters_data(group)
-    data = get_chapters_data(group)
+    data = get_old_data(group)
     chapter_list.old_authors = data.authors
     chapter_list.old_faces = data.faces
     
