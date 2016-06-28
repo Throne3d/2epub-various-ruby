@@ -379,10 +379,12 @@
         end.sort{|thing1, thing2| rainbow_comp(thing1, thing2) }.join(' ').strip.gsub(/[\(\)]/, '')
       end
       
-      unless chapter.report_flags
+      if chapter.title_extras.present? and not chapter.report_flags.present?
         chapter.report_flags = chapter.title_extras.scan(@flag_scan).map{|thing| thing[0] }.uniq.sort{|thing1, thing2| rainbow_comp(thing1, thing2) }.join(' ').strip.gsub(/[\(\)]/, '')
         chapter.title_extras = chapter.title_extras.gsub(@flag_scan, '')
       end
+      
+      chapter.report_flags = "" unless chapter.report_flags
       
       str = "[*]"
       str << '[size=85]' + chapter.report_flags.strip + '[/size] ' if chapter.report_flags and not chapter.report_flags.strip.empty?
@@ -394,9 +396,9 @@
       str << ' (' + chapter.sections * '>' + ')' if show_sections and chapter.sections.present?
       str << ',' unless chapter.entry_title[/[?,.!;]$/] #ends with ? or , or . or ! or ;
       str << ' '
-      str << "#{chapter.title_extras}"
+      str << "#{chapter.title_extras || '(no extras)'}"
       str << ', new' if chapter.entry.time >= show_new_after
-      str << ' (last updated ' + latest_update.time.strftime('%m-%d %H:%M') + ')' if show_last_update_time
+      str << ' (last updated ' + latest_update.time.strftime((latest_update.time.year != @date.year ? '%Y-' : '') + '%m-%d %H:%M') + ')' if show_last_update_time
       return str
     end
     def output(options = {})
