@@ -197,6 +197,14 @@
       @site_handlers ||= {}
     end
     
+    def unpack!
+      each {|chapter| chapter.unpack! } unless @unpacked
+      @unpacked = true
+    end
+    def unpacked?
+      @unpacked ||= false
+    end
+    
     def add_author(arg)
       @authors << arg unless @authors.include?(arg)
     end
@@ -205,8 +213,7 @@
       add_author(arg)
     end
     def get_author_by_id(author_id)
-      each {|chapter| chapter.unpack! } unless @unpacked
-      @unpacked = true
+      unpack!
       
       found_author = nil
       @authors.each do |author|
@@ -228,8 +235,7 @@
       add_face(arg)
     end
     def get_face_by_id(face_id)
-      each {|chapter| chapter.unpack! } unless @unpacked
-      @unpacked = true
+      unpack!
       
       found_face = nil
       @faces.each do |face|
