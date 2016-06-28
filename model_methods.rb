@@ -415,6 +415,7 @@
     File.open(where, "wb") do |f|
       f.write(temp)
     end
+    LOG.debug "Saved data for group: #{group} (#{others.inspect})"
   end
   
   
