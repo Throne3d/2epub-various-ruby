@@ -415,22 +415,35 @@
       f.write(temp)
     end
   end
-
-  def get_prev_chapter_pages(group)
-    chapters = get_chapters_data(group)
-    prev_pages = {}
-    chapters.each do |chapter|
-      prev_pages[chapter.url] = chapter.pages if chapter.pages and not chapter.pages.empty?
+  
+  def get_prev_chapter_detail(group, others={})
+    if others.is_a?(Hash)
+      detail = others[:detail]
+      remove_empty = others[:remove_empty] or others[:reject_empty]
+      only_present = others[:only_present]
+    else
+      detail = others
     end
-    prev_pages
+    remove_empty ||= false
+    
+    chapters = get_chapters_data(group)
+    prev_detail = {}
+    chapters.each do |chapter|
+      prev_detail[chapter.url] = chapter.try(detail)
+    end
+    prev_detail.reject! {|key, value| value.nil? or value.empty?} if remove_empty
+    prev_detail.select! {|key, value| value.present?} if only_present
+    prev_detail
+  end
+  def get_prev_chapter_details(group, others={})
+    get_prev_chapter_detail(group, others)
+  end
+  
+  def get_prev_chapter_pages(group)
+    get_prev_chapter_detail(group, :pages)
   end
   
   def get_prev_chapter_check_pages(group)
-    chapters = get_chapters_data(group)
-    prev_check_pages = {}
-    chapters.each do |chapter|
-      prev_check_pages[chapter.url] = chapter.check_pages if chapter.check_pages and not chapter.check_pages.empty?
-    end
-    prev_check_pages
+    get_prev_chapter_detail(group, detail: :check_pages, only_present: true)
   end
 end

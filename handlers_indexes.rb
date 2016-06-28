@@ -8,10 +8,22 @@ module GlowficIndexHandlers
       @group
     end
     def prev_pages
-      @prev_pages ||= get_prev_chapter_pages(group)
+      @prev_pages ||= get_prev_chapter_detail(group, detail: :pages, only_present: true)
     end
     def prev_check_pages
-      @prev_check_pages ||= get_prev_chapter_check_pages(group)
+      @prev_check_pages ||= get_prev_chapter_detail(group, detail: :check_pages, only_present: true)
+    end
+    def prev_processed
+      @prev_processed = get_prev_chapter_details(group, detail: :processed)
+    end
+    def prev_entries
+      @prev_entries ||= get_prev_chapter_detail(group, detail: :entry, only_present: true)
+    end
+    def prev_replies
+      @prev_replies ||= get_prev_chapter_detail(group, detail: :replies, only_present: true)
+    end
+    def prev_authors
+      @prev_authors ||= get_prev_chapter_detail(group, detail: :authors, only_present: true)
     end
     def initialize(options = {})
       @group = options[:group] if options.key?(:group)
@@ -60,6 +72,14 @@ module GlowficIndexHandlers
       end
       if prev_check_pages.key?(params[:url])
         params[:check_pages] = prev_check_pages[params[:url]]
+      end
+      if prev_processed.key?(params[:url])
+        params[:processed] = prev_processed[params[:url]]
+        if params[:processed]
+          params[:entry] = prev_entries[params[:url]] if prev_entries.key?(params[:url])
+          params[:replies] = prev_replies[params[:url]] if prev_replies.key?(params[:url])
+          params[:authors] = prev_authors[params[:url]] if prev_authors.key?(params[:url])
+        end
       end
       return GlowficEpub::Chapter.new(params)
     end

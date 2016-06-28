@@ -212,6 +212,8 @@
         end
       end
       
+      chapter.processed = false
+      
       #Hasn't been done before, or it's outdated, or some pages were deleted; re-get.
       @download_count = 0
       @success = false
@@ -590,6 +592,7 @@
       LOG.info "#{chapter.title}: parsed #{pages.length} page#{pages.length == 1 ? '' : 's'}" if notify
       
       chapter.replies=@replies
+      chapter.processed = true
     end
   end
   
@@ -702,6 +705,8 @@
         is_new = false
         chapter.pages = pages = [chapter.url]
       end
+      
+      chapter.processed = false
       
       #Needs to be updated / hasn't been got
       @download_count = 0
@@ -1150,6 +1155,7 @@
       LOG.info "#{chapter.title}: parsed #{pages_effectual} page#{pages_effectual == 1 ? '' : 's'}" if notify
       
       chapter.replies=@replies
+      chapter.processed = true
     end
   end
 end

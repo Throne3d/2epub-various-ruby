@@ -285,18 +285,25 @@
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags
+    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed
     
     param_transform :name => :title, :name_extras => :title_extras
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties
     
     def allowed_params
-      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :report_flags]
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :report_flags, :processed]
     end
     
     def unpack!
       entry.unpack! if entry
       replies.each {|reply| reply.unpack! } if replies
+    end
+    
+    def processed
+      processed?
+    end
+    def processed?
+     @processed ||= false
     end
     
     def group
@@ -723,8 +730,14 @@
     def author
       return @author if @author and @author.is_a?(Author)
       return unless @author
-      @author = chapter_list.get_author_by_id(@author) if chapter_list and not @author.is_a?(Author)
-      @author = site_handler.get_author_by_id(@author) if site_handler and not @author.is_a?(Author)
+      if chapter_list and not @author.is_a?(Author)
+        temp_author = chapter_list.get_author_by_id(@author)
+        @author = temp_author if temp_author
+      end
+      if site_handler and not @author.is_a?(Author)
+        temp_author = site_handler.get_author_by_id(@author)
+        @author = temp_author if temp_author
+      end
       @author
     end
     def author=(author)
