@@ -303,8 +303,8 @@
       return @moiety_cache[user_id] if @moiety_cache.key?(user_id)
       
       moieties = []
-      MOIETIES.keys.each do |author|
-        moieties << author if MOIETIES[author].include?(profile) or MOIETIES[author].include?(user_id)
+      GlowficEpub.moieties.keys.each do |author|
+        moieties << author if GlowficEpub.moieties[author].include?(profile) or GlowficEpub.moieties[author].include?(user_id)
       end
       
       icon_moiety = moieties * ' '

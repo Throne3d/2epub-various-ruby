@@ -44,9 +44,16 @@
     #, "Unknown":["hide-and-seek", "antiprojectionist", "vvvvvvibrant", "fine-tuned"]
   }
   
+  def self.built_moieties?
+    @built_moieties ||= false
+  end
+  def self.built_moieties=(val)
+    @built_moieties = val
+  end
   def self.build_moieties()
     file_path = "collectionPages.txt"
     return MOIETIES unless File.file?(file_path)
+    return MOIETIES if self.built_moieties?
     
     open(file_path, 'r') do |file|
       file.each do |line|
@@ -79,6 +86,12 @@
         LOG.info "Processed collection #{collection_name}: #{count} member#{count==1 ? '' : 's'}."
       end
     end
+    self.built_moieties=true
+  end
+  
+  def self.moieties
+    build_moieties unless self.built_moieties?
+    MOIETIES
   end
   
   class Model

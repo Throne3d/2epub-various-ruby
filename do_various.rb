@@ -175,7 +175,6 @@ def main(args)
       set_chapters_data(chapter_list, group)
     end
   elsif (process == :process or process == :report)
-    GlowficEpub::build_moieties if process == :process
     chapter_list = get_chapters_data(group, trash_messages: true)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Processing '#{group}'" + (process == :report ? " (daily report)" : "")
@@ -210,7 +209,6 @@ def main(args)
       set_chapters_data(chapter_list, group)
     end
   elsif (process == :output_epub)
-    GlowficEpub::build_moieties
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Processing '#{group}'"
@@ -240,7 +238,6 @@ def main(args)
     handler = handler.new(chapter_list: chapter_list, group: group)
     handler.output(params)
   elsif (process == :stats)
-    GlowficEpub::build_moieties
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Processing '#{group}'"
