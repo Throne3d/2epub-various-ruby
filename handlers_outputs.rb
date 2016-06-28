@@ -354,6 +354,7 @@
       show_new_after = options.key?(:early) ? options[:early] : (options.key?(:new_after) ? options[:new_after] : (DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0) - 1))
       show_last_update_time = options.key?(:show_last_update_time) ? options[:show_last_update_time] : false
       show_sections = options.key?(:show_sections) ? options[:show_sections] : false
+      show_last_author = options.key?(:show_last_author) ? options[:show_last_author] : false
       
       chapter = chapterthing[:chapter]
       first_update = chapterthing[:first_update]
@@ -398,7 +399,11 @@
       str << ' '
       str << "#{chapter.title_extras || '(no extras)'}"
       str << ', new' if chapter.entry.time >= show_new_after
-      str << ' (last updated ' + latest_update.time.strftime((latest_update.time.year != @date.year ? '%Y-' : '') + '%m-%d %H:%M') + ')' if show_last_update_time
+      str << ' (' if show_last_author or show_last_update_time
+      str << 'last post by ' + latest_update.author.to_s if show_last_author
+      str << ', ' if show_last_author and show_last_update_time
+      str << 'last updated ' + latest_update.time.strftime((latest_update.time.year != @date.year ? '%Y-' : '') + '%m-%d %H:%M') if show_last_update_time
+      str << ')' if show_last_author or show_last_update_time
       return str
     end
     def output(options = {})
