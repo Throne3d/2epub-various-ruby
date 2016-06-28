@@ -107,6 +107,11 @@
 "title_extras": "[b][color=#FF0000]Lúthien[/color][/b] in [b][color=#00BF80]Rewind[/color][/b]",
 "report_flags": "00BF80#007BA7 FF0000"
 },
+{"title": "qualifications",
+"url": "https://vast-journey-9935.herokuapp.com/posts/165",
+"title_extras": "[b][color=#00BF80]Iobel[/color][/b] and [b][color=#FF0000]not-Elves[/color][/b]",
+"report_flags": "00BF80#007BA7 FF0000"
+},
 {"title": "Fish out of Water",
 "url": "https://vast-journey-9935.herokuapp.com/posts/122",
 "title_extras": "[b][color=#960018]Theo[/color][/b], [b][color=#960018]Everett[/color][/b] and [b][color=#960018]Matt[/color][/b] with [b][color=#6960EC]Grace[/color][/b], [b][color=#6960EC]Reubel[/color][/b] and [b][color=#6960EC]Mu[/color][/b] in Lapis",
@@ -183,6 +188,26 @@
 "report_flags": "8040BF#602080 FFFFFF",
 "sections": ["Skylight Empire"]
 },
+{"title": "The Eighth Day",
+"url": "https://vast-journey-9935.herokuapp.com/posts/121",
+"title_extras": "[b][color=#62371F]Portalbold[/color][/b] and [b][color=#FF0000]Fëanáro[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
+"report_flags": "62371F#AAB7BF FF0000"
+},
+{"title": "just a dream",
+"url": "https://vast-journey-9935.herokuapp.com/posts/166",
+"title_extras": "[b][color=#62371F]Portalbold[/color][/b] and post-Angband [b][color=#FF0000]Maedhros[/color][/b]",
+"report_flags": "62371F#AAB7BF FF0000"
+},
+{"title": "Fate and Fortune",
+"url": "https://vast-journey-9935.herokuapp.com/posts/103",
+"title_extras": "[b][color=#960018]Tyler[/color][/b] and [b][color=#228B22]Vital (Nicole)[/color][/b]",
+"report_flags": "960018#682860 228B22"
+},
+{"title": "Weirdly shaped mind",
+"url": "https://vast-journey-9935.herokuapp.com/posts/164",
+"title_extras": "[b][color=#960018]Thario[/color][/b] and [b][color=#228B22]forests[/color][/b] in Milliways",
+"report_flags": "960018#682860 228B22"
+},
 {"title": "obligation of good faith",
 "url": "https://vast-journey-9935.herokuapp.com/posts/83",
 "title_extras": "[b][color=#FF5C5C]Sadde[/color][/b] in [b][color=#FFBF00]Pactverse[/color][/b]",
@@ -228,11 +253,6 @@
 "title_extras": "[b][color=#FFBF00]Amber Atreides[/color][/b] and [b][color=#FF0000]Elves[/color][/b]",
 "report_flags": "FFBF00 FF0000"
 },
-{"title": "Fate and Fortune",
-"url": "https://vast-journey-9935.herokuapp.com/posts/103",
-"title_extras": "[b][color=#960018]Tyler[/color][/b] and [b][color=#228B22]Vital (Nicole)[/color][/b]",
-"report_flags": "960018#682860 228B22"
-},
 {"title": "where the light won't find you",
 "url": "https://vast-journey-9935.herokuapp.com/posts/107",
 "title_extras": "[b][color=#228B22]Vital (Nicole)[/color][/b] in [b][color=#00CFCF]Nightvale[/color][/b]",
@@ -252,11 +272,6 @@
 "url": "https://vast-journey-9935.herokuapp.com/posts/111",
 "title_extras": "[b][color=#8040BF]Matilda[/color][/b] and [b][color=#FF0000]Fëanáro[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
 "report_flags": "8040BF#602080 FF0000"
-},
-{"title": "The Eighth Day",
-"url": "https://vast-journey-9935.herokuapp.com/posts/121",
-"title_extras": "[b][color=#62371F]Portalbold[/color][/b] and [b][color=#FF0000]Fëanáro[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
-"report_flags": "62371F#AAB7BF FF0000"
 },
 {"title": "The Nature of Reactions",
 "url": "https://vast-journey-9935.herokuapp.com/posts/75",
