@@ -641,12 +641,6 @@ module GlowficIndexHandlers
       
       list = if @group == :test
         [
-          {url: "https://theotrics.dreamwidth.org/682.html?style=site",
-          title: "test post please ignore",
-          sections: ["Theotrics"]},
-          {url: "https://theotrics.dreamwidth.org/682.html?thread=9642&style=site#cmt9642",
-          title: "test post please ignore pt 2",
-          sections: ["Theotrics"]},
           {url: "https://vast-journey-9935.herokuapp.com/posts/43",
           title: "Book of Discovery",
           sections: ["Book of the Moon"]},
@@ -664,10 +658,6 @@ module GlowficIndexHandlers
           sections: ["Incandescence", "Chamomile"]},
           {url: "https://alicornutopia.dreamwidth.org/6744.html?thread=2465368&style=site#cmt2465368",
           title: "A Joker summons Demon Cam",
-          sections: ["Demon Cam"],
-          title_extras: "(with kappa)"},
-          {url: "https://alicornutopia.dreamwidth.org/6744.html?style=site&thread=2557272#cmt2557272",
-          title: "Ripper summons Demon Cam",
           sections: ["Demon Cam"],
           title_extras: "(with kappa)"},
           {url: "https://alicornutopia.dreamwidth.org/6744.html?style=site&thread=2560344#cmt2560344",
