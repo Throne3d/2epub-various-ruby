@@ -697,15 +697,11 @@
           return chapter
         end
         
-        first_page_new_data = down_or_cache(chapter.url, where: @group_folder)
-        
-        pages = [chapter.url]
-        chapter.pages = pages
-        LOG.info "Updated: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got 1 page)" if notify
-        return chapter
+        is_new = false
+        chapter.pages = pages = [chapter.url]
       end
       
-      #Hasn't been done before; get.
+      #Needs to be updated / hasn't been got
       @download_count = 0
       
       chapter.check_pages = chapter.check_pages
@@ -715,7 +711,7 @@
       
       pages = get_full(chapter, options.merge({new: (not changed)}))
       chapter.pages = pages
-      LOG.info "New: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
+      LOG.info "#{is_new ? 'New' : 'Updated'}: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
       return chapter
     end
     
