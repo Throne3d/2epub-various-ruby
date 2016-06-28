@@ -652,7 +652,7 @@ module GlowficIndexHandlers
   end
   
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight, :lintamande, :report
+    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt
     def initialize(options = {})
       super(options)
     end
@@ -749,6 +749,56 @@ module GlowficIndexHandlers
             next unless key.is_a?(String)
             thing[key.to_sym] = thing[key]
             thing.delete(key)
+          end
+        end
+      elsif @group == :mwf_leaf || @group == :mwf_lioncourt
+        fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
+        
+        LOG.info "TOC Page: #{fic_toc_url}"
+        fic_toc_data = get_page_data(fic_toc_url, replace: true)
+        fic_toc = Nokogiri::HTML(fic_toc_data)
+        
+        list = []
+        msg = fic_toc.at_css('.post.first').try(:at_css, '.message')
+        if msg
+          if @group == :mwf_leaf
+            msg.css('> ul > li').each do |li|
+              if li.at_css('ul')
+                li.css('ul li a').each do |li_a|
+                  url = li_a[:href]
+                  if url["redirect.viglink.com"]
+                    url = url.split('&u=').last.gsub('%3A', ':').gsub('%3F', '?').gsub('%3D', '=').gsub('%26', '&')
+                  end
+                  name = li_a.text.strip
+                  sections = ["Lioncourt's coronation party"]
+                  list << {url: url, title: name, sections: sections}
+                end
+              elsif li.at_css('a')
+                li_a = li.at_css('a')
+                url = li_a[:href]
+                if url["redirect.viglink.com"]
+                  url = url.split('&u=').last.gsub('%3A', ':').gsub('%3F', '?').gsub('%3D', '=').gsub('%26', '&')
+                end
+                name = li_a.text.strip
+                sections = ["Lioncourt's coronation party"]
+                list << {url: url, title: name, sections: sections}
+              end
+            end
+          elsif @group == :mwf_lioncourt
+            prev_url = ""
+            msg.css('a').each do |anchor|
+              url = anchor[:href]
+              if url["redirect.viglink.com"]
+                url = url.split('&u=').last.gsub('%3A', ':').gsub('%3F', '?').gsub('%3D', '=').gsub('%26', '&')
+              end
+              name = anchor.text.strip
+              if prev_url.present? and url.sub('http://', '').sub('https://', '').start_with?(prev_url.sub('http://', '').sub('https://', '').sub(/[&\?]style=site/, '').sub(/[&\?]view=flat/, ''))
+                puts "Skipping #{name} because thread of previous"
+              elsif url.start_with?('http')
+                prev_url = url
+                list << {url: url, title: name}
+              end
+            end
           end
         end
       end

@@ -74,7 +74,9 @@
     lintamande: [:lintamande, :elves],
     test: [:test],
     temp_starlight: [:temp_starlight, :starlight],
-    report: [:report, :daily]
+    report: [:report, :daily],
+    mwf_leaf: [:mwf_leaf, :mwf_1, :mwf, :leaf],
+    mwf_lioncourt: [:mwf_lion, :mwf_lioncourt, :mwf_2, :lioncourt, :lion]
   }
   FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie, :throne]
   FIC_TOCS = {
@@ -87,6 +89,9 @@
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
     constellation: "https://vast-journey-9935.herokuapp.com/boards/",
+    
+    mwf_leaf: "http://manyworlds.boards.net/thread/80/backstage-leafy-glowfic-index",
+    mwf_lioncourt: "http://manyworlds.boards.net/thread/104/party-thread-index",
     
     #Authors
     sandbox: "http://alicornutopia.dreamwidth.org/1640.html?style=site",
