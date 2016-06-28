@@ -304,7 +304,7 @@
       
       chapter.pages = pages
       chapter.check_pages.each do |check_page|
-        if has_cache(check_page, where: 'temp')
+        if has_cache?(check_page, where: 'temp')
           temp_data = down_or_cache(check_page, where: 'temp')
           save_down(check_page, temp_data, where: @group_folder)
         else
@@ -735,7 +735,7 @@
       
       chapter.check_pages = chapter.check_pages
       chapter.check_pages.each do |check_page|
-        if has_cache(check_page, where: 'temp')
+        if has_cache?(check_page, where: 'temp')
           temp_data = down_or_cache(check_page, where: 'temp')
           save_down(check_page, temp_data, where: @group_folder)
         else
