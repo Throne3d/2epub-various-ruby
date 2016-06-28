@@ -737,7 +737,7 @@
         username = breadcrumb1.text.split("Characters").first.strip
         username = username[0..-3] if username.end_with?("'s")
       end
-      moiety = username.downcase.gsub(/[^\w]/, '_')
+      moiety = username.gsub(/[^\w]/, '_')
       moiety
     end
     
