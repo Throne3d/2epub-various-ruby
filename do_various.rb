@@ -150,7 +150,7 @@ def main(args)
     end
     set_chapters_data(old_data, group)
   elsif (process == :get)
-    chapter_list = get_chapters_data(group, trash_messages: true)
+    chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Getting '#{group}'"
     LOG.info "Chapter count: #{chapter_list.length}"
