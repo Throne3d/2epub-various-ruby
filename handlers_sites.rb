@@ -36,9 +36,10 @@
       @chapter_list = GlowficEpub::Chapters.new if @chapter_list.is_a?(Array) and @chapter_list.empty?
       @download_count = 0
       @downcache = {}
+      @giricache = {}
     end
     def down_or_cache(page, options = {})
-      where = (options.key?(:where)) ? options[:where] : nil
+      where = options.key?(:where) ? options[:where] : nil
       @downcache[where] = [] unless @downcache.key?(where)
       
       downd = @downcache[where].include?(page)
@@ -47,6 +48,21 @@
       @download_count+=1 unless downd
       @downcache[where] << page unless downd
       data
+    end
+    def giri_or_cache(page, options = {})
+      LOG.debug "giri_or_cache(\"#{page}\"" + (options.empty? ? "" : ", #{options}") + ")"
+      where = options.key?(:where) ? options[:where] : nil
+      replace = options.key?(:replace) ? options[:replace] : true
+      @giricache[where] = {} unless @giricache.key?(where)
+      
+      return @giricache[where][page] if @giricache[where].key?(page)
+      
+      data = (replace ? down_or_cache(page, options) : get_page_data(page, options))
+      giri = Nokogiri::HTML(data)
+      @giricache[where][page] = giri
+    end
+    def nokogiri_or_cache(page, options={})
+      giri_or_cache(page, options)
     end
     def has_cache?(page, options={})
       where = (options.key?(:where)) ? options[:where] : nil
@@ -140,8 +156,7 @@
       
       params = {style: :site, view: :flat, page: 1}
       first_page = set_url_params(clear_url_params(chapter.url), params)
-      first_page_data = down_or_cache(first_page, where: @group_folder)
-      first_page_stuff = Nokogiri::HTML(first_page_data)
+      first_page_stuff = giri_or_cache(first_page, where: @group_folder)
       
       first_page_content = first_page_stuff.at_css('#content')
       
@@ -191,12 +206,8 @@
             changed = true
             break
           end
-          page_new_data = down_or_cache(check_page, where: 'temp')
-          
-          LOG.debug "Got old last data, now nokogiri-ing"
+          page_new = giri_or_cache(check_page, where: 'temp')
           page_old = Nokogiri::HTML(page_old_data)
-          page_new = Nokogiri::HTML(page_new_data)
-          LOG.debug "nokogiri'd"
           
           old_content = page_old.at_css('#content')
           new_content = page_new.at_css('#content')
@@ -239,8 +250,7 @@
       params[:thread] = chapter.thread if chapter.thread
       main_page = set_url_params(clear_url_params(chapter.url), params)
       
-      main_page_data = down_or_cache(main_page, where: @group_folder)
-      main_page_stuff = Nokogiri::HTML(main_page_data)
+      main_page_stuff = giri_or_cache(main_page, where: @group_folder)
       
       nsfw_warning = main_page_stuff.at_css('.panel.callout')
       if nsfw_warning
@@ -349,10 +359,8 @@
       unless @face_cache.key?(user_profile) or @face_cache.key?(user_profile.gsub('_', '-'))
         user_id = user_profile.gsub('_', '-')
         
-        icon_page_data = down_or_cache("http://#{user_id}.dreamwidth.org/icons")
-        LOG.debug "got icon page for #{user_id}"
-        icon_page = Nokogiri::HTML(icon_page_data)
-        LOG.debug "nokogiri'd"
+        icon_page = giri_or_cache("http://#{user_id}.dreamwidth.org/icons")
+        LOG.debug "nokogiri'd icon page"
         icons = icon_page.at_css('#content').css('.icon-row .icon')
         default_icon = icon_page.at_css('#content').at_css('.icon.icon-default')
         
@@ -420,10 +428,8 @@
       author_id = author_id.gsub('_', '-')
       author_id = author_id.sub("dreamwidth#", "") if author_id.start_with?("dreamwidth#")
       return @author_id_cache[author_id] if @author_id_cache.key?(author_id)
-      char_page_data = down_or_cache("http://#{author_id}.dreamwidth.org/profile")
-      LOG.debug "got profile page for #{author_id}"
-      char_page = Nokogiri::HTML(char_page_data)
-      LOG.debug "nokogiri'd"
+      char_page = giri_or_cache("http://#{author_id}.dreamwidth.org/profile")
+      LOG.debug "nokogiri'd profile page"
       
       params = {}
       params[:moiety] = get_moiety_by_profile(author_id)
@@ -557,10 +563,7 @@
       LOG.debug "Thread comment: \"#{threadcmt}\"" if chapter.thread
       
       pages.each do |page_url|
-        page_data = get_page_data(page_url, replace: false, where: @group_folder)
-        LOG.debug "got page data for page #{page_url}"
-        page = Nokogiri::HTML(page_data)
-        LOG.debug "nokogiri'd"
+        page = giri_or_cache(page_url, replace: false, where: @group_folder)
         
         page_content = page.at_css('#content')
         nsfw_warning = page_content.at_css('.panel.callout')
@@ -635,7 +638,6 @@
       @char_page_cache = {}
       # When retrieved in get_face_by_id
       @moiety_cache = {}
-      @author_pages_got = []
       @char_user_map = {}
       @char_page_errors = []
     end
@@ -691,11 +693,9 @@
             changed = true
             break
           end
-          page_new_data = down_or_cache(check_page, where: 'temp')
+          page_new = giri_or_cache(check_page, where: 'temp')
           
-          LOG.debug "Got old last data, now nokogiri-ing"
           page_old = Nokogiri::HTML(page_old_data)
-          page_new = Nokogiri::HTML(page_new_data)
           LOG.debug "nokogiri'd"
           
           old_content = page_old.at_css('#content')
@@ -750,10 +750,8 @@
     end
     
     def get_moiety_by_id(character_id)
-      char_page_data = get_page_data("https://vast-journey-9935.herokuapp.com/characters/#{character_id}/", replace: false)
-      LOG.debug "got profile page for char #{character_id}"
-      char_page = Nokogiri::HTML(char_page_data)
-      LOG.debug "nokogiri'd"
+      char_page = giri_or_cache("https://vast-journey-9935.herokuapp.com/characters/#{character_id}/", replace: false)
+      LOG.debug "nokogiri'd profile page"
       
       breadcrumb1 = char_page.at_css('.flash.subber a')
       if breadcrumb1 and breadcrumb1.text.strip == "Characters"
@@ -795,10 +793,7 @@
       
       if character_id and not @char_page_cache.key?(character_id) and not @char_page_errors.include?(character_id) and not character_id.start_with?("user#")
         char_page_url = "https://vast-journey-9935.herokuapp.com/characters/#{character_id}/"
-        char_page_data = get_page_data(char_page_url, replace: (not @author_pages_got.include?(char_page_url)))
-        @author_pages_got << char_page_url unless @author_pages_got.include?(char_page_url)
-        LOG.debug "got profile page for char #{character_id}"
-        char_page = Nokogiri::HTML(char_page_data)
+        char_page = giri_or_cache(char_page_url)
         LOG.debug "nokogiri'd"
         char_page_c = char_page.at_css("#content")
         icons = char_page_c.css(".gallery-icon")
@@ -852,7 +847,6 @@
             @chapter_list.add_face(face)
             @face_id_cache[params[:unique_id]] = face
             
-            LOG.debug "Found an icon for character #{character_id}: ID ##{icon_numid}"
             if (default_icon == icon_element and not icon_hash.key?(:default))
               params[:keyword] = "default"
               params[:unique_id] = "#{character_id}#default"
@@ -873,11 +867,7 @@
       if character_id and @char_user_map.key?(character_id)
         user_id = @char_user_map[character_id]
         usergal_page_url = "https://vast-journey-9935.herokuapp.com/users/#{user_id}/galleries/"
-        usergal_page_data = get_page_data(usergal_page_url, replace: (not @author_pages_got.include?(usergal_page_url)))
-        @author_pages_got << usergal_page_url unless @author_pages_got.include?(usergal_page_url)
-        
-        LOG.debug "got author gallery for ID #{user_id}"
-        usergal_page = Nokogiri::HTML(usergal_page_data)
+        usergal_page = giri_or_cache(usergal_page_url)
         LOG.debug "nokogiri'd"
         
         icons = usergal_page.at_css('#content').css('.gallery-icon')
@@ -917,9 +907,7 @@
       
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       
-      icon_page_data = down_or_cache("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}/")
-      LOG.debug "got a page for the icon #{icon_id}"
-      icon_page = Nokogiri::HTML(icon_page_data)
+      icon_page = giri_or_cache("https://vast-journey-9935.herokuapp.com/icons/#{icon_id}/")
       LOG.debug "nokogiri'd"
       
       icon_img = icon_page.at_css('#content img')
@@ -954,10 +942,7 @@
         user_id = character_id.sub("user#", "")
         
         user_page_url = "https://vast-journey-9935.herokuapp.com/users/#{user_id}/"
-        user_page_data = get_page_data(user_page_url, replace: (not @author_pages_got.include?(user_page_url)))
-        @author_pages_got << user_page_url unless @author_pages_got.include?(user_page_url)
-        LOG.debug "got user page for #{user_id}"
-        user_page = Nokogiri::HTML(user_page_data)
+        user_page = giri_or_cache(user_page_url)
         LOG.debug "nokogiri'd"
         user_page_c = user_page.at_css('#content')
         
@@ -974,10 +959,7 @@
         return author
       else
         char_page_url = "https://vast-journey-9935.herokuapp.com/characters/#{character_id}/"
-        char_page_data = get_page_data(char_page_url, replace: (not @author_pages_got.include?(char_page_url)))
-        @author_pages_got << char_page_url unless @author_pages_got.include?(char_page_url)
-        LOG.debug "got char page for #{character_id}"
-        char_page = Nokogiri::HTML(char_page_data)
+        char_page = giri_or_cache(char_page_url)
         LOG.debug "nokogiri'd"
         char_page_c = char_page.at_css('#content')
         
@@ -1128,9 +1110,7 @@
       @chapter = chapter
       @replies = []
       pages.each do |page_url|
-        page_data = get_page_data(page_url, replace: false, where: @group_folder)
-        LOG.debug "got page data for #{page_url}"
-        page = Nokogiri::HTML(page_data)
+        page = giri_or_cache(page_url, replace: false, where: @group_folder)
         LOG.debug "nokogiri'd"
         
         error = page.at_css('.error.flash')
