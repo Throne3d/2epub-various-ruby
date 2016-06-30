@@ -552,7 +552,10 @@
       message_attributes = (only_attrs ? only_attrs : msg_attrs)
       message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       message_attributes.uniq!
-      return chapter.replies if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
+      if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
+        LOG.info "#{chapter.title}: unchanged, cached data used"
+        return chapter.replies
+      end
       
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
@@ -1105,7 +1108,10 @@
       message_attributes = (only_attrs ? only_attrs : msg_attrs)
       message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       message_attributes.uniq!
-      return chapter.replies if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
+      if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
+        LOG.info "#{chapter.title}: unchanged, cached data used"
+        return chapter.replies
+      end
       
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
