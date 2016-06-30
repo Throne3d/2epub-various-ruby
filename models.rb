@@ -321,7 +321,7 @@
     attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed
     
     param_transform :name => :title, :name_extras => :title_extras
-    serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties
+    serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL
     
     def allowed_params
       @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :report_flags, :processed]
@@ -452,7 +452,11 @@
       end
     end
     def smallURL
-      Chapter.shortenURL(@url)
+      @smallURL ||= Chapter.shortenURL(@url)
+    end
+    def url=(val)
+      @smallURL = nil
+      @url=val
     end
     def self.shortenURL(longURL)
       return "" if longURL.nil? or longURL.empty?
