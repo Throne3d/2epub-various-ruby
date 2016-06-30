@@ -57,9 +57,11 @@
       
       return @giricache[where][page] if @giricache[where].key?(page)
       
+      predone = has_cache?(page, options)
       data = (replace ? down_or_cache(page, options) : get_page_data(page, options))
       giri = Nokogiri::HTML(data)
-      @giricache[where][page] = giri
+      @giricache[where][page] = giri if predone
+      giri
     end
     def nokogiri_or_cache(page, options={})
       giri_or_cache(page, options)
