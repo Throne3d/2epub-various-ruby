@@ -476,6 +476,7 @@
     
     def to_json(options={})
       hash = {}
+      LOG.debug "Chapter.to_json! (title: '#{title}', url: '#{url}')"
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
         var_sym = var_str.to_sym
