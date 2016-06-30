@@ -861,9 +861,9 @@
       
       chapter.entry = self if post_type == PostType::ENTRY
       
-      parent = json_hash["parent"] or json_hash["@parent"]
-      author = json_hash["author"] or json_hash["@author"]
-      face = json_hash["face"] or json_hash["@face"]
+      parent = json_hash['parent'] or json_hash['@parent']
+      author = json_hash['author'] or json_hash['@author']
+      face = json_hash['face'] or json_hash['@face']
       
       if parent
         self.parent = parent
