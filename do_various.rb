@@ -216,8 +216,9 @@ def main(args)
       
       handler.get_replies(chapter, notify: true, only_attrs: only_attrs)
       
-      set_chapters_data(chapter_list, group)
+      set_chapters_data(chapter_list, group) unless process == :report
     end
+    set_chapters_data(chapter_list, group) if process == :report
   elsif (process == :output_epub)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
