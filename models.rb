@@ -832,22 +832,29 @@
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
-        var_sym = var_str.to_sym
-        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
-        
-        if var_str["parent"]
-          parent = self.instance_variable_get(var)
-          hash[var_sym] = [chapter.smallURL, chapter.entry.id, parent.id] if parent.post_type == PostType::REPLY
-          hash[var_sym] = [chapter.smallURL, parent.id] if parent.post_type == PostType::ENTRY
-        elsif var_str["author"]
-          author = self.instance_variable_get(var)
-          hash[var_sym] = author if author.is_a?(String)
-          hash[var_sym] = author.unique_id if author.is_a?(Author)
-        elsif var_str["face"]
-          face = self.instance_variable_get(var)
-          hash[var_sym] = face if face.is_a?(String)
-          hash[var_sym] = face.unique_id if face.is_a?(Face)
+        var_str = var_str[1..-1] if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
+        hash[var_str] = self.instance_variable_get var unless serialize_ignore?(var_str)
+      end
+      if @parent
+        if @parent.is_a?(Message)
+          hash['parent'] = [chapter.smallURL, chapter.entry.id, @parent.id] if @parent.post_type == PostType::REPLY
+          hash['parent'] = [chapter.smallURL, @parent.id] if @parent.post_type == PostType::ENTRY
+        else
+          hash['parent'] = @parent
+        end
+      end
+      if @author
+        if @author.is_a?(Author)
+          hash['author'] = @author.unique_id
+        else
+          hash['author'] = @author
+        end
+      end
+      if @face
+        if @face.is_a?(Face)
+          hash['face'] = @face.unique_id
+        else
+          hash['face'] = @face
         end
       end
       hash.to_json(options)
