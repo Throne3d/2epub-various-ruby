@@ -508,6 +508,8 @@
       
       LOG.debug "Chapter.from_json! (title: '#{title}', url: '#{url}')"
       
+      @processed.map! {|thing| thing.to_s.to_sym } if @processed and @processed.is_a?(Array)
+      
       @authors = [] if @trash_messages
       self.authors
       
