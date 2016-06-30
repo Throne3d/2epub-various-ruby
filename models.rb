@@ -711,8 +711,11 @@
         else
           parent_id = @parent.last
           LOG.error "Parent of post is nil! #{self}" unless parent_id
-          @chapter.replies.each do |reply|
-            @parent = reply if reply.id == parent_id
+          @chapter.replies.reverse_each do |reply|
+            if reply.id == parent_id
+              @parent = reply
+              break
+            end
           end
         end
         @parent.children << self unless @parent.children.include?(self)
