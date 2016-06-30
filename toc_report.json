@@ -33,6 +33,12 @@
 "report_flags": "FF5C5C#FFB25C 00BF80#007BA7",
 "sections": ["Coruscation"]
 },
+{"title": "honor thy father",
+"url": "https://vast-journey-9935.herokuapp.com/posts/169",
+"title_extras": "eclipsed [b][color=#FF5C5C]Sadde[/color][/b] and [b][color=#00BF80]Bell[/color][/b]",
+"report_flags": "FF5C5C#FFB25C 00BF80#007BA7",
+"sections": ["Eclipse"]
+},
 {"title": "Weird physics in, worst physics out.",
 "url": "https://vast-journey-9935.herokuapp.com/posts/127",
 "title_extras": "SCP-914 in Terraria with [b][color=#D5732A]coppers[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b]",
@@ -128,9 +134,20 @@
 "title_extras": "[b][color=#6960EC]Jean[/color][/b], [b][color=#960018]Theo[/color][/b], [b][color=#960018]Ev[/color][/b] and [b][color=#960018]Rachel[/color][/b] in [b][color=#960018]Proximal[/color][/b]",
 "report_flags": "6960EC#800512 960018#682860"
 },
+{"title": "Lost in reflection",
+"url": "https://vast-journey-9935.herokuapp.com/posts/167",
+"title_extras": "[b][color=#960018]carmines[/color][/b] and [b][color=#6960EC]lotuses[/color][/b] in [b][color=#960018]MO[/color][/b]",
+"report_flags": "6960EC#800512 960018#682860"
+},
 {"title": "they may say I am a dreamer",
 "url": "https://vast-journey-9935.herokuapp.com/posts/137",
 "title_extras": "[b][color=#6960EC]lotuses[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b] in WWII France",
+"report_flags": "6960EC#800512 A0A0A0",
+"sections": ["Dreams of Freedom"]
+},
+{"title": "...but I'm not the only one",
+"url": "https://vast-journey-9935.herokuapp.com/posts/168",
+"title_extras": "[b][color=#6960EC]lotuses[/color][/b] and [b][color=#A0A0A0]silvers[/color][/b] in WWII America",
 "report_flags": "6960EC#800512 A0A0A0",
 "sections": ["Dreams of Freedom"]
 },
@@ -393,5 +410,10 @@
 "url": "https://vast-journey-9935.herokuapp.com/posts/163",
 "title_extras": "Various [spoiler][b][color=#FFFFFF]Whites[/color][/b][/spoiler] and a [b][color=#8040BF]Miles[/color][/b] in the [b][color=#8040BF]Wasteland[/color][/b]",
 "report_flags": "FFFFFF 8040BF#602080"
+},
+{"title": "Return to sender. Please.",
+"url": "https://glowfic.dreamwidth.org/37314.html",
+"title_extras": "Thanjen in [b][color=#8040BF]Imbria[/color][/b]",
+"report_flags": "8040BF#602080"
 }
 ]
