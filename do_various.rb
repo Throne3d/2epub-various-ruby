@@ -50,7 +50,7 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, update_toc: :update_toc, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report}
+  processes = {tocs: :tocs, toc: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
       process = value
@@ -88,7 +88,7 @@ def main(args)
     main("process_#{group}")
   elsif (process == :repdo)
     main("tocs_#{group}")
-    main("get_#{group}")
+    main("qget_#{group}")
     main("report_#{group}")
     main("output_report_#{group}")
   elsif (process == :tocs)
@@ -158,7 +158,7 @@ def main(args)
       end
     end
     set_chapters_data(old_data, group)
-  elsif (process == :get)
+  elsif (process == :get || process == :qget)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Getting '#{group}'"
@@ -181,8 +181,9 @@ def main(args)
       
       handler.get_updated(chapter, notify: true)
       
-      set_chapters_data(chapter_list, group)
+      set_chapters_data(chapter_list, group) unless process == :qget
     end
+    set_chapters_data(chapter_list, group) if process == :qget
   elsif (process == :process or process == :report)
     chapter_list = get_chapters_data(group, trash_messages: true)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
