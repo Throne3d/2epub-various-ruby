@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-require 'ruby-prof'
 require 'fileutils'
 require 'pathname'
 require 'logger'
@@ -27,8 +26,6 @@ require 'handlers_outputs'
 include GlowficEpubMethods
 include GlowficEpub
 
-PROFILE = false
-
 FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
 FileUtils.mkdir "logs" unless File.directory?("logs")
 
@@ -40,7 +37,6 @@ class Array
   end
 end
 
-RubyProf.start if PROFILE
 def main(args)
   abort "Please input an argument (e.g. 'tocs_sandbox', 'get_sandbox', 'process_sandbox', 'output_sandbox')" unless args and args.size > 0
   
@@ -323,9 +319,4 @@ end
 
 if __FILE__ == $0
   main(ARGV)
-end
-if PROFILE
-  result = RubyProf.stop
-  printer = RubyProf::MultiPrinter.new(result)
-  printer.print(:path => '.', :profile => 'profile', :min_percent => 0.5)
 end
