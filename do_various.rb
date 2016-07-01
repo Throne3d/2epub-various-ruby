@@ -185,7 +185,7 @@ def main(args)
     end
     set_chapters_data(chapter_list, group) if process == :qget
   elsif (process == :process or process == :report)
-    chapter_list = get_chapters_data(group, trash_messages: true)
+    chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Processing '#{group}'" + (process == :report ? " (daily report)" : "")
     LOG.info "Chapter count: #{chapter_list.length}"
