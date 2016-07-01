@@ -553,8 +553,12 @@
       message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       message_attributes.uniq!
       if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
-        LOG.info "#{chapter.title}: unchanged, cached data used"
-        return chapter.replies
+        if chapter.replies.empty?
+          LOG.error "#{chapter.title}: cached data contains no replies; not using"
+        else
+          LOG.info "#{chapter.title}: unchanged, cached data used"
+          return chapter.replies
+        end
       end
       
       pages = chapter.pages
@@ -1109,8 +1113,12 @@
       message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       message_attributes.uniq!
       if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
-        LOG.info "#{chapter.title}: unchanged, cached data used"
-        return chapter.replies
+        if chapter.replies.empty?
+          LOG.error "#{chapter.title}: cached data contains no replies; not using"
+        else
+          LOG.info "#{chapter.title}: unchanged, cached data used"
+          return chapter.replies
+        end
       end
       
       pages = chapter.pages
