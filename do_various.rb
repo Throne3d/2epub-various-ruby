@@ -91,6 +91,13 @@ def main(args)
     main("qget_#{group}")
     main("report_#{group}")
     main("output_report_#{group}")
+  elsif (process == :trash)
+    LOG.info "Trashing (oldifying) #{group}"
+    
+    oldify_chapters_data(group)
+    data = get_old_data(group, trash_messages: true)
+    set_chapters_data(data, group)
+    LOG.info "Done."
   elsif (process == :tocs)
     chapter_list = GlowficEpub::Chapters.new(group: group)
     
