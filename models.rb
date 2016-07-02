@@ -332,6 +332,10 @@
       replies.each {|reply| reply.unpack! } if replies
     end
     
+    def entry_title
+      @entry_title || @title
+    end
+    
     def processed
       processed?
     end
