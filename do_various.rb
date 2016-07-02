@@ -95,7 +95,8 @@ def main(args)
     LOG.info "Trashing (oldifying) #{group}"
     
     oldify_chapters_data(group)
-    data = get_old_data(group, trash_messages: true)
+    data = get_chapters_data(group, trash_messages: true)
+    data.each { |chapter| chapter.processed = false }
     set_chapters_data(data, group)
     LOG.info "Done."
   elsif (process == :tocs)
