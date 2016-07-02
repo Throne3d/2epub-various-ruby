@@ -86,7 +86,7 @@ module GlowficIndexHandlers
           params[:replies] = prev_replies[params[:url]] if prev_replies.key?(params[:url])
           params[:authors] = prev_authors[params[:url]] if prev_authors.key?(params[:url])
           params[:entry_title] = prev_entry_titles[params[:url]] if prev_entry_titles.key?(params[:url])
-          params[:time_completed] = prev_time_completed[params[:url]] if prev_time_completed.key?(params[:url)
+          params[:time_completed] = prev_time_completed[params[:url]] if prev_time_completed.key?(params[:url])
         end
       end
       return GlowficEpub::Chapter.new(params)
