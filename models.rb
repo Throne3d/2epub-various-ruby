@@ -882,7 +882,10 @@
         self.instance_variable_set var, val unless varname == "parent" or varname == "face" or varname == "author"
       end
       
-      chapter.entry = self if post_type == PostType::ENTRY
+      if post_type == PostType::ENTRY
+        chapter.entry = self
+        chapter.entry_title = self.entry_title if self.entry_title
+      end
       
       parent = json_hash['parent'] or json_hash['@parent']
       author = json_hash['author'] or json_hash['@author']
