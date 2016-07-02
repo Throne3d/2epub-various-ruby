@@ -28,6 +28,9 @@ module GlowficIndexHandlers
     def prev_entry_titles
       @prev_entry_titles ||= get_prev_chapter_detail(group, detail: :entry_title, only_present: true)
     end
+    def prev_time_completed
+      @prev_time_completed ||= get_prev_chapter_detail(group, detail: :time_completed, only_present: true)
+    end
     def initialize(options = {})
       @group = options[:group] if options.key?(:group)
     end
@@ -82,7 +85,8 @@ module GlowficIndexHandlers
           params[:entry] = prev_entries[params[:url]] if prev_entries.key?(params[:url])
           params[:replies] = prev_replies[params[:url]] if prev_replies.key?(params[:url])
           params[:authors] = prev_authors[params[:url]] if prev_authors.key?(params[:url])
-          params[:entry_title] = prev_entry_titles[params[:url]] if prev_entry_titles.key?(params[:entry_title])
+          params[:entry_title] = prev_entry_titles[params[:url]] if prev_entry_titles.key?(params[:url])
+          params[:time_completed] = prev_time_completed[params[:url]] if prev_time_completed.key?(params[:url)
         end
       end
       return GlowficEpub::Chapter.new(params)
