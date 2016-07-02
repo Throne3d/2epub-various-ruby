@@ -50,7 +50,7 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report, test1: :test1, test2: :test2}
+  processes = {tocs: :tocs, toc: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report, test1: :test1, test2: :test2, trash: :trash}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
       process = value
