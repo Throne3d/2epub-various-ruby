@@ -332,6 +332,10 @@
       replies.each {|reply| reply.unpack! } if replies
     end
     
+    def entry_title
+      @entry_title || @title
+    end
+    
     def processed
       processed?
     end
@@ -637,9 +641,12 @@
       @chapter.entry_title
     end
     def entry_title=(newval)
-      return (@chapter.entry_title=newval) if @chapter
-      @entry_title = newval
-      @push_title = true
+      if @chapter
+        @chapter.entry_title = newval
+      else
+        @push_title = true
+        @entry_title = newval
+      end
     end
     
     def chapter=(newval)
@@ -875,7 +882,10 @@
         self.instance_variable_set var, val unless varname == "parent" or varname == "face" or varname == "author"
       end
       
-      chapter.entry = self if post_type == PostType::ENTRY
+      if post_type == PostType::ENTRY
+        chapter.entry = self
+        chapter.entry_title = self.entry_title if self.entry_title
+      end
       
       parent = json_hash['parent'] or json_hash['@parent']
       author = json_hash['author'] or json_hash['@author']
