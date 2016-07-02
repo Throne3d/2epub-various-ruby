@@ -641,9 +641,12 @@
       @chapter.entry_title
     end
     def entry_title=(newval)
-      return (@chapter.entry_title=newval) if @chapter
-      @entry_title = newval
-      @push_title = true
+      if @chapter
+        @chapter.entry_title = newval
+      else
+        @push_title = true
+        @entry_title = newval
+      end
     end
     
     def chapter=(newval)
