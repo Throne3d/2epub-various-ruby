@@ -522,7 +522,7 @@
               LOG.info "[spoiler-box=Continuities]New updates #{early_time.strftime('%m-%d')}:"
               LOG.info "[list]"
               sec_upd_chapters.sort! do |chapter_thing1, chapter_thing2|
-                sect_diff = chapter_thing1[:chapter].sections <=> chapter_thing2[:chapter].sections
+                sect_diff = chapter_thing1[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)} <=> chapter_thing2[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)}
                 if sect_diff == 0
                   chapter_thing2[:first_update].time <=> chapter_thing1[:first_update].time
                 else
