@@ -406,6 +406,25 @@
       end
     end
     
+    def time_hiatus
+      if @time_hiatus.is_a?(String)
+        @time_hiatus = DateTime.strptime(@time_hiatus)
+      elsif @time_hiatus.is_a?(Date)
+        @time_hiatus = @time_hiatus.to_datetime
+      else
+        @time_hiatus
+      end
+    end
+    def time_hiatus=(val)
+      if val.is_a?(String)
+        @time_hiatus = DateTime.strptime(val)
+      elsif val.is_a?(Date)
+        @time_hiatus = val.to_datetime
+      else
+        @time_hiatus = val
+      end
+    end
+    
     def moieties
       @moieties if @moieties and not @moieties.empty?
       @moieties = []
