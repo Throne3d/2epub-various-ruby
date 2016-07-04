@@ -1168,9 +1168,27 @@
           post_ender = page_content.at_css('.post-ender')
           if post_ender
             things = [chapter.entry] + @replies
-            old_time = (chapter.time_completed ? chapter.time_completed : nil)
-            chapter.time_completed = things.last.try(:time)
-            LOG.info "#{chapter.title}: completed on '#{chapter.time_completed.strftime('%Y-%m-%d %H:%M')}'" + (old_time ? " (old time: #{old_time.strftime('%Y-%m-%d %H:%M')})" : "")
+            last_time = things.last.try(:time)
+            if not last_time
+              LOG.error "#{chapter.title}: ended but cannot get last_time. (???)"
+            elsif post_ender.text.downcase['ends'] or post_ender.text.downcase['complete']
+              old_time = chapter.time_completed
+              chapter.time_completed = last_time
+              
+              LOG.info "#{chapter.title}: completed on '#{date_display(chapter.time_completed)}'" + (old_time ? " (old time: #{date_display(old_time)})" : "")
+            elsif post_ender.text.downcase['hiatus']
+              old_time = chapter.time_hiatus
+              chapter.time_hiatus = last_time
+              chapter.time_completed = nil if chapter.time_completed and chapter.time_hiatus >= chapter.time_completed
+              
+              LOG.info "#{chapter.title}: hiatus on #{date_display(chapter.time_hiatus)}" + (old_time ? " (old time: #{date_display(old_time)})" : "")
+            else
+              LOG.error "#{chapter.title}: ended non-hiatus non-complete on #{date_display(last_time)} (???)"
+            end
+          elsif chapter.time_completed or chapter.time_hiatus
+            LOG.info "#{chapter.title}: no ender; wiping" + (chapter.time_completed ? " completed #{date_display(chapter.time_completed)}" : '') + (chapter.time_hiatus ? " hiatus #{date_display(chapter.time_hiatus)}" : '')
+            chapter.time_completed = nil
+            chapter.time_hiatus = nil
           end
         end
       end

@@ -151,6 +151,10 @@
     temp_starlight: "Starlight"
   }
   
+  def date_display(date, strf="%Y-%m-%d %H:%M")
+    date.try(:strftime, strf)
+  end
+  
   def get_page_location(page_url, options={})
     standardize_params(options)
     where = options.key?(:where) ? options[:where] : "web_cache"
