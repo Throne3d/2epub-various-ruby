@@ -87,24 +87,6 @@
 "title_extras": "(explicit) [b][color=#00BF80]Kib (Bell)[/color][/b] in [b][color=#FF0000]Valinor[/color][/b]",
 "report_flags": "00BF80#007BA7 FF0000"
 },
-{"title": "twilight of the idols, baby",
-"url": "https://vast-journey-9935.herokuapp.com/posts/153",
-"title_extras": "[b][color=#00BF80]Demon Cam[/color][/b] in the [b][color=#FF0000]Space Silmarillion[/color][/b]",
-"report_flags": "00BF80#007BA7 FF0000",
-"sections": ["Silmaril", "Defy Your Limitations"]
-},
-{"title": "we suffer greatly",
-"url": "https://vast-journey-9935.herokuapp.com/posts/157",
-"title_extras": "[b][color=#00BF80]Demon Cam[/color][/b] in the [b][color=#FF0000]Space Silmarillion[/color][/b]",
-"report_flags": "00BF80#007BA7 FF0000",
-"sections": ["Silmaril", "Defy Your Limitations"]
-},
-{"title": "obliterate me",
-"url": "https://vast-journey-9935.herokuapp.com/posts/160",
-"title_extras": "[b][color=#00BF80]Demon Cam[/color][/b] in the [b][color=#FF0000]Space Silmarillion[/color][/b]",
-"report_flags": "00BF80#007BA7 FF0000",
-"sections": ["Silmaril", "Defy Your Limitations"]
-},
 {"title": "it gazed back into me",
 "url": "https://vast-journey-9935.herokuapp.com/posts/170",
 "title_extras": "[b][color=#00BF80]Bells[/color][/b] and [b][color=#FF0000]Elves[/color][/b]",
@@ -128,11 +110,6 @@
 "title_extras": "[b][color=#00BF80]Kiri[/color][/b] in [b][color=#FF0000]Arda[/color][/b]",
 "report_flags": "00BF80#007BA7 FF0000",
 "sections": ["Silmaril"]
-},
-{"title": "mommy fix it",
-"url": "https://vast-journey-9935.herokuapp.com/posts/155",
-"title_extras": "[b][color=#00BF80]Lost Pen[/color][/b] in [b][color=#FF0000]Arda[/color][/b]",
-"report_flags": "00BF80#007BA7 FF0000"
 },
 {"title": "Fish out of Water",
 "url": "https://vast-journey-9935.herokuapp.com/posts/122",
@@ -217,12 +194,6 @@
 "title_extras": "[b][color=#000000]Terry[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in [b][color=#FF5C5C]Cardverse[/color][/b]",
 "report_flags": "000000 FF5C5C#FFB25C",
 "sections": ["Calibrilustrum"]
-},
-{"title": "Uninvited Guests Are Welcome Here",
-"url": "https://vast-journey-9935.herokuapp.com/posts/108",
-"title_extras": "[b][color=#8040BF]Milan[/color][/b] and [spoiler][b][color=#FFFFFF]Odette[/color][/b][/spoiler] and [spoiler][b][color=#FFFFFF]Illia[/color][/b][/spoiler] in their as-yet-unnamed world",
-"report_flags": "8040BF#602080 FFFFFF",
-"sections": ["Skylight Empire"]
 },
 {"title": "The Party Had Just Begun",
 "url": "https://glowfic.dreamwidth.org/27837.html",
