@@ -351,6 +351,7 @@
       first_last = options.key?(:first) ? (options[:first] != false ? :first : :last) : (options.key?(:last) ? (options[:last] != false ? :last : :first) : (options.key?(:first_last) ? options[:first_last] : :first))
       show_completed_before = options.key?(:completed) ? options[:completed] : (options.key?(:completed_before) ? options[:completed_before] : (DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0) - 1))
       show_completed_before = 0 unless show_completed_before
+      show_hiatus_before = show_completed_before
       show_new_after = options.key?(:early) ? options[:early] : (options.key?(:new_after) ? options[:new_after] : (DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0) - 1))
       show_last_update_time = options.key?(:show_last_update_time) ? options[:show_last_update_time] : false
       show_sections = options.key?(:show_sections) ? options[:show_sections] : false
@@ -361,6 +362,7 @@
       last_update = chapterthing[:last_update]
       latest_update = chapterthing[:latest_update]
       completed = (chapter.time_completed and chapter.time_completed <= show_completed_before)
+      hiatus = (chapter.time_hiatus and chapter.time_hiatus <= show_hiatus_before)
       url_thing = (first_last == :first ? first_update : (first_last == :last ? last_update : latest_update))
       @errors << "#{chapter} has no url_thing! (first_last: #{first_last})" unless url_thing
       
@@ -389,12 +391,16 @@
       
       show_last_author = false unless latest_update.author_str
       
+      @errors << "#{chapter}: both completed and hiatused" if completed and hiatus
+      
       str = "[*]"
       str << '[size=85]' + chapter.report_flags.strip + '[/size] ' if chapter.report_flags and not chapter.report_flags.strip.empty?
       str << "[url=#{url_thing.permalink}]" if url_thing
+      str << '[color=#9A534D]' if hiatus
       str << '[color=goldenrod]' if completed
       str << "#{chapter.entry_title}"
       str << '[/color]' if completed
+      str << '[/color]' if hiatus
       str << '[/url]' if url_thing
       str << ' (' + chapter.sections * '>' + ')' if show_sections and chapter.sections.present?
       str << ',' unless chapter.entry_title and chapter.entry_title[/[?,.!;]$/] #ends with ? or , or . or ! or ;
