@@ -647,7 +647,7 @@
     end
     
     def allowed_params
-      @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face, :entry_title, :page_no]
+      @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face, :entry_title, :page_no, :author_str]
     end
     
     def unpack!
@@ -818,6 +818,7 @@
     end
     
     def author_str
+      return @author_str if @author_str.present?
       return @author.moiety if @author and @author.is_a?(Author)
       return @author.to_s if @author
       return nil
