@@ -1045,6 +1045,7 @@
       
       params[:content] = message_element.at_css('.post-content').inner_html.strip
       params[:author] = get_author_by_id(character_id) if message_attributes.include?(:author)
+      params[:author_str] = author_name unless message_attributes.include?(:author)
       
       params[:id] = message_id
       params[:chapter] = @chapter
