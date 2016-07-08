@@ -823,6 +823,9 @@
       return @author.to_s if @author
       return nil
     end
+    def author_str=(val)
+      @author_str = val
+    end
     
     def initialize(params={})
       return if params.empty?
