@@ -748,9 +748,8 @@ module GlowficIndexHandlers
       
       if @group == :report
         report_json = ""
-        open('toc_report.json', 'r') do |report_toc|
-          report_json = report_toc.read
-        end
+        @group_folder = "web_cache/#{@group}"
+        report_json = get_page_data("http://pastebin.com/raw/srSHuGik", where: @group_folder, replace: true).strip
         list = JSON.parse(report_json)
         list.each do |thing|
           thing.keys.each do |key|
