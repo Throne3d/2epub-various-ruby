@@ -1128,6 +1128,7 @@
       @entry_title = nil
       @chapter = chapter
       @replies = []
+      @notify_extras = []
       pages.each do |page_url|
         page = giri_or_cache(page_url, replace: false, where: @group_folder)
         LOG.debug "nokogiri'd"
@@ -1176,18 +1177,18 @@
               old_time = chapter.time_completed
               chapter.time_completed = last_time
               
-              LOG.info "#{chapter.title}: completed on '#{date_display(chapter.time_completed)}'" + (old_time ? " (old time: #{date_display(old_time)})" : "")
+              @notify_extras << "completed on '#{date_display(chapter.time_completed)}'" + (old_time ? " (old time: #{date_display(old_time)})" : "")
             elsif post_ender.text.downcase['hiatus']
               old_time = chapter.time_hiatus
               chapter.time_hiatus = last_time
               chapter.time_completed = nil if chapter.time_completed and chapter.time_hiatus >= chapter.time_completed
               
-              LOG.info "#{chapter.title}: hiatus on #{date_display(chapter.time_hiatus)}" + (old_time ? " (old time: #{date_display(old_time)})" : "")
+              @notify_extras << "hiatus on #{date_display(chapter.time_hiatus)}" + (old_time ? " (old time: #{date_display(old_time)})" : "")
             else
               LOG.error "#{chapter.title}: ended non-hiatus non-complete on #{date_display(last_time)} (???)"
             end
           elsif chapter.time_completed or chapter.time_hiatus
-            LOG.info "#{chapter.title}: no ender; wiping" + (chapter.time_completed ? " completed #{date_display(chapter.time_completed)}" : '') + (chapter.time_hiatus ? " hiatus #{date_display(chapter.time_hiatus)}" : '')
+            @notify_extras << "no ender; wiping" + (chapter.time_completed ? " completed #{date_display(chapter.time_completed)}" : '') + (chapter.time_hiatus ? " hiatus #{date_display(chapter.time_hiatus)}" : '')
             chapter.time_completed = nil
             chapter.time_hiatus = nil
           end
@@ -1197,7 +1198,7 @@
       pages_effectual = (@replies.length * 1.0 / 25).ceil
       pages_effectual = 1 if pages_effectual < 1
       
-      LOG.info "#{chapter.title}: parsed #{pages_effectual} page#{pages_effectual == 1 ? '' : 's'}" if notify
+      LOG.info "#{chapter.title}: parsed #{pages_effectual} page#{pages_effectual == 1 ? '' : 's'}" + (@notify_extras.present? ? ", #{@notify_extras * ', '}" : '') if notify
       
       chapter.processed = message_attributes
       chapter.replies=@replies
