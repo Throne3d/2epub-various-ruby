@@ -572,43 +572,57 @@ module GlowficIndexHandlers
     end
     
     def board_to_block(options = {}, &block)
-      section_url = options[:section_url] if options.key?(:section_url)
+      board_url = options[:board_url] if options.key?(:board_url)
       
-      LOG.info "TOC Page: #{section_url}"
+      LOG.info "TOC Page: #{board_url}"
       
-      section_toc_data = get_page_data(section_url, replace: true)
-      section_toc = Nokogiri::HTML(section_toc_data)
+      board_toc_data = get_page_data(board_url, replace: true, headers: {"Accept" => "text/html"})
+      board_toc = Nokogiri::HTML(board_toc_data)
       
-      section_title_ele = section_toc.at_css("#content tr th")
-      section_title_ele.at_css("a").try(:remove)
-      section_name = section_title_ele.text.strip
+      content = board_toc.at_css('#content')
+      board_sections = content.css('tbody tr th')
       
-      chapter_sections = [section_name]
+      board_title_ele = content.at_css('tr th')
+      board_title_ele.at_css("a").try(:remove)
+      board_name = board_title_ele.text.strip
       
-      pages = section_toc.at_css('.pagination')
-      last_url = section_url
+      pages = board_toc.at_css('.pagination')
+      last_url = board_url
       if pages
         pages.at_css('a.last_page').try(:remove)
         pages.at_css('a.next_page').try(:remove)
-        last_url = get_absolute_url(pages.css('a').last[:href].strip, section_url)
+        last_url = get_absolute_url(pages.css('a').last[:href].strip, board_url)
       end
       
       previous_url = last_url
       while previous_url
         puts "URL: #{previous_url}"
-        board_toc_data = get_page_data(previous_url, replace: (previous_url != section_url))
+        board_toc_data = get_page_data(previous_url, replace: (previous_url != board_url), headers: {"Accept" => "text/html"})
         board_toc = Nokogiri::HTML(board_toc_data)
+        board_body = board_toc.at_css('tbody') #why the heck is the body not existing?
+        #board_tbody = board_toc.at_css('tbody')
         
-        chapters = board_toc.css("tr")
-        chapters = chapters.reverse
+        chapter_sections = [board_name]
+        
+        chapters = board_body.css('tr')
+        chapters.reverse! unless board_sections
         chapters.each do |chapter_row|
-          next if chapter_row.at_css('th')
+          thead = chapter_row.at_css('th')
+          next if thead and not thead.try(:[], :colspan)
+          
           no_post = chapter_row.at_css('.centered.padding-10')
           next if no_post and no_post.text["No posts"]
           
+          if thead
+            section_name = thead.at_css('a').try(:text).try(:strip)
+            chapter_sections = [board_name, section_name] if section_name
+            LOG.error "couldn't get section name for thead #{thead}" unless section_name
+            next
+          end
+          
           chapter_link = chapter_row.at_css('td a')
           chapter_title = chapter_link.text.strip
-          chapter_url = get_absolute_url(chapter_link["href"], section_url)
+          chapter_url = get_absolute_url(chapter_link["href"], board_url)
           
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
           
@@ -632,16 +646,16 @@ module GlowficIndexHandlers
         fic_toc_data = get_page_data(fic_toc_url, replace: true)
         fic_toc = Nokogiri::HTML(fic_toc_data)
         
-        sections = fic_toc.css("#content tr")
-        sections.each do |section|
-          next if section.at_css("th")
+        boards = fic_toc.css("#content tr")
+        boards.each do |board|
+          next if board.at_css("th")
           
-          section_link = section.at_css('a')
-          section_name = section_link.text.strip
-          next if section_name == "Site testing" or section_name == "Effulgence" or section_name == "Witchlight"
-          section_url = get_absolute_url(section_link["href"], fic_toc_url)
+          board_link = board.at_css('a')
+          board_name = board_link.text.strip
+          next if board_name == "Site testing" or board_name == "Effulgence" or board_name == "Witchlight"
+          board_url = get_absolute_url(board_link["href"], fic_toc_url)
           
-          board_to_block(section_url: section_url) do |chapter_details|
+          board_to_block(board_url: board_url) do |chapter_details|
             chapter_list << chapter_details
             if block_given?
               yield chapter_details
@@ -651,7 +665,7 @@ module GlowficIndexHandlers
         return chapter_list
       elsif fic_toc_url[/\/boards\/\d+/]
         chapter_list = GlowficEpub::Chapters.new
-        board_to_block(section_url: fic_toc_url) do |chapter_details|
+        board_to_block(board_url: fic_toc_url) do |chapter_details|
           chapter_list << chapter_details
           if block_given?
             yield chapter_details
