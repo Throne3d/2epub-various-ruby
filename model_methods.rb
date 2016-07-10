@@ -190,6 +190,7 @@
     end
     
     save_path = options[:save_path] if options.key?(:save_path)
+    headers = options[:headers] if options.key?(:headers)
     
     retries = 3
     if options.key?(:do_retry)
@@ -219,8 +220,10 @@
     
     success = false
     has_retried = false
+    param_hash = {ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE, allow_redirections: :safe}
+    param_hash.merge!(headers) if headers
     begin
-      open(file_url, {ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE, allow_redirections: :safe}) do |webpage| #EUGH UGLY HACK PLEASE FIX MAYBE?
+      open(file_url, param_hash) do |webpage| #EUGH UGLY HACK PLEASE FIX MAYBE?
         open(save_path, 'w') do |file|
           file.write webpage.read
         end
