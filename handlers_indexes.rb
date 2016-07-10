@@ -658,6 +658,8 @@ module GlowficIndexHandlers
           end
         end
         return chapter_list
+      else
+        raise(ArgumentException, "Chapter URL is not /boards or /boards/:id – failed")
       end
     end
   end
