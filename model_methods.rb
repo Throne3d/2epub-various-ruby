@@ -76,15 +76,19 @@
     temp_starlight: [:temp_starlight, :starlight],
     report: [:report, :daily],
     mwf_leaf: [:mwf_leaf, :mwf_1, :mwf, :leaf],
-    mwf_lioncourt: [:mwf_lion, :mwf_lioncourt, :mwf_2, :lioncourt, :lion]
+    mwf_lioncourt: [:mwf_lion, :mwf_lioncourt, :mwf_2, :lioncourt, :lion],
+    opalescence: [:opal, :opalescence],
+    zodiac: [:zodiac]
   }
-  FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie, :throne]
+  FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie, :throne, :lintamande, :test, :report, :mwf_leaf, :mwf_lioncourt]
   FIC_TOCS = {
     #Continuities
     effulgence: "http://edgeofyourseat.dreamwidth.org/2121.html?style=site",
     incandescence: "http://alicornutopia.dreamwidth.org/7441.html?style=site",
     pixiethreads: "http://pixiethreads.dreamwidth.org/613.html?style=site",
     radon: "http://radon-absinthe.dreamwidth.org/295.html?style=site",
+    opalescence: "https://vast-journey-9935.herokuapp.com/boards/12",
+    zodiac: "https://vast-journey-9935.herokuapp.com/boards/7",
     
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
@@ -111,6 +115,8 @@
     incandescence: "Alicorn & Aestrix",
     pixiethreads: "Aestrix & Kappa",
     radon: "Kappa & AndaisQ",
+    opalescence: "Moriwen & Throne",
+    zodiac: "Pedro & Throne",
     
     glowfic: "Misc",
     constellation: "Misc",
@@ -133,6 +139,8 @@
     incandescence: "Incandescence",
     pixiethreads: "Pixiethreads",
     radon: "Radon Absinthe",
+    opalescence: "Opalescence",
+    zodiac: "Zodiac",
     
     glowfic: "Glowfic Community",
     constellation: "Constellation",

@@ -558,7 +558,7 @@ module GlowficIndexHandlers
   end
   
   class ConstellationIndexHandler < IndexHandler
-    handles :constellation
+    handles :constellation, :opalescence, :zodiac
     def initialize(options = {})
       super(options)
     end
