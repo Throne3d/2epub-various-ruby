@@ -277,8 +277,12 @@ def main(args)
     html_match = Regexp.compile(/\<[^\>]*?\>/)
     word_match = Regexp.compile(/[\w']+/)
     
+    chapter_urls = []
+    
     chapter_list.each do |chapter|
       next unless chapter.entry
+      (LOG.info "Skipping duplicate: #{chapter}" and next) if chapter_urls.include?(chapter.url)
+      chapter_urls << chapter.url
       
       msgs = [chapter.entry] + chapter.replies
       LOG.info "Processing chapter #{chapter}: #{msgs.length} message#{('s' unless msgs.length == 1)}"
