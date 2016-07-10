@@ -228,10 +228,10 @@
     
     success = false
     has_retried = false
-    param_hash = {ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE, allow_redirections: :safe}
-    param_hash.merge!(headers) if headers
     begin
-      open(file_url, param_hash) do |webpage| #EUGH UGLY HACK PLEASE FIX MAYBE?
+      param_hash = {:ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE, :allow_redirections => :all}
+      param_hash.merge!(headers) if headers
+      open(file_url, param_hash) do |webpage|
         open(save_path, 'w') do |file|
           file.write webpage.read
         end
