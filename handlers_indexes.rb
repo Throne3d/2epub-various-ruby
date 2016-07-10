@@ -638,9 +638,8 @@ module GlowficIndexHandlers
           
           section_link = section.at_css('a')
           section_name = section_link.text.strip
-          next if section_name == "Site testing"
+          next if section_name == "Site testing" or section_name == "Effulgence" or section_name == "Witchlight"
           section_url = get_absolute_url(section_link["href"], fic_toc_url)
-          next if section_url[/\/boards\/1($|\?)/]
           
           board_to_block(section_url: section_url) do |chapter_details|
             chapter_list << chapter_details
