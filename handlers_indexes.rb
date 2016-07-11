@@ -599,8 +599,7 @@ module GlowficIndexHandlers
         puts "URL: #{previous_url}"
         board_toc_data = get_page_data(previous_url, replace: (previous_url != board_url), headers: {"Accept" => "text/html"})
         board_toc = Nokogiri::HTML(board_toc_data)
-        board_body = board_toc.at_css('tbody') #why the heck is the body not existing?
-        #board_tbody = board_toc.at_css('tbody')
+        board_body = board_toc.at_css('tbody')
         
         chapter_sections = [board_name]
         
@@ -768,7 +767,19 @@ module GlowficIndexHandlers
       if @group == :report
         report_json = ""
         @group_folder = "web_cache/#{@group}"
-        report_json = get_page_data("http://pastebin.com/raw/srSHuGik", where: @group_folder, replace: true).strip
+        url = "http://pastebin.com/raw/srSHuGik"
+        file_path = get_page_location(url, where: @group_folder)
+        if File.file?(file_path)
+          open(file_path) do |old|
+            text = old.read
+            if text.strip.length > 10
+              open(file_path + '.bak', 'w') do |new|
+                new.write text
+              end
+            end
+          end
+        end
+        report_json = get_page_data(url, where: @group_folder, replace: true).strip
         list = JSON.parse(report_json)
         list.each do |thing|
           thing.keys.each do |key|
