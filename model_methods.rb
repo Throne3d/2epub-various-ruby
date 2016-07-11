@@ -88,9 +88,9 @@
     incandescence: "http://alicornutopia.dreamwidth.org/7441.html?style=site",
     pixiethreads: "http://pixiethreads.dreamwidth.org/613.html?style=site",
     radon: "http://radon-absinthe.dreamwidth.org/295.html?style=site",
-    opalescence: "https://vast-journey-9935.herokuapp.com/boards/12",
-    zodiac: "https://vast-journey-9935.herokuapp.com/boards/7",
-    silmaril: "https://vast-journey-9935.herokuapp.com/boards/18",
+    opalescence: "https://vast-journey-9935.herokuapp.com/boards/12/",
+    zodiac: "https://vast-journey-9935.herokuapp.com/boards/7/",
+    silmaril: "https://vast-journey-9935.herokuapp.com/boards/18/",
     
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
@@ -105,12 +105,12 @@
     peterverse: "http://peterverse.dreamwidth.org/1643.html?style=site",
     maggie: "http://maggie-of-the-owls.dreamwidth.org/454.html?style=site",
     throne: "https://theotrics.dreamwidth.org/268.html?style=site",
-    lintamande: "https://vast-journey-9935.herokuapp.com/users/34",
+    lintamande: "https://vast-journey-9935.herokuapp.com/users/34/",
     
     #Test
-    test: "https://vast-journey-9935.herokuapp.com/boards/7",
+    test: "https://vast-journey-9935.herokuapp.com/boards/7/",
     temp_starlight: "https://alicornutopia.dreamwidth.org/29069.html",
-    report: "https://vast-journey-9935.herokuapp.com/boards"
+    report: "https://vast-journey-9935.herokuapp.com/boards/"
   }
   FIC_AUTHORSTRINGS = {
     effulgence: "Alicorn & Kappa",
