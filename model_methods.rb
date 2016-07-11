@@ -78,7 +78,8 @@
     mwf_leaf: [:mwf_leaf, :mwf_1, :mwf, :leaf],
     mwf_lioncourt: [:mwf_lion, :mwf_lioncourt, :mwf_2, :lioncourt, :lion],
     opalescence: [:opal, :opalescence],
-    zodiac: [:zodiac]
+    zodiac: [:zodiac],
+    silmaril: [:silm, :silmaril]
   }
   FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie, :throne, :lintamande, :test, :report, :mwf_leaf, :mwf_lioncourt]
   FIC_TOCS = {
@@ -89,6 +90,7 @@
     radon: "http://radon-absinthe.dreamwidth.org/295.html?style=site",
     opalescence: "https://vast-journey-9935.herokuapp.com/boards/12",
     zodiac: "https://vast-journey-9935.herokuapp.com/boards/7",
+    silmaril: "https://vast-journey-9935.herokuapp.com/boards/18",
     
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
@@ -117,6 +119,7 @@
     radon: "Kappa & AndaisQ",
     opalescence: "Moriwen & Throne",
     zodiac: "Pedro & Throne",
+    silmaril: "Alicorn & Lintamande",
     
     glowfic: "Misc",
     constellation: "Misc",
@@ -141,6 +144,7 @@
     radon: "Radon Absinthe",
     opalescence: "Opalescence",
     zodiac: "Zodiac",
+    silmaril: "Silmaril",
     
     glowfic: "Glowfic Community",
     constellation: "Constellation",

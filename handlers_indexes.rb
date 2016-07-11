@@ -737,7 +737,7 @@ module GlowficIndexHandlers
   end
   
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt
+    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :silmaril
     def initialize(options = {})
       super(options)
     end
@@ -880,6 +880,9 @@ module GlowficIndexHandlers
         #const_handler
         #TODO: Append the threads from the Constellation to list for this group!
         #TODO: Also make Silmaril world? Or whatever it was? Um. Uh. Oh, yes, make silmaril work to include the threads from Alicorn's index!
+      elsif @group == :silmaril
+        const_handler = ConstellationIndexHandler.new(group: @group)
+        #TODO: include the threads from Alicorn's index (if applicable? Telperion and such – ask to confirm.)
       end
       
       list.each do |item|
