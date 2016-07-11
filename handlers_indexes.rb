@@ -604,7 +604,7 @@ module GlowficIndexHandlers
         chapter_sections = [board_name]
         
         chapters = board_body.css('tr')
-        chapters.reverse! unless board_sections
+        chapters = chapters.reverse unless board_sections
         chapters.each do |chapter_row|
           thead = chapter_row.at_css('th')
           next if thead and not thead.try(:[], :colspan)
@@ -656,12 +656,12 @@ module GlowficIndexHandlers
       previous_url = last_url
       while previous_url
         puts "URL: #{previous_url}"
-        user_toc_data = get_page_data(previous_url, replace: (previous_url != board_url), headers: {"Accept" => "text/html"})
+        user_toc_data = get_page_data(previous_url, replace: (previous_url != user_url), headers: {"Accept" => "text/html"})
         user_toc = Nokogiri::HTML(user_toc_data)
         user_body = user_toc.at_css('tbody')
         
         chapters = user_body.css('tr')
-        chapters.reverse!
+        chapters = chapters.reverse
         chapters.each do |chapter_row|
           thead = chapter_row.at_css('th')
           next if thead
@@ -682,7 +682,7 @@ module GlowficIndexHandlers
         end
         
         temp_url = previous_url
-        previous_url = board_toc.at_css('.pagination a.previous_page').try(:[], :href)
+        previous_url = user_toc.at_css('.pagination a.previous_page').try(:[], :href)
         previous_url = get_absolute_url(previous_url.strip, temp_url) if previous_url
       end
     end
@@ -730,6 +730,7 @@ module GlowficIndexHandlers
             yield chapter_details
           end
         end
+        return chapter_list
       else
         raise(ArgumentException, "Chapter URL is not /boards or /boards/:id or /users/:id – failed")
       end
@@ -737,7 +738,7 @@ module GlowficIndexHandlers
   end
   
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt
+    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :silmaril
     def initialize(options = {})
       super(options)
     end
@@ -790,15 +791,29 @@ module GlowficIndexHandlers
           {url: "http://alicornutopia.dreamwidth.org/30911.html",
           title: "spear of ice",
           sections: ["Elentári"]},
+          {url: "http://alicornutopia.dreamwidth.org/31535.html",
+          title: "galaxy of stars",
+          sections: ["Elentári"]},
           {url: "http://alicornutopia.dreamwidth.org/29954.html",
           title: "interplanar studies",
           sections: ["Telperion"]},
           {url: "http://alicornutopia.dreamwidth.org/30387.html",
           title: "applied theology",
           sections: ["Telperion"]},
+          {url: "http://alicornutopia.dreamwidth.org/31134.html",
+          title: "high-energy physics",
+          sections: ["Telperion"]},
           {url: "http://lintamande.dreamwidth.org/513.html",
           title: "don't touch me",
-          sections: ["Promise in Arda"]}
+          sections: ["Promise in Arda"]},
+          {url: "http://alicornutopia.dreamwidth.org/31354.html",
+          title: "Kib in Valinor",
+          sections: ["Kib in Valinor"]}
+        ]
+      elsif @group == :silmaril
+        [
+          #{}
+          #TODO: include the threads from Alicorn's index (if applicable? Telperion and such – ask to confirm.)
         ]
       end
       
@@ -875,11 +890,17 @@ module GlowficIndexHandlers
             end
           end
         end
-      elsif @group == :lintamande
-        const_handler = ConstellationIndexHandler.new(group: :lintamande)
-        #const_handler
-        #TODO: Append the threads from the Constellation to list for this group!
-        #TODO: Also make Silmaril world? Or whatever it was? Um. Uh. Oh, yes, make silmaril work to include the threads from Alicorn's index!
+      elsif @group == :lintamande or @group == :silmaril
+        const_handler = ConstellationIndexHandler.new(group: @group)
+        chapter_list = GlowficEpub::Chapters.new(sort_chapters: true)
+        const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group]) do |chapter|
+          if block_given?
+            yield chapter
+          end
+        end
+        const_chapters.each do |chapter|
+          chapter_list << chapter
+        end
       end
       
       list.each do |item|

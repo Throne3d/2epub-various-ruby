@@ -402,6 +402,9 @@
       @replies ||= []
     end
     def sections
+      if @sections.is_a?(String)
+        @sections = [@sections]
+      end
       @sections ||= []
     end
     def authors
