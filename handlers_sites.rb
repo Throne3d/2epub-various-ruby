@@ -175,7 +175,7 @@
       content = current_page.at_css('#content')
       
       nsfw_warning = content.at_css('.panel.callout').try(:at_css, '.text-center').try(:text)
-      if nsfw_warning and nsfw_warning["Discretion Advised"]
+      if nsfw_warning.try(:[], 'Discretion Advised')
         LOG.debug "Got a discretion advised – trying to fix with Mechanize"
         page = @mech_agent.get(url)
         discretion_form = nil
@@ -191,7 +191,7 @@
           
           nsfw_warning = current_page.at_css('.panel.callout').try(:at_css, '.text-center').try(:text)
         end
-        if nsfw_warning["Discretion Advised"]
+        if nsfw_warning.try(:[], 'Discretion Advised')
           LOG.error "Failed to fix discretion advised warning for page #{url}"
           return nil
         else
