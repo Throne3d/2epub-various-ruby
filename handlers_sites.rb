@@ -121,6 +121,8 @@
       @moiety_cache = {}
       
       @downloaded = []
+      
+      @mech_agent = Mechanize.new
     end
     
     def get_comment_link(comment)
@@ -182,7 +184,7 @@
         nsfw_warning_text = nsfw_warning.at_css('.text-center')
         if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
           LOG.debug "Got a discretion advised – trying to fix with Mechanize"
-          page = mech_agent.get(first_page)
+          page = @mech_agent.get(first_page)
           actual_page = page.form.submit
           
           remove_giri_cache(first_page, where: @group_folder)
@@ -246,7 +248,7 @@
             nsfw_warning_text = nsfw_warning.at_css('.text-center')
             if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
               LOG.debug "Got a discretion advised – trying to fix with Mechanize"
-              page = mech_agent.get(check_page)
+              page = @mech_agent.get(check_page)
               actual_page = page.form.submit
               
               remove_giri_cache(check_page, where: 'temp')
@@ -308,7 +310,7 @@
         nsfw_warning_text = nsfw_warning.at_css('.text-center')
         if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
           LOG.debug "Got a discretion advised – trying to fix with Mechanize"
-          page = mech_agent.get(main_page)
+          page = @mech_agent.get(main_page)
           actual_page = page.form.submit
           
           remove_giri_cache(main_page, where: @group_folder)
@@ -641,7 +643,7 @@
           nsfw_warning_text = nsfw_warning.at_css('.text-center')
           if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
             LOG.debug "Got a discretion advised – trying to fix with Mechanize"
-            page = mech_agent.get(page_url)
+            page = @mech_agent.get(page_url)
             actual_page = page.form.submit
             
             remove_giri_cache(page_url, where: @group_folder)
