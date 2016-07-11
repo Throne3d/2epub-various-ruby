@@ -722,8 +722,16 @@ module GlowficIndexHandlers
           end
         end
         return chapter_list
+      elsif fic_toc_url[/\/users\/\d+/]
+        chapter_list = GlowficEpub::Chapters.new(sort_chapters: true)
+        userlist_to_block(user_url: fic_toc_url) do |chapter_details|
+          chapter_list << chapter_details
+          if block_given?
+            yield chapter_details
+          end
+        end
       else
-        raise(ArgumentException, "Chapter URL is not /boards or /boards/:id – failed")
+        raise(ArgumentException, "Chapter URL is not /boards or /boards/:id or /users/:id – failed")
       end
     end
   end
