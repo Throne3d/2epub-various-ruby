@@ -343,10 +343,10 @@
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed
+    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed, :report_flags_processed
     
     param_transform :name => :title, :name_extras => :title_extras
-    serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL
+    serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
     
     def allowed_params
       @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :report_flags, :processed]
@@ -366,6 +366,10 @@
     end
     def processed?
      @processed ||= false
+    end
+    
+    def report_flags_processed?
+      report_flags_processed
     end
     
     def group
