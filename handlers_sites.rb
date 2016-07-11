@@ -63,6 +63,21 @@
       @giricache[where][page] = giri if predone
       giri
     end
+    def remove_cache(page, options = {})
+      where = options.key?(:where) ? options[:where] : nil
+      return unless @downcache.key?(where)
+      @downcache[where].delete(page)
+    end
+    def remove_giri_cache(page, options = {})
+      where = options.key?(:where) ? options[:where] : nil
+      return unless @giricache.key?(where)
+      old_cache = nil
+      if @giricache[where].key?(page)
+        old_cache = @giricache[where][page]
+        @giricache[where][page] = nil
+      end
+      old_cache
+    end
     def nokogiri_or_cache(page, options={})
       giri_or_cache(page, options)
     end
@@ -166,9 +181,21 @@
       if nsfw_warning
         nsfw_warning_text = nsfw_warning.at_css('.text-center')
         if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
-          @error = "Page had discretion advised warning!"
-          @success = false
-          return
+          LOG.debug "Got a discretion advised – trying to fix with Mechanize"
+          page = mech_agent.get(first_page)
+          actual_page = page.form.submit
+          
+          remove_giri_cache(first_page, where: @group_folder)
+          save_down(first_page, actual_page.content, where: @group_folder)
+          first_page_stuff = giri_or_cache(first_page, where: @group_folder)
+          first_page_content = first_page_stuff.at_css('#content')
+          if first_page_content.at_css('.panel.callout').try(:at_css, '.text-center')
+            @error = "Page had discretion advised warning! (Not fixed by Mechanize)"
+            @success = false
+            return
+          else
+            LOG.debug "Fixed with Mechanize"
+          end
         end
       end
       
@@ -214,6 +241,28 @@
           old_content = page_old.at_css('#content')
           new_content = page_new.at_css('#content')
           
+          nsfw_warning = new_content.at_css('.panel.callout')
+          if nsfw_warning
+            nsfw_warning_text = nsfw_warning.at_css('.text-center')
+            if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
+              LOG.debug "Got a discretion advised – trying to fix with Mechanize"
+              page = mech_agent.get(check_page)
+              actual_page = page.form.submit
+              
+              remove_giri_cache(check_page, where: 'temp')
+              save_down(check_page, actual_page.content, where: 'temp')
+              page_new = giri_or_cache(check_page, where: 'temp')
+              new_content = first_page_stuff.at_css('#content')
+              if new_content.at_css('.panel.callout').try(:at_css, '.text-center')
+                @error = "Page had discretion advised warning! (Not fixed by Mechanize)"
+                @success = false
+                return
+              else
+                LOG.debug "Fixed with Mechanize"
+              end
+            end
+          end
+          
           old_content.at_css(".entry-interaction-links").try(:remove)
           new_content.at_css(".entry-interaction-links").try(:remove)
           
@@ -258,7 +307,18 @@
       if nsfw_warning
         nsfw_warning_text = nsfw_warning.at_css('.text-center')
         if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
-          @error = "Page had discretion advised warning!"
+          LOG.debug "Got a discretion advised – trying to fix with Mechanize"
+          page = mech_agent.get(main_page)
+          actual_page = page.form.submit
+          
+          remove_giri_cache(main_page, where: @group_folder)
+          save_down(main_page, actual_page.content, where: @group_folder)
+          main_page_stuff = giri_or_cache(main_page, where: @group_folder)
+          if main_page_stuff.at_css('.panel.callout').try(:at_css, '.text-center')
+            @error = "Page had discretion advised warning! (Not fixed by Mechanize)"
+          else
+            LOG.debug "Fixed with Mechanize"
+          end
         end
       end
       
@@ -580,7 +640,19 @@
         if nsfw_warning
           nsfw_warning_text = nsfw_warning.at_css('.text-center')
           if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
-            (LOG.error('Page had discretion advised warning!') and break)
+            LOG.debug "Got a discretion advised – trying to fix with Mechanize"
+            page = mech_agent.get(page_url)
+            actual_page = page.form.submit
+            
+            remove_giri_cache(page_url, where: @group_folder)
+            save_down(page_url, actual_page.content, where: @group_folder)
+            page = giri_or_cache(page_url, where: @group_folder)
+            page_content = page.at_css('#content')
+            if page_content.at_css('.panel.callout').try(:at_css, '.text-center')
+              (LOG.error('Page had discretion advised warning! (Not fixed by Mechanize)') and break)
+            else
+              LOG.debug "Fixed with Mechanize"
+            end
           end
         end
         

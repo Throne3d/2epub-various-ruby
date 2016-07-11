@@ -7,6 +7,8 @@ require 'json'
 require 'uri'
 require 'open-uri'
 require 'open_uri_redirections'
+require 'rubygems'
+require 'mechanize'
 require 'openssl'
 require 'cgi'
 require 'date'
@@ -49,6 +51,8 @@ def main(args)
   end
   process = :""
   group = :""
+  
+  mech_agent = Mechanize.new
   
   processes = {tocs: :tocs, toc: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report, test1: :test1, test2: :test2, trash: :trash}
   processes.each do |key, value|
