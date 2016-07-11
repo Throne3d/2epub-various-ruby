@@ -656,7 +656,7 @@ module GlowficIndexHandlers
       previous_url = last_url
       while previous_url
         puts "URL: #{previous_url}"
-        user_toc_data = get_page_data(previous_url, replace: (previous_url != board_url), headers: {"Accept" => "text/html"})
+        user_toc_data = get_page_data(previous_url, replace: (previous_url != user_url), headers: {"Accept" => "text/html"})
         user_toc = Nokogiri::HTML(user_toc_data)
         user_body = user_toc.at_css('tbody')
         
@@ -682,7 +682,7 @@ module GlowficIndexHandlers
         end
         
         temp_url = previous_url
-        previous_url = board_toc.at_css('.pagination a.previous_page').try(:[], :href)
+        previous_url = user_toc.at_css('.pagination a.previous_page').try(:[], :href)
         previous_url = get_absolute_url(previous_url.strip, temp_url) if previous_url
       end
     end
