@@ -1,232 +1,232 @@
 ﻿@namespace epub "http://www.idpf.org/2007/ops";
 h3.entry-title {
-    border-bottom: solid 1px #aaa;
-    padding-bottom: 5px;
+  border-bottom: solid 1px #aaa;
+  padding-bottom: 5px;
 }
 body {
-    font-family: sans-serif;
+  font-family: sans-serif;
 }
 div[data-type] {
-    padding-top: 10px;
+  padding-top: 10px;
 }
 .user {
-    border: solid 1px #aaa;
-    padding: 10px;
-    background-color: #eee;
-    color: #111111;
+  border: solid 1px #aaa;
+  padding: 10px;
+  background-color: #eee;
+  color: #111111;
 
-    break-inside: avoid-column;
-    -webkit-column-break-inside: avoid;
-    column-break-inside: avoid;
-    page-break-inside: avoid;
+  break-inside: avoid-column;
+  -webkit-column-break-inside: avoid;
+  column-break-inside: avoid;
+  page-break-inside: avoid;
 
-    break-after: avoid-column;
-    -webkit-column-break-after: avoid;
-    column-break-after: avoid;
-    page-break-after: avoid;
+  break-after: avoid-column;
+  -webkit-column-break-after: avoid;
+  column-break-after: avoid;
+  page-break-after: avoid;
 
-    display: inline-block;
-    width: 95%;
+  display: inline-block;
+  width: 95%;
 }
 .usericon {
-    padding: 0;
-    margin: 0;
-    display: table-cell;
-    vertical-align: middle;
-    max-height: 102px;
-    max-width: 102px;
-    width: 4em;
+  padding: 0;
+  margin: 0;
+  display: table-cell;
+  vertical-align: middle;
+  max-height: 102px;
+  max-width: 102px;
+  width: 4em;
 }
 .usericon img, .usericon div {
-    display: table-cell;
-    border: solid 1px #aaa;
-    max-height: 102px;
-    max-width: 102px;
-    height: 4em;
-    width: 4em;
+  display: table-cell;
+  border: solid 1px #aaa;
+  max-height: 102px;
+  max-width: 102px;
+  height: 4em;
+  width: 4em;
 }
 .username {
-    display: table-cell;
-    padding: 10px 10px 10px 15px;
-    vertical-align: bottom;
-    font-size: 90%;
-    font-weight: 600;
+  display: table-cell;
+  padding: 10px 10px 10px 15px;
+  vertical-align: bottom;
+  font-size: 90%;
+  font-weight: 600;
 }
 .alicorn .user {
-    background-color: #bfffc8; /*hsl(128, 100%, 87%)*/
-    background-color: rgba(0, 191, 128, 0.3);
-    color: inherit;
+  background-color: #bfffc8; /*hsl(128, 100%, 87%)*/
+  background-color: rgba(0, 191, 128, 0.3);
+  color: inherit;
 }
 .aestrix .user {
-    background-color: #bfdfff; /*hsl(210, 100%, 87%)*/
-    background-color: rgba(0, 128, 255, 0.3);
-    color: inherit;
+  background-color: #bfdfff; /*hsl(210, 100%, 87%)*/
+  background-color: rgba(0, 128, 255, 0.3);
+  color: inherit;
 }
 .kappa .user {
-    background-color: #dfcfef; /*hsl(270, 50%, 87%)*/
-    background-color: rgba(128, 64, 191, 0.3);
-    color: inherit;
+  background-color: #dfcfef; /*hsl(270, 50%, 87%)*/
+  background-color: rgba(128, 64, 191, 0.3);
+  color: inherit;
 }
 .adelene .user {
-    background-color: #f0dace; /*hsl(21, 53%, 87%)*/
-    background-color: rgba(98, 55, 31, 0.3);
-    color: inherit;
+  background-color: #f0dace; /*hsl(21, 53%, 87%)*/
+  background-color: rgba(98, 55, 31, 0.3);
+  color: inherit;
 }
 .andaisq .user {
-    background-color: #ffbfd5; /*hsl(339, 100%, 87%)*/
-    background-color: rgba(255, 64, 128, 0.3);
-    color: inherit;
+  background-color: #ffbfd5; /*hsl(339, 100%, 87%)*/
+  background-color: rgba(255, 64, 128, 0.3);
+  color: inherit;
 }
 .anthusiasm .user {
-    background-color: #ffdfbf; /*hsl(30, 100%, 87%)*/
-    background-color: rgba(255, 128, 0, 0.3);
-    color: inherit;
+  background-color: #ffdfbf; /*hsl(30, 100%, 87%)*/
+  background-color: rgba(255, 128, 0, 0.3);
+  color: inherit;
 }
 .anya .user {
-    background-color: #f4eaff; /*hsl(269, 100%, 96%)*/
-    background-color: rgba(192, 128, 255, 0.3);
-    color: inherit;
+  background-color: #f4eaff; /*hsl(269, 100%, 96%)*/
+  background-color: rgba(192, 128, 255, 0.3);
+  color: inherit;
 }
 .atheistcanuck .user, .andygal .user {
-    background-color: #fdc1e8;
-    background-color: rgba(125, 5, 82, 0.3);
-    color: inherit;
+  background-color: #fdc1e8;
+  background-color: rgba(125, 5, 82, 0.3);
+  color: inherit;
 }
 .benedict .user {
-    background-color: #696969; /*hsl(0, 0%, 41%)*/
-    background-color: rgba(105, 105, 105, 0.7);
-    color: #dddddd;
+  background-color: #696969; /*hsl(0, 0%, 41%)*/
+  background-color: rgba(105, 105, 105, 0.7);
+  color: #dddddd;
 }
 .curiousdiscoverer .user, .bluelantern .user, .faceless .user {
-    background-color: #a0a0a0; /*hsl(0, 0%, 63%)*/
-    background-color: rgba(160, 160, 160, 0.7);
-    color: #111111;
+  background-color: #a0a0a0; /*hsl(0, 0%, 63%)*/
+  background-color: rgba(160, 160, 160, 0.7);
+  color: #111111;
 }
 .deanno .user {
-    background-color: #ffffbf; /*hsl(60, 100%, 87%)*/
-    background-color: rgba(255, 255, 0, 0.3);
-    color: inherit;
+  background-color: #ffffbf; /*hsl(60, 100%, 87%)*/
+  background-color: rgba(255, 255, 0, 0.3);
+  color: inherit;
 }
 .diaeresis .user {
-    background-color: #bfffbf; /*hsl(120, 100%, 87%)*/
-    background-color: rgba(0, 96, 0, 0.3);
-    color: inherit;
+  background-color: #bfffbf; /*hsl(120, 100%, 87%)*/
+  background-color: rgba(0, 96, 0, 0.3);
+  color: inherit;
 }
 .erinflight .user {
-    background-color: #e9b996; /*hsl(26, 66%, 87%)*/
-    background-color: rgba(213, 115, 42, 0.3);
-    color: inherit;
+  background-color: #e9b996; /*hsl(26, 66%, 87%)*/
+  background-color: rgba(213, 115, 42, 0.3);
+  color: inherit;
 }
 .eva .user, .evenstar .user {
-    background-color: #bfbfff; /*hsl(240, 100%, 87%)*/
-    background-color: rgba(0, 0, 128, 0.3);
-    color: inherit;
+  background-color: #bfbfff; /*hsl(240, 100%, 87%)*/
+  background-color: rgba(0, 0, 128, 0.3);
+  color: inherit;
 }
 .kel .user {
-    background-color: #eaffff; /*hsl(180, 100%, 96%)*/
-    background-color: rgba(0, 207, 207, 0.3);
-    color: inherit;
+  background-color: #eaffff; /*hsl(180, 100%, 96%)*/
+  background-color: rgba(0, 207, 207, 0.3);
+  color: inherit;
 }
 .kuuskytkolme .user {
-    background-color: #e7f1cd; /*hsl(77, 56%, 87%)*/
-    background-color: rgba(153, 197, 52, 0.3);
-    color: inherit;
+  background-color: #e7f1cd; /*hsl(77, 56%, 87%)*/
+  background-color: rgba(153, 197, 52, 0.3);
+  color: inherit;
 }
 .lambda .user {
-    background-color: #bfffff; /*hsl(180, 100%, 87%)*/
-    background-color: rgba(0, 128, 128, 0.3);
-    color: inherit;
+  background-color: #bfffff; /*hsl(180, 100%, 87%)*/
+  background-color: rgba(0, 128, 128, 0.3);
+  color: inherit;
 }
 .link .user, .linkhyrule5 .user {
-    background-color: #d5aaff; /*hsl(270, 100%, 83%)*/
-    background-color: rgba(127, 0, 255, 0.3);
-    color: inherit;
+  background-color: #d5aaff; /*hsl(270, 100%, 83%)*/
+  background-color: rgba(127, 0, 255, 0.3);
+  color: inherit;
 }
 .lintamande .user {
-    background-color: #ffbfbf; /*hsl(0, 100%, 87%)*/
-    background-color: rgba(255, 0, 0, 0.3);
-    color: inherit;
+  background-color: #ffbfbf; /*hsl(0, 100%, 87%)*/
+  background-color: rgba(255, 0, 0, 0.3);
+  color: inherit;
 }
 .maggie .user, .maggieoftheowls .user {
-    background-color: #ffffff; /*hsl(0, 0%, 100%)*/
-    background-color: rgba(255, 255, 255, 0.7);
-    color: #111111;
+  background-color: #ffffff; /*hsl(0, 0%, 100%)*/
+  background-color: rgba(255, 255, 255, 0.7);
+  color: #111111;
 }
 .marrinikari .user, .marri .user {
-    background-color: #efcfcf; /*hsl(0, 50%, 87%)*/
-    background-color: rgba(191, 64, 64, 0.3);
-    color: inherit;
+  background-color: #efcfcf; /*hsl(0, 50%, 87%)*/
+  background-color: rgba(191, 64, 64, 0.3);
+  color: inherit;
 }
 .moriwen .user {
-    background-color: #cac6f9; /*hsl(245, 81%, 88%)*/
-    background-color: rgba(105, 96, 236, 0.3);
-    color: inherit;
+  background-color: #cac6f9; /*hsl(245, 81%, 88%)*/
+  background-color: rgba(105, 96, 236, 0.3);
+  color: inherit;
 }
 .nemo .user {
-    background-color: #ffefbf; /*hsl(45, 100%, 87%)*/
-    background-color: rgba(255, 191, 0, 0.3);
-    color: inherit;
+  background-color: #ffefbf; /*hsl(45, 100%, 87%)*/
+  background-color: rgba(255, 191, 0, 0.3);
+  color: inherit;
 }
 .pdv .user, .plaindealingvillain .user {
-    background-color: #efdfcf; /*hsl(30, 50%, 87%)*/
-    background-color: rgba(191, 128, 64, 0.3);
-    color: inherit;
+  background-color: #efdfcf; /*hsl(30, 50%, 87%)*/
+  background-color: rgba(191, 128, 64, 0.3);
+  color: inherit;
 }
 .pedro .user {
-    background-color: #ffbfbf; /*hsl(0, 100%, 87%)*/
-    background-color: rgba(255, 92, 92, 0.3);
-    color: inherit;
+  background-color: #ffbfbf; /*hsl(0, 100%, 87%)*/
+  background-color: rgba(255, 92, 92, 0.3);
+  color: inherit;
 }
 .roboticlin .user {
-    background-color: #f4ffbf; /*hsl(70, 100%, 87%)*/
-    background-color: rgba(114, 140, 0, 0.3);
-    color: inherit;
+  background-color: #f4ffbf; /*hsl(70, 100%, 87%)*/
+  background-color: rgba(114, 140, 0, 0.3);
+  color: inherit;
 }
 .rockeye .user, .rockeye_stonetoe .user {
-    background-color: #000000; /*hsl(0, 0%, 0%)*/
-    background-color: rgba(0, 0, 0, 0.7);
-    color: #dddddd;
+  background-color: #000000; /*hsl(0, 0%, 0%)*/
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #dddddd;
 }
 .sine_salvatorem .user {
-    background-color: #bfffff;
-    background-color: rgba(0, 255, 255, 0.3);
-    color: inherit;
+  background-color: #bfffff;
+  background-color: rgba(0, 255, 255, 0.3);
+  color: inherit;
 }
 .teceler .user {
-    background-color: #ccf2cc;
-    background-color: rgba(34, 139, 34, 0.3);
-    color: inherit;
+  background-color: #ccf2cc;
+  background-color: rgba(34, 139, 34, 0.3);
+  color: inherit;
 }
 .throne3d .user {
-    background-color: #ffbfc9; /*hsl(351, 100%, 87%)*/
-    background-color: rgba(150, 0, 24, 0.3);
-    color: inherit;
+  background-color: #ffbfc9; /*hsl(351, 100%, 87%)*/
+  background-color: rgba(150, 0, 24, 0.3);
+  color: inherit;
 }
 .timepoof .user {
-    background-color: #ffbfdb; /*hsl(334, 100%, 87%)*/
-    background-color: rgba(255, 145, 191, 0.3);
-    color: inherit;
+  background-color: #ffbfdb; /*hsl(334, 100%, 87%)*/
+  background-color: rgba(255, 145, 191, 0.3);
+  color: inherit;
 }
 .content {
-    padding-top: 5px;
-    page-break-before: avoid;
+  padding-top: 5px;
+  page-break-before: avoid;
 }
 .branchnote {
-    color: #c50;
-    font-weight: bold;
-    border-top: solid 1px #ddd;
-    padding-top: 5px;
-    padding-bottom: 5px;
+  color: #c50;
+  font-weight: bold;
+  border-top: solid 1px #ddd;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 .section-subtitle {
-    padding-bottom: 5px;
+  padding-bottom: 5px;
 }
 .entry-subtitle {
-    padding-bottom: 5px;
+  padding-bottom: 5px;
 }
 .edittime {
-    font-size: 80%;
+  font-size: 80%;
 }
 .timestamp {
-    font-size: 80%;
+  font-size: 80%;
 }
