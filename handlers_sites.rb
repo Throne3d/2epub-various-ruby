@@ -174,24 +174,25 @@
       
       content = current_page.at_css('#content')
       
+      text_thing = 'Discretion Advised'
+      
       nsfw_warning = content.at_css('.panel.callout').try(:at_css, '.text-center').try(:text)
-      if nsfw_warning.try(:[], 'Discretion Advised')
+      if nsfw_warning.try(:[], text_thing)
         LOG.debug "Got a discretion advised – trying to fix with Mechanize"
         page = @mech_agent.get(url)
-        discretion_form = nil
-        actual_page = page.forms.each do |form|
-          discretion_form = form if form.action["/adult_concepts"]
-        end
+        sleep 0.05
+        discretion_form = page.forms.select{|form| form.action["/adult_concepts"]}.first
         
+        remove_giri_cache(url, options)
         if discretion_form
           data_page = discretion_form.submit
-          remove_giri_cache(url, options)
           save_down(url, data_page.content, options)
-          current_page = giri_or_cache(url, options)
-          
-          nsfw_warning = current_page.at_css('.panel.callout').try(:at_css, '.text-center').try(:text)
+        else
+          save_down(url, page.content, options)
         end
-        if nsfw_warning.try(:[], 'Discretion Advised')
+        current_page = giri_or_cache(url, options)
+        nsfw_warning = current_page.at_css('.panel.callout').try(:at_css, '.text-center').try(:text)
+        if nsfw_warning.try(:[], text_thing)
           LOG.error "Failed to fix discretion advised warning for page #{url}"
           return nil
         else
@@ -317,67 +318,70 @@
       main_page_stuff = get_undiscretioned(main_page, where: @group_folder)
       unless main_page_stuff
         @error = "Page failed to load (discretion advised warning?)"
+        @success = false
       end
       
-      #Check the comments and find each branch-end and get a link to them all :D
-      chapter.check_pages = [main_page]
-      main_page_content = main_page_stuff.at_css('#content')
-      comments = main_page_content.css('.comment-thread')
-      prev_chain = []
-      prev_depth = 0
       comment_count = 0
-      comm_depth = 0
-      comments.each do |comment|
-        comment_count += 1
-        prev_chain = prev_chain.drop(prev_chain.length - 3) if prev_chain.length > 3
-        
+      if main_page_stuff
+        #Check the comments and find each branch-end and get a link to them all :D
+        chapter.check_pages = [main_page]
+        main_page_content = main_page_stuff.at_css('#content')
+        comments = main_page_content.css('.comment-thread')
+        prev_chain = []
+        prev_depth = 0
         comm_depth = 0
-        (LOG.error "Error: failed comment depth" and next) unless comment[:class]["comment-depth-"]
-        comm_depth = comment[:class].split('comment-depth-').last.split(/\s+/).first.to_i
-        
-        if comm_depth > prev_depth
-          prev_chain << comment
+        comments.each do |comment|
+          comment_count += 1
+          prev_chain = prev_chain.drop(prev_chain.length - 3) if prev_chain.length > 3
+          
+          comm_depth = 0
+          (LOG.error "Error: failed comment depth" and next) unless comment[:class]["comment-depth-"]
+          comm_depth = comment[:class].split('comment-depth-').last.split(/\s+/).first.to_i
+          
+          if comm_depth > prev_depth
+            prev_chain << comment
+            prev_depth = comm_depth
+            next
+          end
+          
+          LOG.debug "depth (#{comm_depth}) was lower than prev_depth (#{prev_depth}), therefore new branch, let's track the previous one."
+          
+          upper_comment = prev_chain.first
+          @cont = false
+          comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
+            unless comm_link
+              LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
+              @cont = true
+            end
+          end
+          next if @cont
+          
+          chapter.check_pages << comm_link
+          LOG.debug "Added to chapter check_pages: #{comm_link}"
+          
+          prev_chain = [comment]
           prev_depth = comm_depth
-          next
         end
         
-        LOG.debug "depth (#{comm_depth}) was lower than prev_depth (#{prev_depth}), therefore new branch, let's track the previous one."
-        
-        upper_comment = prev_chain.first
-        @cont = false
-        comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
-          unless comm_link
-            LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
-            @cont = true
+        unless prev_chain.empty?
+          upper_comment = prev_chain.first
+          comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
+            unless comm_link
+              LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
+            end
           end
+          chapter.check_pages << comm_link
+          LOG.debug "Added to chapter check_pages: #{comm_link}"
         end
-        next if @cont
         
-        chapter.check_pages << comm_link
-        LOG.debug "Added to chapter check_pages: #{comm_link}"
-        
-        prev_chain = [comment]
-        prev_depth = comm_depth
-      end
-      
-      unless prev_chain.empty?
-        upper_comment = prev_chain.first
-        comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
-          unless comm_link
-            LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
+        chapter.pages = pages
+        chapter.check_pages.each do |check_page|
+          if has_cache?(check_page, where: 'temp')
+            temp_data = down_or_cache(check_page, where: 'temp')
+            save_down(check_page, temp_data, where: @group_folder)
+          else
+            down_or_cache(check_page, where: @group_folder)
           end
-        end
-        chapter.check_pages << comm_link
-        LOG.debug "Added to chapter check_pages: #{comm_link}"
-      end
-      
-      chapter.pages = pages
-      chapter.check_pages.each do |check_page|
-        if has_cache?(check_page, where: 'temp')
-          temp_data = down_or_cache(check_page, where: 'temp')
-          save_down(check_page, temp_data, where: @group_folder)
-        else
-          down_or_cache(check_page, where: @group_folder)
         end
       end
       
