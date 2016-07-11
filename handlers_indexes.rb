@@ -730,6 +730,7 @@ module GlowficIndexHandlers
             yield chapter_details
           end
         end
+        return chapter_list
       else
         raise(ArgumentException, "Chapter URL is not /boards or /boards/:id or /users/:id – failed")
       end
