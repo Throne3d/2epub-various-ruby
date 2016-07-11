@@ -103,7 +103,7 @@
     peterverse: "http://peterverse.dreamwidth.org/1643.html?style=site",
     maggie: "http://maggie-of-the-owls.dreamwidth.org/454.html?style=site",
     throne: "https://theotrics.dreamwidth.org/268.html?style=site",
-    lintamande: "https://lintamande.dreamwidth.org/", #hardcoded
+    lintamande: "https://vast-journey-9935.herokuapp.com/users/34",
     
     #Test
     test: "https://vast-journey-9935.herokuapp.com/boards/7",

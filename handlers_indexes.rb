@@ -636,6 +636,57 @@ module GlowficIndexHandlers
       end
     end
     
+    def userlist_to_block(options = {}, &block)
+      user_url = options[:user_url] if options.key?(:user_url)
+      
+      LOG.info "TOC Page: #{user_url}"
+      user_toc_data = get_page_data(user_url, replace: true, headers: {"Accept" => "text/html"})
+      user_toc = Nokogiri::HTML(user_toc_data)
+      
+      content = user_toc.at_css('#content')
+      
+      pages = user_toc.at_css('.pagination')
+      last_url = user_url
+      if pages
+        pages.at_css('a.last_page').try(:remove)
+        pages.at_css('a.next_page').try(:remove)
+        last_url = get_absolute_url(pages.css('a').last[:href].strip, user_url)
+      end
+      
+      previous_url = last_url
+      while previous_url
+        puts "URL: #{previous_url}"
+        user_toc_data = get_page_data(previous_url, replace: (previous_url != board_url), headers: {"Accept" => "text/html"})
+        user_toc = Nokogiri::HTML(user_toc_data)
+        user_body = user_toc.at_css('tbody')
+        
+        chapters = user_body.css('tr')
+        chapters.reverse!
+        chapters.each do |chapter_row|
+          thead = chapter_row.at_css('th')
+          next if thead
+          
+          no_post = chapter_row.at_css('.centered.padding-10')
+          next if no_post and no_post.text["No posts"]
+          
+          chapter_link = chapter_row.at_css('td a')
+          chapter_title = chapter_link.text.strip
+          chapter_url = get_absolute_url(chapter_link["href"], user_url)
+          chapter_sections = chapter_row.at_css('.post-board').try(:text).try(:strip)
+          
+          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
+          
+          if block_given?
+            yield chapter_details
+          end
+        end
+        
+        temp_url = previous_url
+        previous_url = board_toc.at_css('.pagination a.previous_page').try(:[], :href)
+        previous_url = get_absolute_url(previous_url.strip, temp_url) if previous_url
+      end
+    end
+    
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
       
@@ -671,8 +722,16 @@ module GlowficIndexHandlers
           end
         end
         return chapter_list
+      elsif fic_toc_url[/\/users\/\d+/]
+        chapter_list = GlowficEpub::Chapters.new(sort_chapters: true)
+        userlist_to_block(user_url: fic_toc_url) do |chapter_details|
+          chapter_list << chapter_details
+          if block_given?
+            yield chapter_details
+          end
+        end
       else
-        raise(ArgumentException, "Chapter URL is not /boards or /boards/:id – failed")
+        raise(ArgumentException, "Chapter URL is not /boards or /boards/:id or /users/:id – failed")
       end
     end
   end
@@ -722,27 +781,6 @@ module GlowficIndexHandlers
         ]
       elsif @group == :lintamande
         [
-          {url: "https://vast-journey-9935.herokuapp.com/posts/84",
-          title: "Let Me Tell You What I Wish I'd Known",
-          sections: ["Constellation"]},
-          {url: "https://vast-journey-9935.herokuapp.com/posts/111",
-          title: "you know what they say about the young",
-          sections: ["Constellation"]},
-          {url: "https://vast-journey-9935.herokuapp.com/posts/99",
-          title: "No one really knows how the parties get to yes",
-          sections: ["Constellation"]},
-          {url: "https://vast-journey-9935.herokuapp.com/posts/96",
-          title: "the world turned upside down",
-          sections: ["Constellation"]},
-          {url: "https://vast-journey-9935.herokuapp.com/posts/101",
-          title: "I'm Glad I'm Not Back There But Where Did You Take Us",
-          sections: ["Constellation"]},
-          {url: "https://vast-journey-9935.herokuapp.com/posts/100",
-          title: "New neighbors. Just as frustrating.",
-          sections: ["Constellation"]},
-          {url: "https://vast-journey-9935.herokuapp.com/posts/97",
-          title: "I Asked The World For Elsewhere But I Never Imagined This",
-          sections: ["Constellation"]},
           {url: "http://alicornutopia.dreamwidth.org/29664.html",
           title: "leave of absence",
           sections: ["Elentári"]},
@@ -837,6 +875,11 @@ module GlowficIndexHandlers
             end
           end
         end
+      elsif @group == :lintamande
+        const_handler = ConstellationIndexHandler.new(group: :lintamande)
+        #const_handler
+        #TODO: Append the threads from the Constellation to list for this group!
+        #TODO: Also make Silmaril world? Or whatever it was? Um. Uh. Oh, yes, make silmaril work to include the threads from Alicorn's index!
       end
       
       list.each do |item|

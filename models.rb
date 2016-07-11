@@ -189,6 +189,7 @@
       @faces = []
       @authors = []
       @group = (options.key?(:group)) ? options[:group] : nil
+      @sort_chapters = (options.key?(:sort_chapters) ? options[:sort_chapters] : (options.key?(:sort) ? options[:sort] : false))
       @trash_messages = (options.key?(:trash_messages)) ? options[:trash_messages] : false
       @unpacked = false
     end
@@ -250,13 +251,37 @@
       found_face
     end
     
+    def add_chapter(arg)
+      @chapters << arg unless @chapters.include?(arg)
+      if @sort_chapters
+        sort_chapters!
+      end
+    end
+    
+    def sort_chapters!
+      #TODO: do better
+      @chapters.sort! do |chapter1, chapter2|
+        sections1 = if chapter1.sections.present?
+          chapter1.sections.map {|thing| thing.downcase}
+        else
+          []
+        end
+        sections2 = if chapter2.sections.present?
+          chapter2.sections.map {|thing| thing.downcase}
+        else
+          []
+        end
+        sections1 <=> sections2
+      end
+    end
+    
     def <<(arg)
       if (arg.is_a?(Face))
         self.add_face(arg)
       elsif (arg.is_a?(Author))
         self.add_author(arg)
       else
-        @chapters << arg unless @chapters.include?(arg)
+        self.add_chapter(arg)
       end
     end
     def length
