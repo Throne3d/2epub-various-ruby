@@ -599,8 +599,7 @@ module GlowficIndexHandlers
         puts "URL: #{previous_url}"
         board_toc_data = get_page_data(previous_url, replace: (previous_url != board_url), headers: {"Accept" => "text/html"})
         board_toc = Nokogiri::HTML(board_toc_data)
-        board_body = board_toc.at_css('tbody') #why the heck is the body not existing?
-        #board_tbody = board_toc.at_css('tbody')
+        board_body = board_toc.at_css('tbody')
         
         chapter_sections = [board_name]
         
