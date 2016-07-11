@@ -604,7 +604,7 @@ module GlowficIndexHandlers
         chapter_sections = [board_name]
         
         chapters = board_body.css('tr')
-        chapters.reverse! unless board_sections
+        chapters = chapters.reverse unless board_sections
         chapters.each do |chapter_row|
           thead = chapter_row.at_css('th')
           next if thead and not thead.try(:[], :colspan)
@@ -661,7 +661,7 @@ module GlowficIndexHandlers
         user_body = user_toc.at_css('tbody')
         
         chapters = user_body.css('tr')
-        chapters.reverse!
+        chapters = chapters.reverse
         chapters.each do |chapter_row|
           thead = chapter_row.at_css('th')
           next if thead
