@@ -800,6 +800,11 @@ module GlowficIndexHandlers
           title: "don't touch me",
           sections: ["Promise in Arda"]}
         ]
+      elsif @group == :silmaril
+        [
+          #{}
+          #TODO: include the threads from Alicorn's index (if applicable? Telperion and such – ask to confirm.)
+        ]
       end
       
       if @group == :report
@@ -875,14 +880,17 @@ module GlowficIndexHandlers
             end
           end
         end
-      elsif @group == :lintamande
-        const_handler = ConstellationIndexHandler.new(group: :lintamande)
-        #const_handler
-        #TODO: Append the threads from the Constellation to list for this group!
-        #TODO: Also make Silmaril world? Or whatever it was? Um. Uh. Oh, yes, make silmaril work to include the threads from Alicorn's index!
-      elsif @group == :silmaril
+      elsif @group == :lintamande or @group == :silmaril
         const_handler = ConstellationIndexHandler.new(group: @group)
-        #TODO: include the threads from Alicorn's index (if applicable? Telperion and such – ask to confirm.)
+        chapter_list = GlowficEpub::Chapters.new(sort_chapters: true)
+        const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group]) do |chapter|
+          if block_given?
+            yield chapter
+          end
+        end
+        const_chapters.each do |chapter|
+          chapter_list << chapter
+        end
       end
       
       list.each do |item|
