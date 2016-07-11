@@ -74,7 +74,7 @@
       old_cache = nil
       if @giricache[where].key?(page)
         old_cache = @giricache[where][page]
-        @giricache[where][page] = nil
+        @giricache[where].delete(page)
       end
       old_cache
     end
@@ -159,6 +159,50 @@
       end
     end
     
+    def get_undiscretioned(url, options = {})
+      current_page = options.key?(:current_page) ? options[:current_page] : (options.key?(:current) ? options[:current] : nil)
+      options.delete(:current_page)
+      options.delete(:current)
+      
+      if current_page.is_a?(String)
+        current_page = Nokogiri::HTML(current_page)
+      end
+      where = options.key?(:where) ? options[:where] : nil
+      unless current_page.present?
+        current_page = giri_or_cache(url, options)
+      end
+      
+      content = current_page.at_css('#content')
+      
+      text_thing = 'Discretion Advised'
+      
+      nsfw_warning = content.at_css('.panel.callout').try(:at_css, '.text-center').try(:text)
+      if nsfw_warning.try(:[], text_thing)
+        LOG.debug "Got a discretion advised – trying to fix with Mechanize"
+        page = @mech_agent.get(url)
+        sleep 0.05
+        discretion_form = page.forms.select{|form| form.action["/adult_concepts"]}.first
+        
+        remove_giri_cache(url, options)
+        if discretion_form
+          data_page = discretion_form.submit
+          save_down(url, data_page.content, options)
+        else
+          save_down(url, page.content, options)
+        end
+        current_page = giri_or_cache(url, options)
+        nsfw_warning = current_page.at_css('.panel.callout').try(:at_css, '.text-center').try(:text)
+        if nsfw_warning.try(:[], text_thing)
+          LOG.error "Failed to fix discretion advised warning for page #{url}"
+          return nil
+        else
+          LOG.debug "Fixed a discretion advised warning"
+        end
+      end
+      
+      return current_page
+    end
+    
     def get_full(chapter, options = {})
       if chapter.is_a?(GlowficEpub::Chapter)
         params = {style: :site}
@@ -175,31 +219,15 @@
       
       params = {style: :site, view: :flat, page: 1}
       first_page = set_url_params(clear_url_params(chapter.url), params)
-      first_page_stuff = giri_or_cache(first_page, where: @group_folder)
+      first_page_stuff = get_undiscretioned(first_page, where: @group_folder)
+      
+      unless first_page_stuff
+        @error = "Page failed to load (discretion advised warning?)"
+        @success = false
+        return
+      end
       
       first_page_content = first_page_stuff.at_css('#content')
-      
-      nsfw_warning = first_page_content.at_css('.panel.callout')
-      if nsfw_warning
-        nsfw_warning_text = nsfw_warning.at_css('.text-center')
-        if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
-          LOG.debug "Got a discretion advised – trying to fix with Mechanize"
-          page = @mech_agent.get(first_page)
-          actual_page = page.form.submit
-          
-          remove_giri_cache(first_page, where: @group_folder)
-          save_down(first_page, actual_page.content, where: @group_folder)
-          first_page_stuff = giri_or_cache(first_page, where: @group_folder)
-          first_page_content = first_page_stuff.at_css('#content')
-          if first_page_content.at_css('.panel.callout').try(:at_css, '.text-center')
-            @error = "Page had discretion advised warning! (Not fixed by Mechanize)"
-            @success = false
-            return
-          else
-            LOG.debug "Fixed with Mechanize"
-          end
-        end
-      end
       
       page_count = first_page_content.try(:at_css, '.comment-pages').try(:at_css, '.page-links').try(:at_css, 'a:last').try(:text).try(:strip)
       page_count = page_count.gsub("[","").gsub("]","").to_i if page_count
@@ -237,33 +265,17 @@
             changed = true
             break
           end
-          page_new = giri_or_cache(check_page, where: 'temp')
+          page_new = get_undiscretioned(check_page, where: 'temp')
           page_old = Nokogiri::HTML(page_old_data)
+          
+          unless page_new
+            @error = "Page failed to load (discretion advised warning?)"
+            @success = false
+            return
+          end
           
           old_content = page_old.at_css('#content')
           new_content = page_new.at_css('#content')
-          
-          nsfw_warning = new_content.at_css('.panel.callout')
-          if nsfw_warning
-            nsfw_warning_text = nsfw_warning.at_css('.text-center')
-            if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
-              LOG.debug "Got a discretion advised – trying to fix with Mechanize"
-              page = @mech_agent.get(check_page)
-              actual_page = page.form.submit
-              
-              remove_giri_cache(check_page, where: 'temp')
-              save_down(check_page, actual_page.content, where: 'temp')
-              page_new = giri_or_cache(check_page, where: 'temp')
-              new_content = first_page_stuff.at_css('#content')
-              if new_content.at_css('.panel.callout').try(:at_css, '.text-center')
-                @error = "Page had discretion advised warning! (Not fixed by Mechanize)"
-                @success = false
-                return
-              else
-                LOG.debug "Fixed with Mechanize"
-              end
-            end
-          end
           
           old_content.at_css(".entry-interaction-links").try(:remove)
           new_content.at_css(".entry-interaction-links").try(:remove)
@@ -303,86 +315,73 @@
       params[:thread] = chapter.thread if chapter.thread
       main_page = set_url_params(clear_url_params(chapter.url), params)
       
-      main_page_stuff = giri_or_cache(main_page, where: @group_folder)
-      
-      nsfw_warning = main_page_stuff.at_css('.panel.callout')
-      if nsfw_warning
-        nsfw_warning_text = nsfw_warning.at_css('.text-center')
-        if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
-          LOG.debug "Got a discretion advised – trying to fix with Mechanize"
-          page = @mech_agent.get(main_page)
-          actual_page = page.form.submit
-          
-          remove_giri_cache(main_page, where: @group_folder)
-          save_down(main_page, actual_page.content, where: @group_folder)
-          main_page_stuff = giri_or_cache(main_page, where: @group_folder)
-          if main_page_stuff.at_css('.panel.callout').try(:at_css, '.text-center')
-            @error = "Page had discretion advised warning! (Not fixed by Mechanize)"
-          else
-            LOG.debug "Fixed with Mechanize"
-          end
-        end
+      main_page_stuff = get_undiscretioned(main_page, where: @group_folder)
+      unless main_page_stuff
+        @error = "Page failed to load (discretion advised warning?)"
+        @success = false
       end
       
-      #Check the comments and find each branch-end and get a link to them all :D
-      chapter.check_pages = [main_page]
-      main_page_content = main_page_stuff.at_css('#content')
-      comments = main_page_content.css('.comment-thread')
-      prev_chain = []
-      prev_depth = 0
       comment_count = 0
-      comm_depth = 0
-      comments.each do |comment|
-        comment_count += 1
-        prev_chain = prev_chain.drop(prev_chain.length - 3) if prev_chain.length > 3
-        
+      if main_page_stuff
+        #Check the comments and find each branch-end and get a link to them all :D
+        chapter.check_pages = [main_page]
+        main_page_content = main_page_stuff.at_css('#content')
+        comments = main_page_content.css('.comment-thread')
+        prev_chain = []
+        prev_depth = 0
         comm_depth = 0
-        (LOG.error "Error: failed comment depth" and next) unless comment[:class]["comment-depth-"]
-        comm_depth = comment[:class].split('comment-depth-').last.split(/\s+/).first.to_i
-        
-        if comm_depth > prev_depth
-          prev_chain << comment
+        comments.each do |comment|
+          comment_count += 1
+          prev_chain = prev_chain.drop(prev_chain.length - 3) if prev_chain.length > 3
+          
+          comm_depth = 0
+          (LOG.error "Error: failed comment depth" and next) unless comment[:class]["comment-depth-"]
+          comm_depth = comment[:class].split('comment-depth-').last.split(/\s+/).first.to_i
+          
+          if comm_depth > prev_depth
+            prev_chain << comment
+            prev_depth = comm_depth
+            next
+          end
+          
+          LOG.debug "depth (#{comm_depth}) was lower than prev_depth (#{prev_depth}), therefore new branch, let's track the previous one."
+          
+          upper_comment = prev_chain.first
+          @cont = false
+          comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
+            unless comm_link
+              LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
+              @cont = true
+            end
+          end
+          next if @cont
+          
+          chapter.check_pages << comm_link
+          LOG.debug "Added to chapter check_pages: #{comm_link}"
+          
+          prev_chain = [comment]
           prev_depth = comm_depth
-          next
         end
         
-        LOG.debug "depth (#{comm_depth}) was lower than prev_depth (#{prev_depth}), therefore new branch, let's track the previous one."
-        
-        upper_comment = prev_chain.first
-        @cont = false
-        comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
-          unless comm_link
-            LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
-            @cont = true
+        unless prev_chain.empty?
+          upper_comment = prev_chain.first
+          comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
+            unless comm_link
+              LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
+            end
           end
+          chapter.check_pages << comm_link
+          LOG.debug "Added to chapter check_pages: #{comm_link}"
         end
-        next if @cont
         
-        chapter.check_pages << comm_link
-        LOG.debug "Added to chapter check_pages: #{comm_link}"
-        
-        prev_chain = [comment]
-        prev_depth = comm_depth
-      end
-      
-      unless prev_chain.empty?
-        upper_comment = prev_chain.first
-        comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
-          unless comm_link
-            LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
+        chapter.pages = pages
+        chapter.check_pages.each do |check_page|
+          if has_cache?(check_page, where: 'temp')
+            temp_data = down_or_cache(check_page, where: 'temp')
+            save_down(check_page, temp_data, where: @group_folder)
+          else
+            down_or_cache(check_page, where: @group_folder)
           end
-        end
-        chapter.check_pages << comm_link
-        LOG.debug "Added to chapter check_pages: #{comm_link}"
-      end
-      
-      chapter.pages = pages
-      chapter.check_pages.each do |check_page|
-        if has_cache?(check_page, where: 'temp')
-          temp_data = down_or_cache(check_page, where: 'temp')
-          save_down(check_page, temp_data, where: @group_folder)
-        else
-          down_or_cache(check_page, where: @group_folder)
         end
       end
       
@@ -635,28 +634,12 @@
       LOG.debug "Thread comment: \"#{threadcmt}\"" if chapter.thread
       
       pages.each do |page_url|
-        page = giri_or_cache(page_url, replace: false, where: @group_folder)
-        
-        page_content = page.at_css('#content')
-        nsfw_warning = page_content.at_css('.panel.callout')
-        if nsfw_warning
-          nsfw_warning_text = nsfw_warning.at_css('.text-center')
-          if nsfw_warning_text and nsfw_warning_text.text["Discretion Advised"]
-            LOG.debug "Got a discretion advised – trying to fix with Mechanize"
-            page = @mech_agent.get(page_url)
-            actual_page = page.form.submit
-            
-            remove_giri_cache(page_url, where: @group_folder)
-            save_down(page_url, actual_page.content, where: @group_folder)
-            page = giri_or_cache(page_url, where: @group_folder)
-            page_content = page.at_css('#content')
-            if page_content.at_css('.panel.callout').try(:at_css, '.text-center')
-              (LOG.error('Page had discretion advised warning! (Not fixed by Mechanize)') and break)
-            else
-              LOG.debug "Fixed with Mechanize"
-            end
-          end
+        page = get_undiscretioned(page_url, replace: false, where: @group_folder)
+        unless page
+          LOG.error "Page failed to load (discretion advised warning?)"
+          break
         end
+        page_content = page.at_css('#content')
         
         if @replies.empty?
           entry_element = page_content.at_css('.entry')
