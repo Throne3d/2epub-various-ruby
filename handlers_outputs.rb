@@ -366,7 +366,7 @@
       url_thing = (first_last == :first ? first_update : (first_last == :last ? last_update : latest_update))
       @errors << "#{chapter} has no url_thing! (first_last: #{first_last})" unless url_thing
       
-      if chapter.report_flags
+      if chapter.report_flags and not chapter.report_flags_processed?
         chapter.report_flags = chapter.report_flags.scan(@col_scan).map{|thing| thing[0] }.uniq.map do |thing|
           thing = thing[1..-1] if thing.start_with?('#')
           things = thing.split('#')
@@ -380,6 +380,7 @@
             temp
           end
         end.sort{|thing1, thing2| rainbow_comp(thing1, thing2) }.join(' ').strip.gsub(/[\(\)]/, '')
+        chapter.report_flags_processed = true
       end
       
       if chapter.title_extras.present? and not chapter.report_flags.present?
