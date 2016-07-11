@@ -88,9 +88,9 @@
     incandescence: "http://alicornutopia.dreamwidth.org/7441.html?style=site",
     pixiethreads: "http://pixiethreads.dreamwidth.org/613.html?style=site",
     radon: "http://radon-absinthe.dreamwidth.org/295.html?style=site",
-    opalescence: "https://vast-journey-9935.herokuapp.com/boards/12/",
-    zodiac: "https://vast-journey-9935.herokuapp.com/boards/7/",
-    silmaril: "https://vast-journey-9935.herokuapp.com/boards/18/",
+    opalescence: "https://vast-journey-9935.herokuapp.com/boards/12",
+    zodiac: "https://vast-journey-9935.herokuapp.com/boards/7",
+    silmaril: "https://vast-journey-9935.herokuapp.com/boards/18",
     
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
@@ -108,7 +108,7 @@
     lintamande: "https://vast-journey-9935.herokuapp.com/users/34/",
     
     #Test
-    test: "https://vast-journey-9935.herokuapp.com/boards/7/",
+    test: "https://vast-journey-9935.herokuapp.com/boards/7",
     temp_starlight: "https://alicornutopia.dreamwidth.org/29069.html",
     report: "https://vast-journey-9935.herokuapp.com/boards/"
   }
