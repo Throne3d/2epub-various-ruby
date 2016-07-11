@@ -636,6 +636,57 @@ module GlowficIndexHandlers
       end
     end
     
+    def userlist_to_block(options = {}, &block)
+      user_url = options[:user_url] if options.key?(:user_url)
+      
+      LOG.info "TOC Page: #{user_url}"
+      user_toc_data = get_page_data(user_url, replace: true, headers: {"Accept" => "text/html"})
+      user_toc = Nokogiri::HTML(user_toc_data)
+      
+      content = user_toc.at_css('#content')
+      
+      pages = user_toc.at_css('.pagination')
+      last_url = user_url
+      if pages
+        pages.at_css('a.last_page').try(:remove)
+        pages.at_css('a.next_page').try(:remove)
+        last_url = get_absolute_url(pages.css('a').last[:href].strip, user_url)
+      end
+      
+      previous_url = last_url
+      while previous_url
+        puts "URL: #{previous_url}"
+        user_toc_data = get_page_data(previous_url, replace: (previous_url != board_url), headers: {"Accept" => "text/html"})
+        user_toc = Nokogiri::HTML(user_toc_data)
+        user_body = user_toc.at_css('tbody')
+        
+        chapters = user_body.css('tr')
+        chapters.reverse!
+        chapters.each do |chapter_row|
+          thead = chapter_row.at_css('th')
+          next if thead
+          
+          no_post = chapter_row.at_css('.centered.padding-10')
+          next if no_post and no_post.text["No posts"]
+          
+          chapter_link = chapter_row.at_css('td a')
+          chapter_title = chapter_link.text.strip
+          chapter_url = get_absolute_url(chapter_link["href"], user_url)
+          chapter_sections = chapter_row.at_css('.post-board').try(:text).try(:strip)
+          
+          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
+          
+          if block_given?
+            yield chapter_details
+          end
+        end
+        
+        temp_url = previous_url
+        previous_url = board_toc.at_css('.pagination a.previous_page').try(:[], :href)
+        previous_url = get_absolute_url(previous_url.strip, temp_url) if previous_url
+      end
+    end
+    
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
       
