@@ -198,8 +198,9 @@
     end
     
     def unpack!
-      each {|chapter| chapter.unpack! } unless @unpacked
+      was_unpacked = @unpacked
       @unpacked = true
+      each {|chapter| chapter.unpack! } unless was_unpacked
     end
     def unpacked?
       @unpacked ||= false
@@ -215,15 +216,21 @@
     def get_author_by_id(author_id)
       unpack!
       
-      found_author = nil
-      authors.each do |author|
-        found_author = author if author.unique_id == author_id
-      end
+      found_author = authors.find {|author| author.unique_id == author_id}
       if old_authors.present? and not found_author
-        old_authors.each do |author|
-          found_author = author if author.unique_id == author_id
-        end
+        found_author = old_authors.find {|author| author.unique_id == author_id}
         add_author(found_author) if found_author
+      end
+      found_author
+    end
+    def keep_old_author(author_id)
+      return nil unless old_authors.present?
+      @kept_authors ||= []
+      return get_author_by_id(author_id) if @kept_authors.include?(author_id)
+      found_author = old_authors.find {|author| author.unique_id == author_id}
+      if found_author.present?
+        add_author(found_author)
+        @kept_authors << author_id
       end
       found_author
     end
@@ -237,21 +244,28 @@
     def get_face_by_id(face_id)
       unpack!
       
-      found_face = nil
-      faces.each do |face|
-        found_face = face if face.unique_id == face_id
-      end
+      found_face = faces.find {|face| face.unique_id == face_id}
       if old_faces.present? and not found_face
-        old_faces.each do |face|
-          found_face = author if face.unique_id == face_id
-        end
+        old_faces.find {|face| face.unique_id == face_id}
         add_face(found_face) if found_face
+      end
+      found_face
+    end
+    def keep_old_face(face_id)
+      return nil unless old_faces.present?
+      @kept_faces ||= []
+      return get_face_by_id(face_id) if @kept_faces.include?(face_id)
+      found_face = old_faces.find {|face| face.unique_id == face_id}
+      if found_face.present?
+        add_face(found_face)
+        @kept_faces << face_id
       end
       found_face
     end
     
     def add_chapter(arg)
       chapters << arg unless chapters.include?(arg)
+      arg.chapter_list = self unless arg.chapter_list == self
       if sort_chapters
         sort_chapters!
       end
@@ -342,8 +356,7 @@
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed, :report_flags_processed
-    attr_reader :chapter_list
+    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed, :report_flags_processed, :chapter_list
     
     param_transform :name => :title, :name_extras => :title_extras
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
@@ -405,6 +418,12 @@
     def replies
       @replies ||= []
     end
+    def replies=(newval)
+      @replies=newval
+      @replies.each do |reply|
+        reply.chapter = self
+      end
+    end
     def sections
       if @sections.is_a?(String)
         @sections = [@sections]
@@ -417,6 +436,14 @@
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
       end
       @authors
+    end
+    
+    def chapter_list=(newval)
+      @chapter_list=newval
+      replies.each do |reply|
+        reply.keep_old_stuff
+      end
+      newval
     end
     
     def time_completed
@@ -701,8 +728,14 @@
       @push_title = false
       newval.add_author(author) if @push_author
       @push_author = false
-      
       @chapter = newval
+      keep_old_stuff
+      newval
+    end
+    
+    def keep_old_stuff
+      chapter.chapter_list.try(:keep_old_author, author_id) if author_id
+      chapter.chapter_list.try(:keep_old_face, face_id) if face_id
     end
     
     def time
@@ -825,6 +858,14 @@
       end
     end
     
+    def face_id
+      if @face.is_a?(Face)
+        @face.unique_id
+      else
+        @face
+      end
+    end
+    
     @push_author = false
     def author
       return @author if @author and @author.is_a?(Author)
@@ -843,6 +884,14 @@
       @author = author
       chapter.add_author(self.author) if chapter
       @push_author = true unless chapter
+    end
+    
+    def author_id
+      if @author.is_a?(Author)
+        @author.unique_id
+      else
+        @author
+      end
     end
     
     def author_str
@@ -952,6 +1001,7 @@
       if face
         self.face = face
       end
+      keep_old_stuff
     end
   end
 
