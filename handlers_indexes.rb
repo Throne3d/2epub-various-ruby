@@ -196,10 +196,10 @@ module GlowficIndexHandlers
   end
   
   class OrderedListHandler < IndexHandler
-    handles :effulgence, :pixiethreads, :incandescence, :radon
+    handles :effulgence, :pixiethreads, :incandescence, :radon, :silmaril
     def initialize(options = {})
       super(options)
-      @strip_li_end = @group == :incandescence
+      @strip_li_end = (@group == :incandescence or @group == :silmaril)
       @strip_li_end = options[:strip_li_end] if options.key?(:strip_li_end)
     end
     def get_chapters(section, section_list, &block)
@@ -738,7 +738,7 @@ module GlowficIndexHandlers
   end
   
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :silmaril
+    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt
     def initialize(options = {})
       super(options)
     end
@@ -809,11 +809,6 @@ module GlowficIndexHandlers
           {url: "http://alicornutopia.dreamwidth.org/31354.html",
           title: "Kib in Valinor",
           sections: ["Kib in Valinor"]}
-        ]
-      elsif @group == :silmaril
-        [
-          #{}
-          #TODO: include the threads from Alicorn's index (if applicable? Telperion and such – ask to confirm.)
         ]
       end
       
@@ -890,7 +885,7 @@ module GlowficIndexHandlers
             end
           end
         end
-      elsif @group == :lintamande or @group == :silmaril
+      elsif @group == :lintamande
         const_handler = ConstellationIndexHandler.new(group: @group)
         chapter_list = GlowficEpub::Chapters.new(sort_chapters: true)
         const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group]) do |chapter|

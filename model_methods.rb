@@ -90,7 +90,7 @@
     radon: "http://radon-absinthe.dreamwidth.org/295.html?style=site",
     opalescence: "https://vast-journey-9935.herokuapp.com/boards/12",
     zodiac: "https://vast-journey-9935.herokuapp.com/boards/7",
-    silmaril: "https://vast-journey-9935.herokuapp.com/boards/18",
+    silmaril: "https://alicornutopia.dreamwidth.org/31812.html",
     
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
