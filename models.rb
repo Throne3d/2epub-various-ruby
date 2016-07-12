@@ -116,7 +116,6 @@
       params
     end
     
-    
     def self.serialize_ignore? thing
       return false if @serialize_ignore.nil?
       thing = thing.to_sym if thing.is_a? String
@@ -182,7 +181,7 @@
   
   class Chapters < Model
     attr_reader :chapters, :faces, :authors, :group, :trash_messages
-    attr_accessor :group, :old_authors, :old_faces
+    attr_accessor :group, :old_authors, :old_faces, :sort_chapters
     serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces
     def initialize(options = {})
       @chapters = []
@@ -207,17 +206,17 @@
     end
     
     def add_author(arg)
-      @authors << arg unless @authors.include?(arg)
+      authors << arg unless authors.include?(arg)
     end
     def replace_author(arg)
-      @authors.delete_if { |author| author.unique_id == arg.unique_id }
+      authors.delete_if { |author| author.unique_id == arg.unique_id }
       add_author(arg)
     end
     def get_author_by_id(author_id)
       unpack!
       
       found_author = nil
-      @authors.each do |author|
+      authors.each do |author|
         found_author = author if author.unique_id == author_id
       end
       if old_authors.present? and not found_author
@@ -229,17 +228,17 @@
       found_author
     end
     def add_face(arg)
-      @faces << arg unless @faces.include?(arg)
+      faces << arg unless faces.include?(arg)
     end
     def replace_face(arg)
-      @faces.delete_if { |face| face.unique_id == arg.unique_id }
+      faces.delete_if { |face| face.unique_id == arg.unique_id }
       add_face(arg)
     end
     def get_face_by_id(face_id)
       unpack!
       
       found_face = nil
-      @faces.each do |face|
+      faces.each do |face|
         found_face = face if face.unique_id == face_id
       end
       if old_faces.present? and not found_face
@@ -252,15 +251,15 @@
     end
     
     def add_chapter(arg)
-      @chapters << arg unless @chapters.include?(arg)
-      if @sort_chapters
+      chapters << arg unless chapters.include?(arg)
+      if sort_chapters
         sort_chapters!
       end
     end
     
     def sort_chapters!
       #TODO: do better
-      @chapters.sort! do |chapter1, chapter2|
+      chapters.sort! do |chapter1, chapter2|
         sections1 = if chapter1.sections.present?
           chapter1.sections.map {|thing| thing.downcase}
         else
@@ -285,13 +284,13 @@
       end
     end
     def length
-      @chapters.length
+      chapters.length
     end
     def empty?
-      @chapters.empty?
+      chapters.empty?
     end
     def each(&block)
-      @chapters.each(&block)
+      chapters.each(&block)
     end
     def from_json! string
       json_hash = if string.is_a? String
@@ -316,7 +315,7 @@
       
       @authors = []
       @faces = []
-      unless @trash_messages
+      unless trash_messages
         authors.each do |author_hash|
           author_hash["chapter_list"] = self
           author = Author.new
@@ -335,7 +334,7 @@
       @chapters = []
       chapters.each do |chapter_hash|
         chapter_hash["chapter_list"] = self
-        chapter = Chapter.new(trash_messages: @trash_messages)
+        chapter = Chapter.new(trash_messages: trash_messages)
         chapter.from_json! chapter_hash
         @chapters << chapter
       end
@@ -344,6 +343,7 @@
 
   class Chapter < Model
     attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed, :report_flags_processed
+    attr_reader :chapter_list
     
     param_transform :name => :title, :name_extras => :title_extras
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
@@ -460,7 +460,7 @@
     def moieties
       @moieties if @moieties and not @moieties.empty?
       @moieties = []
-      self.authors.each do |author|
+      authors.each do |author|
         author.moiety.split(' ').each do |moiety|
           @moieties << moiety unless @moieties.include?(moiety)
         end
@@ -470,15 +470,11 @@
     end
     
     def add_author(newauthor)
-      unless @authors.include?(newauthor)
-        @authors << newauthor
+      unless authors.include?(newauthor)
+        authors << newauthor
         @moieties = nil
       end
       chapter_list.add_author(newauthor)
-    end
-    
-    def chapter_list
-      @chapter_list
     end
     
     def initialize(params={})
@@ -569,7 +565,7 @@
       
       @processed.map! {|thing| thing.to_s.to_sym } if @processed and @processed.is_a?(Array)
       
-      @authors = [] if @trash_messages
+      self.authors = [] if @trash_messages
       self.authors
       
       if not @trash_messages
@@ -581,16 +577,16 @@
           entry_hash["chapter"] = self
           entry = Entry.new
           entry.from_json! entry_hash
-          @entry = entry
+          self.entry = entry
         end
         if replies
-          @replies = []
+          self.replies = []
           replies.each do |reply_hash|
             reply_hash["post_type"] = PostType::REPLY
             reply_hash["chapter"] = self
             reply = Reply.new
             reply.from_json! reply_hash
-            @replies << reply
+            self.replies << reply
           end
         end
       end
@@ -689,11 +685,11 @@
     
     @push_title = false
     def entry_title
-      @chapter.entry_title
+      chapter.entry_title
     end
     def entry_title=(newval)
-      if @chapter
-        @chapter.entry_title = newval
+      if chapter
+        chapter.entry_title = newval
       else
         @push_title = true
         @entry_title = newval
@@ -731,8 +727,8 @@
     end
     
     def depth
-      if @parent and not @depth
-        @depth = self.parent.depth + 1
+      if parent and not @depth
+        @depth = parent.depth + 1
       end
       @depth ||= 0
     end
@@ -745,9 +741,9 @@
     end
     
     def post_type_str
-      if @post_type == PostType::ENTRY
+      if post_type == PostType::ENTRY
         "entry"
-      elsif @post_type == PostType::REPLY
+      elsif post_type == PostType::REPLY
         "comment"
       else
         "unknown"
@@ -879,10 +875,10 @@
     def to_s
       if chapter.nil?
         "#{author}##{id} @ #{time}: #{content}"
-      elsif @post_type
-        if @post_type == PostType::ENTRY
+      elsif post_type
+        if post_type == PostType::ENTRY
           "#{chapter.smallURL}##{id}"
-        elsif @post_type == PostType::REPLY
+        elsif post_type == PostType::REPLY
           "#{chapter.smallURL}##{chapter.entry.id}##{id}"
         end
       else
@@ -963,7 +959,7 @@
     message_serialize_ignore
     def initialize(params={})
       super(params)
-      @post_type = PostType::REPLY
+      self.post_type = PostType::REPLY
     end
   end
   
@@ -971,7 +967,7 @@
     message_serialize_ignore
     def initialize(params={})
       super(params)
-      @post_type = PostType::ENTRY
+      self.post_type = PostType::ENTRY
     end
   end
   
