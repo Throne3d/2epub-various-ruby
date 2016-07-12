@@ -123,7 +123,7 @@ def main(args)
     
     group_handler = group_handler.first
     
-    handler = group_handler.new(group: group)
+    handler = group_handler.new(group: group, chapter_list: chapter_list)
     chapter_list = handler.toc_to_chapterlist(fic_toc_url: fic_toc_url) do |chapter|
       LOG.info chapter.to_s
     end

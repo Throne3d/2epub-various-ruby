@@ -4,9 +4,25 @@ module GlowficIndexHandlers
   include GlowficEpubMethods
   
   class IndexHandler
-    def group
-      @group
+    attr_reader :group
+    def initialize(options = {})
+      @group = options[:group] if options.key?(:group)
+      @chapter_list = options[:chapter_list] if options.key?(:chapter_list)
     end
+    def self.handles(*args)
+      @handles = args
+    end
+    def self.handles?(thing)
+      return false unless @handles
+      return @handles.include?(thing)
+    end
+    def handles?(thing)
+      return self.handles? thing
+    end
+    def chapter_list
+      @chapter_list ||= GlowficEpub::Chapters.new
+    end
+    
     def prev_pages
       @prev_pages ||= get_prev_chapter_detail(group, detail: :pages, only_present: true)
     end
@@ -33,19 +49,6 @@ module GlowficIndexHandlers
     end
     def prev_time_hiatus
       @prev_time_hiatus ||= get_prev_chapter_detail(group, detail: :time_hiatus, only_present: true)
-    end
-    def initialize(options = {})
-      @group = options[:group] if options.key?(:group)
-    end
-    def self.handles(*args)
-      @handles = args
-    end
-    def self.handles?(thing)
-      return false unless @handles
-      return @handles.include?(thing)
-    end
-    def handles?(thing)
-      return self.handles? thing
     end
     def get_chapter_titles(chapter_link, options = {})
       backward = true
@@ -172,7 +175,7 @@ module GlowficIndexHandlers
         end
       end
       continuities = chapter_list.keys.sort
-      sorted_chapter_list = GlowficEpub::Chapters.new
+      sorted_chapter_list = self.chapter_list
       
       continuities.each do |continuity|
         next if (continuity == defaultCont or continuity.downcase == "oneshot")
@@ -255,8 +258,6 @@ module GlowficIndexHandlers
     def toc_to_chapterlist(options={}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
       
-      chapter_list = GlowficEpub::Chapters.new
-      
       LOG.info "TOC Page: #{fic_toc_url}"
       fic_toc_data = get_page_data(fic_toc_url, replace: true)
       fic_toc_data = fic_toc_data.gsub("</li>", "") if @strip_li_end
@@ -293,8 +294,6 @@ module GlowficIndexHandlers
     end
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
-      
-      chapter_list = GlowficEpub::Chapters.new
       
       LOG.info "TOC Page: #{fic_toc_url}"
       fic_toc_data = get_page_data(fic_toc_url, replace: true)
@@ -423,6 +422,7 @@ module GlowficIndexHandlers
   
   class NeatListHandler < IndexHandler
     handles :marri, :peterverse, :maggie, :throne
+    attr_reader :entry
     def initialize(options = {})
       super(options)
       @heading_selects = ["b, strong", "u", "em, i"]
@@ -432,9 +432,6 @@ module GlowficIndexHandlers
       elsif group == :throne
         @heading_selects = ["h4", "h5"]
       end
-    end
-    def entry
-      @entry
     end
     def get_heading_encapsule(node)
       text = get_text_on_line(node).strip
@@ -455,8 +452,6 @@ module GlowficIndexHandlers
     end
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
-      
-      chapter_list = GlowficEpub::Chapters.new
       
       LOG.info "TOC Page: #{fic_toc_url}"
       fic_toc_data = get_page_data(fic_toc_url, replace: true)
@@ -691,7 +686,6 @@ module GlowficIndexHandlers
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
       
       if fic_toc_url.end_with?("/boards/")
-        chapter_list = GlowficEpub::Chapters.new
         LOG.info "TOC Page: #{fic_toc_url}"
         fic_toc_data = get_page_data(fic_toc_url, replace: true)
         fic_toc = Nokogiri::HTML(fic_toc_data)
@@ -712,28 +706,25 @@ module GlowficIndexHandlers
             end
           end
         end
-        return chapter_list
       elsif fic_toc_url[/\/boards\/\d+/]
-        chapter_list = GlowficEpub::Chapters.new
         board_to_block(board_url: fic_toc_url) do |chapter_details|
           chapter_list << chapter_details
           if block_given?
             yield chapter_details
           end
         end
-        return chapter_list
       elsif fic_toc_url[/\/users\/\d+/]
-        chapter_list = GlowficEpub::Chapters.new(sort_chapters: true)
+        chapter_list.sort_chapters = true
         userlist_to_block(user_url: fic_toc_url) do |chapter_details|
           chapter_list << chapter_details
           if block_given?
             yield chapter_details
           end
         end
-        return chapter_list
       else
         raise(ArgumentException, "Chapter URL is not /boards or /boards/:id or /users/:id – failed")
       end
+      chapter_list
     end
   end
   
@@ -743,8 +734,6 @@ module GlowficIndexHandlers
       super(options)
     end
     def toc_to_chapterlist(options = {}, &block)
-      chapter_list = GlowficEpub::Chapters.new
-      
       list = if @group == :test
         [
           {url: "https://vast-journey-9935.herokuapp.com/posts/43",
@@ -887,7 +876,7 @@ module GlowficIndexHandlers
         end
       elsif @group == :lintamande
         const_handler = ConstellationIndexHandler.new(group: @group)
-        chapter_list = GlowficEpub::Chapters.new(sort_chapters: true)
+        chapter_list.sort_chapters = true
         const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group]) do |chapter|
           if block_given?
             yield chapter
@@ -911,14 +900,12 @@ module GlowficIndexHandlers
   end
   
   ##
-  #class HandlerTemplate
+  #class HandlerTemplate < IndexHandler
   #  def initialize(options = {})
-  #    group = options[:group] if options.key?(:group)
+  #    super(options)
   #  end
   #  def toc_to_chapterlist(options = {}, &block)
   #    fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
-  #    
-  #    chapter_list = GlowficEpub::Chapters.new
   #    
   #    LOG.info "TOC Page: #{fic_toc_url}"
   #    fic_toc_data = get_page_data(fic_toc_url, replace: true)
