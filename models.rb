@@ -434,6 +434,10 @@
       @authors ||= []
       if @authors.present? and @authors.select{|thing| thing.is_a?(String)}.present?
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
+        if @authors.select{|thing| thing.nil?}.present?
+          LOG.error "#{self} has a nil author."
+          LOG.info "Authors: #{@authors * ', '}"
+        end
       end
       @authors
     end
@@ -488,6 +492,7 @@
       @moieties if @moieties and not @moieties.empty?
       @moieties = []
       authors.each do |author|
+        (LOG.error "nil author for #{self}" and next) unless author
         author.moiety.split(' ').each do |moiety|
           @moieties << moiety unless @moieties.include?(moiety)
         end
@@ -497,6 +502,11 @@
     end
     
     def add_author(newauthor)
+      unless newauthor
+        LOG.error "add_author(nil) for #{self}"
+        puts caller
+        return
+      end
       unless authors.include?(newauthor)
         authors << newauthor
         @moieties = nil
