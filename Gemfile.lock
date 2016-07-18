@@ -43,8 +43,6 @@ GEM
       unf_ext
     unf_ext (0.0.7.2)
     webrobots (0.1.2)
-    zip-zip (0.3)
-      rubyzip (>= 1.0.0)
 
 PLATFORMS
   ruby
@@ -55,7 +53,6 @@ DEPENDENCIES
   mechanize
   nokogiri
   open_uri_redirections
-  zip-zip
 
 BUNDLED WITH
    1.12.5
