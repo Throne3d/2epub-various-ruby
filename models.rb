@@ -51,40 +51,39 @@
     @built_moieties = val
   end
   def self.build_moieties()
-    file_path = "collectionPages.txt"
-    return MOIETIES unless File.file?(file_path)
     return MOIETIES if self.built_moieties?
     
-    open(file_path, 'r') do |file|
-      file.each do |line|
-        next if line.chomp.strip.empty?
-        collection_name = line.chomp.split(" ~#~ ").first.strip
-        collection_url = line.chomp.sub("#{collection_name} ~#~ ", "").strip
-        
-        uri = URI.parse(collection_url)
-        collection_id = uri.host.sub(".dreamwidth.org", "")
-        
-        collection_data = get_page_data(collection_url, replace: true)
-        collection = Nokogiri::HTML(collection_data)
-        
-        moiety_key = nil
-        MOIETIES.keys.each do |key|
-          moiety_key = key if key.downcase.strip == collection_name.downcase.strip
-        end
-        if moiety_key.nil?
-          moiety_key = collection_name
-          MOIETIES[moiety_key] = []
-        end
-        
-        MOIETIES[moiety_key] << collection_id
-        count = 0
-        collection.css('#members_people_body a').each do |user_element|
-          MOIETIES[moiety_key] << user_element.text.strip.gsub('_', '-')
-          count += 1
-        end
-        
-        LOG.info "Processed collection #{collection_name}: #{count} member#{count==1 ? '' : 's'}."
+    url = 'http://pastebin.com/raw/nAqFiV5a'
+    file_data = get_page_data(url, where: 'temp', replace: true).strip
+    file_data.split(/\r?\n/).each do |line|
+      line = line.strip
+      next if line.empty?
+      collection_name = line.split(" ~#~ ").first.strip
+      collection_url = line.sub("#{collection_name} ~#~ ", "").strip
+      
+      uri = URI.parse(collection_url)
+      collection_id = uri.host.sub(".dreamwidth.org", "")
+      
+      collection_data = get_page_data(collection_url, replace: true)
+      collection = Nokogiri::HTML(collection_data)
+      
+      moiety_key = nil
+      MOIETIES.keys.each do |key|
+        moiety_key = key if key.downcase.strip == collection_name.downcase.strip
       end
+      if moiety_key.nil?
+        moiety_key = collection_name
+        MOIETIES[moiety_key] = []
+      end
+      
+      MOIETIES[moiety_key] << collection_id
+      count = 0
+      collection.css('#members_people_body a').each do |user_element|
+        MOIETIES[moiety_key] << user_element.text.strip.gsub('_', '-')
+        count += 1
+      end
+      
+      LOG.info "Processed collection #{collection_name}: #{count} member#{count==1 ? '' : 's'}."
     end
     self.built_moieties=true
   end
