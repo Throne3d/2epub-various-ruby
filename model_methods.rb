@@ -1,4 +1,7 @@
 ﻿module GlowficEpubMethods
+  require 'fileutils'
+  require 'open-uri'
+  require 'open_uri_redirections'
   class FileLogIO
     def initialize(defaultFile=nil)
       FileUtils::mkdir_p(File.dirname(defaultFile)) if defaultFile

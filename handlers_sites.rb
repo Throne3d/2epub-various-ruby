@@ -1,8 +1,8 @@
 ﻿module GlowficSiteHandlers
   require 'model_methods'
   require 'models'
-  require 'uri'
-  require 'date'
+  require 'mechanize'
+  require 'active_support/core_ext/numeric/time'
   include GlowficEpubMethods
   include GlowficEpub::PostType
   
