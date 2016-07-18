@@ -1193,12 +1193,14 @@
         if error
           error_text = error.text
           if error_text["do not have permission"]
-            (LOG.error('Page was private!') and break)
+            (LOG.error("Chapter '#{chapter.title}': Error. Page was private!") and break)
           elsif error_text["not be found"]
-            (LOG.error('Post does not exist!') and break)
+            (LOG.error("Chapter '#{chapter.title}': Error. Post does not exist!") and break)
+          elsif error_text["content warning"]
+            # is a content warning; ignore
+          else
+            (LOG.error("Chapter '#{chapter.title}': Error. Unknown post error: '#{error_text}'" and break)
           end
-          LOG.error("Unknown post error: \"#{error_text.strip}\"")
-          break
         end
         
         page_content = page.at_css('#content')
