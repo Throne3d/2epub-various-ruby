@@ -220,7 +220,7 @@ def main(args)
   elsif (process == :output_epub)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
-    LOG.info "Processing '#{group}'"
+    LOG.info "Outputting an EPUB for '#{group}'"
     
     handler = GlowficOutputHandlers::EpubHandler
     handler = handler.new(chapter_list: chapter_list, group: group)
@@ -239,7 +239,7 @@ def main(args)
     
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
-    LOG.info "Processing '#{group}'"
+    LOG.info "Outputting a report for '#{group}'"
     
     params = {}
     params[:date] = date if date
@@ -254,7 +254,7 @@ def main(args)
   elsif (process == :stats)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
-    LOG.info "Processing '#{group}'"
+    LOG.info "Doing stats for '#{group}'"
     
     #replies by author, replies by character, icon uses
     #total and per-month?
