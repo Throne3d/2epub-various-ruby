@@ -572,4 +572,14 @@
       end
     end
   end
+  
+  class RailsHandler < OutputHandler
+    def initialize(options={})
+      super options
+    end
+    
+    def output(options={})
+    
+    end
+  end
 end

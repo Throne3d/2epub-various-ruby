@@ -42,7 +42,7 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report, test1: :test1, test2: :test2, trash: :trash}
+  processes = {tocs: :tocs, toc: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
       process = value
@@ -248,6 +248,14 @@ def main(args)
     handler = GlowficOutputHandlers::ReportHandler
     handler = handler.new(chapter_list: chapter_list, group: group)
     handler.output(params)
+  elsif (process == :output_rails)
+    chapter_list = get_chapters_data(group)
+    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    LOG.info "Outputting Rails stuff for '#{group}'"
+    
+    handler = GlowficOutputHandlers::RailsHandler
+    handler = handler.new(chapter_list: chapter_list, group: group)
+    handler.output
   elsif (process == :test1)
     chapter_list = get_chapters_data(group)
   elsif (process == :test2)
