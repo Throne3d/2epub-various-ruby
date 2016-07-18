@@ -454,7 +454,7 @@
     
     def time_completed
       if @time_completed.is_a?(String)
-        @time_completed = DateTime.strptime(@time_completed)
+        @time_completed = DateTime.parse(@time_completed)
       elsif @time_completed.is_a?(Date)
         @time_completed = @time_completed.to_datetime
       else
@@ -463,7 +463,7 @@
     end
     def time_completed=(val)
       if val.is_a?(String)
-        @time_completed = DateTime.strptime(val)
+        @time_completed = DateTime.parse(val)
       elsif val.is_a?(Date)
         @time_completed = val.to_datetime
       else
@@ -473,7 +473,7 @@
     
     def time_hiatus
       if @time_hiatus.is_a?(String)
-        @time_hiatus = DateTime.strptime(@time_hiatus)
+        @time_hiatus = DateTime.parse(@time_hiatus)
       elsif @time_hiatus.is_a?(Date)
         @time_hiatus = @time_hiatus.to_datetime
       else
@@ -482,7 +482,7 @@
     end
     def time_hiatus=(val)
       if val.is_a?(String)
-        @time_hiatus = DateTime.strptime(val)
+        @time_hiatus = DateTime.parse(val)
       elsif val.is_a?(Date)
         @time_hiatus = val.to_datetime
       else
