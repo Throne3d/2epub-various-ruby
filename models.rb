@@ -154,6 +154,10 @@
     end
     
     def to_json(options={})
+      puts "#{self}.to_json"
+      as_json.to_json(options)
+    end
+    def as_json(options={})
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
@@ -161,7 +165,7 @@
         var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
-      hash.to_json(options)
+      hash
     end
     def from_json! string
       json_hash = if string.is_a? String
@@ -566,9 +570,9 @@
       str += ": #{smallURL}"
     end
     
-    def to_json(options={})
+    def as_json(options={})
       hash = {}
-      LOG.debug "Chapter.to_json! (title: '#{title}', url: '#{url}')"
+      LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
         var_sym = var_str.to_sym
@@ -581,7 +585,7 @@
           hash[var_sym] = authors
         end
       end
-      hash.to_json(options)
+      hash
     end
     def from_json! string
       json_hash = if string.is_a? String
@@ -680,7 +684,7 @@
       "#{user_display}: #{keyword}"
     end
     
-    def to_json(options={})
+    def as_json(options={})
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
@@ -694,7 +698,7 @@
           hash[var_sym] = author.unique_id if author.is_a?(Author)
         end
       end
-      hash.to_json(options)
+      hash
     end
   end
   
@@ -945,7 +949,7 @@
       end
     end
     
-    def to_json(options={})
+    def as_json(options={})
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
@@ -974,7 +978,7 @@
           hash['face'] = @face
         end
       end
-      hash.to_json(options)
+      hash
     end
     
     def from_json! string
@@ -1060,7 +1064,7 @@
       "#{display}"
     end
     
-    def to_json(options={})
+    def as_json(options={})
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
@@ -1068,7 +1072,7 @@
         var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
-      hash.to_json(options)
+      hash
     end
   end
 end
