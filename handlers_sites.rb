@@ -1199,7 +1199,7 @@
           elsif error_text["content warning"]
             # is a content warning; ignore
           else
-            (LOG.error("Chapter '#{chapter.title}': Error. Unknown post error: '#{error_text}'" and break)
+            (LOG.error("Chapter '#{chapter.title}': Error. Unknown post error: '#{error_text}'") and break)
           end
         end
         
