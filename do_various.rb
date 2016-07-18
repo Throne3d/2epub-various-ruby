@@ -4,10 +4,12 @@ require 'logger'
 require 'active_support'
 require 'active_support/core_ext/object/blank'
 require 'active_support/core_ext/object/try'
+require 'active_support/json'
 
 $LOAD_PATH << '.'
 $LOAD_PATH << 'script'
 $LOAD_PATH << 'script/scraper'
+$LOAD_PATH << File.dirname(__FILE__)
 require 'models'
 require 'model_methods'
 require 'handlers_indexes'
