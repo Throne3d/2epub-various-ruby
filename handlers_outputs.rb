@@ -3,7 +3,6 @@
   require 'models'
   require 'uri'
   require 'erb'
-  require 'eeepub'
   include GlowficEpubMethods
   include GlowficEpub::PostType
   
@@ -21,6 +20,7 @@
     include ERB::Util
     def initialize(options={})
       super options
+      require 'eeepub'
       @group_folder = File.join('output', 'epub', @group.to_s)
       @style_folder = File.join(@group_folder, 'style')
       @html_folder = File.join(@group_folder, 'html')
