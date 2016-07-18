@@ -154,7 +154,6 @@
     end
     
     def to_json(options={})
-      puts "#{self}.to_json"
       as_json.to_json(options)
     end
     def as_json(options={})
