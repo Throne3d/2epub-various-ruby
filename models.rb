@@ -780,6 +780,14 @@
     def children
       @children ||= []
     end
+    def add_child(val)
+      children << val unless children.include?(val)
+      val.parent = self unless val.parent == self
+    end
+    def remove_child(val)
+      children.delete(val) if children.include?(val)
+      val.parent = nil if val.parent == self
+    end
     def moiety
       return "" unless face
       face.moiety
@@ -800,13 +808,20 @@
     end
     
     def parent=(newparent)
-      if newparent.is_a?(Array)
+      return newparent if @parent == newparent
+      if @parent
+        parent = self.parent
+        @parent = nil
+        parent.remove_child(self)
+      end
+      if newparent.is_a?(Message)
         @parent = newparent
+        self.parent.add_child(self)
+        self.depth = self.parent.depth + 1
       else
         @parent = newparent
-        @parent.children << self unless @parent.children.include?(self)
-        @depth = @parent.depth + 1
       end
+      @parent
     end
     def parent
       if @parent.is_a?(Array)
