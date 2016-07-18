@@ -579,7 +579,18 @@
     end
     
     def output(options={})
-    
+      chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : (@chapters ? @chapters : nil)
+      (LOG.fatal "No chapters given!" and return) unless chapter_list
+      
+      chapter_list.each do |chapter|
+        threaded = false
+        chapter.replies.each do |reply|
+          next if reply.children.length <= 1
+          puts "reply #{reply.id} has #{reply.children.length} children"
+          threaded = true
+        end
+        puts "#{chapter} is " + (!threaded ? 'un' : '') + "threaded"
+      end
     end
   end
 end
