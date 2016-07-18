@@ -2,7 +2,6 @@
   require 'model_methods'
   require 'models'
   require 'mechanize'
-  require 'active_support/core_ext/numeric/time'
   include GlowficEpubMethods
   include GlowficEpub::PostType
   
@@ -1088,15 +1087,13 @@
         create_date = date_element.at_css('.post-posted').try(:text).try(:strip)
         LOG.error "No create date for message ID ##{message_id}?" unless create_date
         if create_date
-          params[:time] = DateTime.strptime(create_date + " Eastern Time (US & Canada)", "%b %d, %Y %l:%M %p %Z")
-          params[:time] = (params[:time].to_time - 1.hour).to_datetime if params[:time].to_time.dst?
+          params[:time] = Time.zone.parse(create_date).to_datetime
         end
       end
       if message_attributes.include?(:edittime)
         edit_date = date_element.at_css('.post-updated').try(:text).try(:strip)
         if edit_date
-          params[:edittime] = DateTime.strptime(edit_date + " Eastern Time (US & Canada)", "%b %d, %Y %l:%M %p %Z")
-          params[:edittime] = (params[:edittime].to_time - 1.hour).to_datetime if params[:edittime].to_time.dst?
+          params[:edittime] = Time.zone.parse(edit_date).to_datetime
         end
       end
       
@@ -1181,6 +1178,8 @@
       
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
+      
+      Time.zone = 'Eastern Time (US & Canada)'
       
       @entry_title = nil
       @chapter = chapter
