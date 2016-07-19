@@ -6,6 +6,7 @@ require 'active_support'
 require 'active_support/core_ext/object/blank'
 require 'active_support/core_ext/object/try'
 require 'active_support/core_ext/numeric/time'
+require 'active_support/core_ext/string'
 require 'active_support/time_with_zone'
 require 'active_support/json'
 
