@@ -807,7 +807,7 @@
       chapter_list.each do |chapter|
         (LOG.error "Chapter has no entry: #{chapter}" and next) unless chapter.entry.present?
         threaded = false
-        chapter.replies.each do |reply|
+        ([chapter.entry] + chapter.replies).each do |reply|
           next if reply.children.length <= 1
           if reply.children.length == 2 && reply.children.first.children.empty?
             reply.children.last.parent = reply.children.first
