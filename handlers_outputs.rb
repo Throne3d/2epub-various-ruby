@@ -730,7 +730,7 @@
         
         if matching_posts.present?
           matching_post_ids = matching_posts.map(&:id)
-          LOG.info "Chapter '#{chapter}' appears to have duplicate(s). ID(s): #{matching_post_ids * ', '}"
+          @msgs << "Chapter '#{chapter}' appears to have duplicate(s). ID(s): #{matching_post_ids * ', '}."
           if @confirm_dupes
             first_reply = chapter.replies.first
             puts "First reply content: #{first_reply.content}" if first_reply.present?
@@ -743,10 +743,10 @@
             input = 'y'
           end
           if input == 'y'
-            LOG.info "Noted as duplicate"
+            @msgs.last << " Noted as duplicate"
             @post_cache[post_cache_id] = matching_posts.first
           else
-            LOG.info "Noted as not duplicates"
+            @msgs.last << " Noted as not duplicates"
             @post_not_skips[lowercase_title] ||= []
             @post_not_skips[lowercase_title] += matching_post_ids
           end
@@ -819,8 +819,10 @@
         end
         puts "#{chapter} is " + (!threaded ? 'un' : '') + "threaded"
         
+        @msgs = []
+        
         board = board_for_chapterlist(chapter_list)
-        (LOG.info "Chapter #{chapter} already exists." and next) if post_for_entry?(chapter.entry, board)
+        (@msgs.each {|msg| LOG.info msg} and next) if post_for_entry?(chapter.entry, board)
         post = post_for_entry(chapter.entry, board)
         thread_id = nil
         chapter.replies.each do |reply|
