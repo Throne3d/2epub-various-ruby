@@ -607,8 +607,7 @@
           char_id = author.unique_id.sub('constellation#', '')
           chars = Character.where(user_id: user.id, id: char_id)
           unless chars.present?
-            LOG.warn "Author #{author} appears to be on the constellation but is not present in database; this is presumably a dev copy."
-            LOG.info "Creating character for author."
+            LOG.info "Creating character '#{author.name}' for author '#{user.username}'."
             Character.create!(user: user, name: author.name, screenname: author.screenname)
           end
         end
