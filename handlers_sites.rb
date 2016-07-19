@@ -731,6 +731,7 @@
       super options
       @face_id_cache = {} # {"6951" => "[is a face: ahein, imgur..., etc.]"}
       @face_param_cache = {}
+      @face_issue_cache = [] #these helpful names ikr
       @author_id_cache = {}
       @author_param_cache = {}
       @char_page_cache = {}
@@ -1048,11 +1049,12 @@
       
       done_face = get_face_by_id(face.unique_id, default)
       
-      face_hash = @face_param_cache[face.unique_id]
+      face_hash = @face_param_cache[done_face.unique_id] || @face_param_cache[done_face.unique_id.sub('constellation#', '')]
       if face_hash.present?
         face.from_json! face_hash
-      elsif done_face.present?
+      elsif done_face.present? && !@face_issue_cache.include?(face.unique_id)
         LOG.error "Face was created, param cache was not set. Face not updating despite being supposed to. #{face}"
+        @face_issue_cache << face.unique_id
       end
       set_face_cache(face)
       
