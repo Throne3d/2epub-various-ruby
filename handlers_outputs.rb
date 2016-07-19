@@ -601,19 +601,22 @@
       chars = Character.where(user_id: user.id, name: author.name) if author.name.present? && !chars.present?
       unless chars.present?
         # unique_ids:
-        # dreamwidth#{author_id} (is already done or else there is some real weirdness going on)
+        # dreamwidth#{author_id}
         # constellation#user#{user_id}
         # constellation#{character_id}
+        skip_creation = false
         if author.unique_id.start_with?('constellation#user#')
           chars = [] # character is nil if it's a user post
-        elsif author.unique_id.start_with?('constellation#')
+          skip_creation = true
+        elsif
           char_id = author.unique_id.sub('constellation#', '')
           chars = Character.where(user_id: user.id, id: char_id)
-          unless chars.present?
-            LOG.info "Creating character '#{author.name}' for author '#{user.username}'."
-            Character.create!(user: user, name: author.name, screenname: author.screenname)
-            chars = Character.where(user_id: user.id, screenname: author.screenname)
-          end
+        end
+        
+        unless skip_creation or chars.present?
+          LOG.info "Creating character '#{author.name}' for author '#{user.username}'."
+          Character.create!(user: user, name: author.name, screenname: author.screenname)
+          chars = Character.where(user_id: user.id, screenname: author.screenname)
         end
       end
       char = chars.first
