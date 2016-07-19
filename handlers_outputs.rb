@@ -676,7 +676,7 @@
       @icon_cache[face.unique_id] = icon
     end
     
-    def board_from_chapterlist(chapter_list)
+    def board_for_chapterlist(chapter_list)
       return @board_cache[chapter_list] if @board_cache.key?(chapter_list)
       chapter_list.group ||= @group
       board_name = FIC_NAMESTRINGS[chapter_list.group]
@@ -688,10 +688,10 @@
       board = boards.first
       @board_cache[chapter_list] = board
     end
-    def boardsection_from_chapter(chapter)
+    def boardsection_for_chapter(chapter)
       return nil unless chapter.sections.present?
       section_string = chapter.sections * ' > '
-      board = board_from_chapterlist(chapter.chapter_list)
+      board = board_for_chapterlist(chapter.chapter_list)
       @boardsection_cache[board] ||= {}
       return @boardsection_cache[board][section_string] if @boardsection_cache[board].key?(section_string)
       boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board_id: board.id)
@@ -710,8 +710,8 @@
       writable.created_at = message.time
       writable.updated_at = message.edittime
     end
-    def post_from_entry(entry, board=nil)
-      board ||= board_from_chapterlist(entry.chapter_list)
+    def post_for_entry(entry, board=nil)
+      board ||= board_for_chapterlist(entry.chapter_list)
       post_cache_id = entry.id + '#entry'
       return @post_cache[post_cache_id] if @post_cache.key?(post_cache_id)
       chapter = entry.chapter
@@ -719,18 +719,18 @@
       post.board = board
       post.subject = chapter.entry_title
       post.status = chapter.time_completed ? Post::STATUS_COMPLETE : (chapter.time_hiatus ? Post::STATUS_HIATUS : Post::STATUS_ACTIVE)
-      post.section = boardsection_from_chapter(chapter)
+      post.section = boardsection_for_chapter(chapter)
       
       do_writables_from_message(post, entry)
       post.save!
       
       @post_cache[post_cache_id] = post
     end
-    def reply_from_comment(comment, threaded=false, thread_id=nil, do_update=false)
+    def reply_for_comment(comment, threaded=false, thread_id=nil, do_update=false)
       reply_cache_id = comment.chapter.entry.id + '#' + comment.id
       return @reply_cache[reply_cache_id] if @reply_cache.key?(reply_cache_id)
       reply = Reply.new
-      reply.post = post_from_entry(comment.chapter.entry)
+      reply.post = post_for_entry(comment.chapter.entry)
       reply.thread_id = thread_id if threaded && thread_id
       reply.skip_notify = true
       
@@ -775,11 +775,11 @@
         end
         puts "#{chapter} is " + (!threaded ? 'un' : '') + "threaded"
         
-        board = board_from_chapterlist(chapter_list)
-        post = post_from_entry(chapter.entry, board)
+        board = board_for_chapterlist(chapter_list)
+        post = post_for_entry(chapter.entry, board)
         thread_id = nil
         chapter.replies.each do |reply|
-          repl = reply_from_comment(reply, threaded, thread_id, reply == chapter.replies.last)
+          repl = reply_for_comment(reply, threaded, thread_id, reply == chapter.replies.last)
           thread_id = repl.thread_id if threaded
         end
         LOG.info "Did chapter #{chapter}."
