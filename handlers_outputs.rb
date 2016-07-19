@@ -724,17 +724,26 @@
       
       @post_cache[entry] = post
     end
-    def reply_from_comment(comment, threaded=false, thread_id=nil)
+    def reply_from_comment(comment, threaded=false, thread_id=nil, do_update=false)
       reply_cache_id = comment.chapter.entry.id + '#' + comment.id
       return @reply_cache[reply_cache_id] if @reply_cache.key?(reply_cache_id)
       reply = Reply.new
       reply.post = post_from_entry(comment.chapter.entry)
       reply.thread_id = thread_id if threaded && thread_id
-      reply.skip_post_update = true
       reply.skip_notify = true
       
       do_writables_from_message(reply, comment)
-      reply.save!
+      
+      if do_update
+        reply.skip_post_update = false
+        old_status = reply.post.status
+        old_updated_at = reply.post.updated_at
+        reply.save!
+        reply.post.update_column(:status, old_status)
+      else
+        reply.skip_post_update = true
+        reply.save!
+      end
       
       if threaded && comment.parent == comment.chapter.entry
         reply.thread_id = reply.id
@@ -768,7 +777,7 @@
         post = post_from_entry(chapter.entry, board)
         thread_id = nil
         chapter.replies.each do |reply|
-          repl = reply_from_comment(reply, threaded, thread_id)
+          repl = reply_from_comment(reply, threaded, thread_id, reply == chapter.replies.last)
           thread_id = repl.thread_id if threaded
         end
         LOG.info "Did chapter #{chapter}."
