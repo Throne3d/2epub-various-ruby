@@ -453,14 +453,10 @@
             params[:unique_id] = "#{user_id}##{params[:keyword]}"
             face = Face.new(params)
             icon_hash[params[:keyword]] = face
-            
-            @chapter_list.add_face(face)
-          end
-          if (icon_element == default_icon)
-            params[:keyword] = "default"
-            params[:unique_id] = "#{user_id}#default"
-            face = Face.new(params)
-            icon_hash[:default] = face
+            if icon_element == default_icon
+              icon_hash[:default] = face
+              params[:author].default_face = face if params[:author]
+            end
             
             @chapter_list.add_face(face)
           end
@@ -909,18 +905,13 @@
             params[:chapter_list] = @chapter_list
             face = Face.new(params)
             icon_hash[icon_numid] = face
+            if default_icon == icon_element
+              icon_hash[:default] = face
+              params[:author].default_face = face if params[:author]
+            end
             
             @chapter_list.add_face(face)
             @face_id_cache[params[:unique_id]] = face
-            
-            if (default_icon == icon_element and not icon_hash.key?(:default))
-              params[:keyword] = "default"
-              params[:unique_id] = "#{character_id}#default"
-              face = Face.new(params)
-              icon_hash[:default] = face
-              
-              @chapter_list.add_face(face)
-            end
           end
           LOG.debug "got #{icon_hash.keys.length} icon(s)"
           @char_page_cache[character_id] = icon_hash

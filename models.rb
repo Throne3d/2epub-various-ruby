@@ -1014,11 +1014,11 @@
   end
   
   class Author < Model
-    attr_accessor :moiety, :name, :screenname, :chapter_list, :display, :unique_id
-    serialize_ignore :faces, :chapters, :chapter_list, :allowed_params
+    attr_accessor :moiety, :name, :screenname, :chapter_list, :display, :unique_id, :default_face
+    serialize_ignore :faces, :chapters, :chapter_list, :allowed_params, :default_face
     
     def allowed_params
-      @allowed_params ||= [:chapter_list, :moiety, :name, :screenname, :display, :unique_id]
+      @allowed_params ||= [:chapter_list, :moiety, :name, :screenname, :display, :unique_id, :default_face]
     end
     
     def initialize(params={})
@@ -1042,6 +1042,33 @@
       "#{display}"
     end
     
+    def default_face
+      return @default_face if @default_face and not @default_face.is_a?(String)
+      return unless @default_face and @default_face.is_a?(String)
+      
+      if chapter_list
+        temp_face = chapter_list.get_face_by_id(@default_face)
+        new_face = site_handler.get_updated_face(temp_face)
+        new_face = temp_face unless new_face
+        if new_face
+          @default_face = new_face
+          chapter_list.replace_face(new_face)
+        end
+      end
+      
+      if site_handler and (not @default_face or @default_face.is_a?(String))
+        temp_face = site_handler.get_face_by_id(@default_face)
+        if temp_face
+          @default_face = temp_face
+          chapter_list.replace_face(temp_face)
+        end
+      end
+      
+      @default_face.author = self if @default_face and not @default_face.is_a?(String)
+      LOG.error "Failed to generate a face object, is still string; bad (#{@default_face})" if @default_face.is_a?(String)
+      @default_face
+    end
+    
     def as_json(options={})
       hash = {}
       self.instance_variables.each do |var|
@@ -1049,6 +1076,9 @@
         var_sym = var_str.to_sym
         var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
+      end
+      if default_face
+        hash[:default_face] = (default_face.is_a?(Face) ? default_face.unique_id : default_face)
       end
       hash
     end
