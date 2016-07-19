@@ -708,7 +708,8 @@
       writable.created_at = message.time
       writable.updated_at = message.edittime
     end
-    def post_from_entry(entry, board)
+    def post_from_entry(entry, board=nil)
+      board ||= board_from_chapterlist(entry.chapter_list)
       post_cache_id = entry.id + '#entry'
       return @post_cache[post_cache_id] if @post_cache.key?(post_cache_id)
       chapter = entry.chapter
