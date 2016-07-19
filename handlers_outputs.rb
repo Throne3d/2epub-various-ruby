@@ -586,6 +586,11 @@
         threaded = false
         chapter.replies.each do |reply|
           next if reply.children.length <= 1
+          if reply.children.length == 2 && reply.children.first.children.empty?
+            reply.children.last.parent = reply.children.first
+            (puts "unbranched #{reply}" and next) if reply.children.length <= 1
+            puts "unbranching failed somehow? reply: #{reply}, children: #{reply.children}, children parents: #{reply.children.map(&:parent)}"
+          end
           puts "reply #{reply.id} has #{reply.children.length} children"
           threaded = true
         end
