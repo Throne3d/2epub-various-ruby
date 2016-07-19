@@ -612,6 +612,7 @@
           unless chars.present?
             LOG.info "Creating character '#{author.name}' for author '#{user.username}'."
             Character.create!(user: user, name: author.name, screenname: author.screenname)
+            chars = Character.where(user_id: user.id, screenname: author.screenname)
           end
         end
       end
