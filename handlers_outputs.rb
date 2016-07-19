@@ -585,6 +585,8 @@
       @board_cache = {}
       @post_cache = {}
       @reply_cache = {}
+      @post_not_skips = {}
+      @confirm_dupes = (options.key?(:confirm_dupes) ? options[:confirm_dupes] : DEBUGGING)
     end
     
     def character_for_author(author)
@@ -710,9 +712,47 @@
       writable.created_at = message.time
       writable.updated_at = message.edittime
     end
+    def post_for_entry?(entry, board=nil)
+      post_cache_id = entry.id + (entry.chapter.thread ? "##{entry.chapter.thread}" : '') + '#entry'
+      unless @post_cache.key?(post_cache_id)
+        chapter = entry.chapter
+        section = boardsection_for_chapter(chapter) or board_for_chapterlist(entry.chapter_list)
+        lowercase_title = chapter.entry_title.downcase
+        matching_posts = section.posts.where('lower(subject) = ?', lowercase_title)
+        matching_posts = matching_posts.not(id: @post_not_skips[lowercase_title]) if @post_not_skips.key?(lowercase_title)
+        
+        matching_posts.select {|post| post.replies.length == chapter.replies.length && post.replies.order('id asc').first.content.strip.gsub(/\<[^\<\>]+\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') == chapter.replies.first.content.strip.gsub(/\<[^\<\>]+\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') }
+        # If they're the same length, check if they have the same content for their first reply (skipping HTML tags and linebreaks and dupe spaces).
+        
+        if matching_posts.present?
+          matching_post_ids = matching_posts.map(&:id)
+          LOG.info "Chapter '#{chapter}' appears to have duplicate(s). ID(s): #{matching_post_ids * ', '}"
+          if @confirm_dupes
+            first_reply = chapter.replies.first
+            puts "First reply content: #{first_reply.content}" if first_reply.present?
+            puts "Please verify if this is a duplicate (Y) and should be skipped or not (n) and should be reprocessed."
+            while (input = STDIN.gets.chomp.strip.downcase) && input != 'y' && input != 'n' && input != ''
+              puts "Unrecognized input."
+            end
+            input = 'y' if input.empty?
+          else
+            input = 'y'
+          end
+          if input == 'y'
+            LOG.info "Noted as duplicate"
+            @post_cache[post_cache_id] = matching_posts.first
+          else
+            LOG.info "Noted as not duplicates"
+            @post_not_skips[lowercase_title] ||= []
+            @post_not_skips[lowercase_title] += matching_post_ids
+          end
+        end
+      end
+      @post_cache.key?(post_cache_id)
+    end
     def post_for_entry(entry, board=nil)
       board ||= board_for_chapterlist(entry.chapter_list)
-      post_cache_id = entry.id + '#entry'
+      post_cache_id = entry.id + (entry.chapter.thread ? "##{entry.chapter.thread}" : '') + '#entry'
       return @post_cache[post_cache_id] if @post_cache.key?(post_cache_id)
       chapter = entry.chapter
       post = Post.new
@@ -776,6 +816,7 @@
         puts "#{chapter} is " + (!threaded ? 'un' : '') + "threaded"
         
         board = board_for_chapterlist(chapter_list)
+        (LOG.info "Chapter #{chapter} already exists." and next) if post_for_entry?(chapter.entry, board)
         post = post_for_entry(chapter.entry, board)
         thread_id = nil
         chapter.replies.each do |reply|
