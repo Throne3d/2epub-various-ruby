@@ -593,6 +593,7 @@
     def character_for_author(author)
       return @char_cache[author.unique_id] if @char_cache.key?(author.unique_id)
       return nil unless author.unique_id
+      LOG.warn("- Character has no default face: #{author}") unless author.default_face.present?
       user = user_for_author(author)
       chars = nil
       author.screenname = author.unique_id.sub('dreamwidth#', '') if !author.screenname.present? && author.unique_id.start_with?('dreamwidth#')
@@ -615,9 +616,9 @@
         end
         
         unless skip_creation or chars.present?
-          LOG.info "- Creating character '#{author.name}' for author '#{user.username}'."
           Character.create!(user: user, name: author.name, screenname: author.screenname)
           chars = Character.where(user_id: user.id, screenname: author.screenname)
+          LOG.info "- Created character '#{author.name}' for author '#{user.username}'."
         end
       end
       char = chars.first
@@ -638,7 +639,6 @@
       cached_moiety = moieties.find {|moiety_val| @usermoiety_cache.key?(moiety_val) }
       return @usermoiety_cache[cached_moiety] if cached_moiety
       LOG.warn("- Character has many moieties (#{author.moiety})") if moieties.length > 1
-      LOG.warn("- Character has no default face: #{author}") unless author.default_face.present?
       
       users = User.where('lower(username) = ?', moieties.map(&:downcase))
       unless users.present?
@@ -730,8 +730,8 @@
       writable.character = character_for_author(message.author)
       writable.icon = icon_for_face(message.face)
       if writable.character.present? and writable.character.default_icon_id.blank? and message.author.default_face == message.face
-        LOG.info "- Setting a default icon for #{writable.character.name}: #{writable.icon.id}"
         writable.character.default_icon = writable.icon
+        LOG.info "- Set a default icon for #{writable.character.name}: #{writable.icon.id}"
       end
       writable.content = message.content.strip
       writable.created_at = message.time
