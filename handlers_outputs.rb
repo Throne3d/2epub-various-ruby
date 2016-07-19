@@ -724,7 +724,7 @@
       do_writables_from_message(post, entry)
       post.save!
       
-      @post_cache[entry] = post
+      @post_cache[post_cache_id] = post
     end
     def reply_from_comment(comment, threaded=false, thread_id=nil, do_update=false)
       reply_cache_id = comment.chapter.entry.id + '#' + comment.id
