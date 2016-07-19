@@ -614,7 +614,7 @@
         end
         
         unless skip_creation or chars.present?
-          LOG.info "Creating character '#{author.name}' for author '#{user.username}'."
+          LOG.info "- Creating character '#{author.name}' for author '#{user.username}'."
           Character.create!(user: user, name: author.name, screenname: author.screenname)
           chars = Character.where(user_id: user.id, screenname: author.screenname)
         end
@@ -636,11 +636,11 @@
       moiety = moieties.first
       cached_moiety = moieties.find {|moiety_val| @usermoiety_cache.key?(moiety_val) }
       return @usermoiety_cache[cached_moiety] if cached_moiety
-      LOG.warn("author has many moieties (#{author.moiety})") if moieties.length > 1
+      LOG.warn("- Character has many moieties (#{author.moiety})") if moieties.length > 1
       
       users = User.where('lower(username) = ?', moieties.map(&:downcase))
       unless users.present?
-        LOG.info "No user(s) found for moiet" + (moieties.length == 1 ? "y '#{moieties.first}'" : "ies: #{moieties * ', '}")
+        LOG.info "- No user(s) found for moiet" + (moieties.length == 1 ? "y '#{moieties.first}'" : "ies: #{moieties * ', '}")
         puts "Please enter a user ID or username for the user."
         userthing = STDIN.gets.chomp
         if userthing[/[A-Za-z]/]
@@ -657,9 +657,9 @@
           input = 'n' if input.empty?
           if input == 'y'
             User.create!(username: moiety, password: moiety, email: moiety)
-            LOG.info "User created for #{moiety}."
+            LOG.info "- User created for #{moiety}."
           else
-            LOG.warn "Skipping user for #{moiety}. Will likely cause errors."
+            LOG.warn "- Skipping user for #{moiety}. Will likely cause errors."
           end
           users = User.where(username: moiety)
         end
@@ -735,7 +735,7 @@
         
         if matching_posts.present?
           matching_post_ids = matching_posts.map(&:id)
-          @msgs << "Chapter '#{chapter}' appears to have duplicate(s). ID(s): #{matching_post_ids * ', '}."
+          @msgs << "- Chapter is duplicate. IDs: #{matching_post_ids * ', '}."
           if @confirm_dupes
             first_reply = chapter.replies.first
             puts "First reply content: #{first_reply.content}" if first_reply.present?
@@ -748,10 +748,10 @@
             input = 'y'
           end
           if input == 'y'
-            @msgs.last << " Noted as duplicate"
+            @msgs.last << " Noted duplicate."
             @post_cache[post_cache_id] = matching_posts.first
           else
-            @msgs.last << " Noted as not duplicates"
+            @msgs.last << " Noted not duplicates."
             @post_not_skips[lowercase_title] ||= []
             @post_not_skips[lowercase_title] += matching_post_ids
           end
@@ -823,6 +823,7 @@
         end
         
         @msgs = []
+        puts "Chapter #{chapter}."
         
         board = board_for_chapterlist(chapter_list)
         (@msgs.each {|msg| LOG.info msg} and next) if post_for_entry?(chapter.entry, board)
@@ -832,8 +833,8 @@
           repl = reply_for_comment(reply, threaded, thread_id, reply == chapter.replies.last)
           thread_id = repl.thread_id if threaded
         end
-        LOG.info "Did chapter #{chapter}."
       end
+      LOG.info "Finished outputting #{@group} to Rails."
     end
   end
 end
