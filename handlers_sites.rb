@@ -493,7 +493,11 @@
       
       done_face = get_face_by_id(face.unique_id, default)
       face_hash = @face_param_cache[face.unique_id]
-      face.from_json! face_hash
+      if face_hash.present?
+        face.from_json! face_hash
+      elsif done_face.present?
+        LOG.error "Face was created, param cache was not set. Face not updating despite being supposed to. #{face}"
+      end
       set_face_cache(face)
       
       face
