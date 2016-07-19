@@ -594,7 +594,7 @@
       chars = nil
       author.screenname = author.unique_id.sub('dreamwidth#', '') if !author.screenname.present? && author.unique_id.start_with?('dreamwidth#')
       if author.screenname.present?
-        chars = Character.where(user: user, screenname: author.screenname)
+        chars = Character.where(user_id: user.id, screenname: author.screenname)
       end
       unless chars.present?
         # unique_ids:
@@ -605,7 +605,7 @@
           chars = [user] # character is user (or nil?) if it's a user post
         elsif author.unique_id.start_with?('constellation#')
           char_id = author.unique_id.sub('constellation#', '')
-          chars = Character.where(user: user, id: char_id)
+          chars = Character.where(user_id: user.id, id: char_id)
           unless chars.present?
             LOG.warn "Author #{author} appears to be on the constellation but is not present in database; this is presumably a dev copy."
             LOG.info "Creating character for author."
@@ -692,10 +692,10 @@
       board = board_from_chapterlist(chapter.chapter_list)
       @boardsection_cache[board] ||= {}
       return @boardsection_cache[board][section_string] if @boardsection_cache[board].key?(section_string)
-      boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board: board)
+      boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board_id: board.id)
       unless boardsections.present?
         BoardSection.create!(board: board, name: section_string)
-        boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board: board)
+        boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board_id: board.id)
       end
       boardsection = boardsections.first
       @boardsection_cache[board][section_string] = boardsection
