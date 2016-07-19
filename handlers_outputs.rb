@@ -645,7 +645,7 @@
         
         unless users.present?
           puts "No user(s) found for '#{userthing}'. Would you like to create a new user for this moiety? (#{moiety}) (y/N)"
-          while input = gets.chomp.strip.downcase && input != 'y' && input != 'n' && input != ''
+          while (input = STDIN.gets.chomp.strip.downcase) && input != 'y' && input != 'n' && input != ''
             puts "Unrecognized input."
           end
           input = 'n' if input.empty?
