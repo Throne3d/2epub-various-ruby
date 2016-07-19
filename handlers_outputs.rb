@@ -576,6 +576,172 @@
   class RailsHandler < OutputHandler
     def initialize(options={})
       super options
+      @icon_cache = {}
+      @char_cache = {}
+      @gallery_cache = {}
+      @user_cache = {}
+      @usermoiety_cache = {}
+      @boardsection_cache = {}
+      @board_cache = {}
+      @post_cache = {}
+      @reply_cache = {}
+    end
+    
+    def character_for_author(author)
+      return @char_cache[author.unique_id] if @char_cache.key?(author.unique_id)
+      return nil unless author.unique_id
+      user = user_for_author(author)
+      chars = nil
+      author.screenname = author.unique_id.sub('dreamwidth#', '') if !author.screenname.present? && author.unique_id.start_with?('dreamwidth#')
+      if author.screenname.present?
+        chars = Character.where(user: user, screenname: author.screenname)
+      end
+      unless chars.present?
+        # unique_ids:
+        # dreamwidth#{author_id} (is already done or else there is some real weirdness going on)
+        # constellation#user#{user_id}
+        # constellation#{character_id}
+        if author.unique_id.start_with?('constellation#user#')
+          chars = [user] # character is user (or nil?) if it's a user post
+        elsif author.unique_id.start_with?('constellation#')
+          char_id = author.unique_id.sub('constellation#', '')
+          chars = Character.where(user: user, id: char_id)
+          unless chars.present?
+            LOG.warn "Author #{author} appears to be on the constellation but is not present in database; this is presumably a dev copy."
+            LOG.info "Creating character for author."
+            Character.create!(user: user, name: author.name, screenname: author.screenname)
+          end
+        end
+      end
+      char = chars.first
+      @char_cache[author.unique_id] = char
+    end
+    def gallery_for_author(author)
+      return @gallery_cache[author.unique_id] if @gallery_cache.key?(author.unique_id)
+      char = character_for_author(author)
+      return nil unless char
+      char.gallery ||= Gallery.create!(user: char.user, name: author.name)
+      @gallery_cache[author.unique_id] = char.gallery
+    end
+    def user_for_author(author)
+      return @user_cache[author.unique_id] if @user_cache.key?(author.unique_id)
+      return nil unless author.unique_id
+      moieties = author.moiety.split(' ').uniq.map(&:downcase)
+      moiety = moieties.first
+      cached_moiety = moieties.find {|moiety_val| @usermoiety_cache.key?(moiety_val) }
+      return @usermoiety_cache[cached_moiety] if cached_moiety
+      LOG.warn("author has many moieties (#{author.moiety})") if moieties.length > 1
+      
+      users = User.where('lower(username) = ?', moieties.map(&:downcase))
+      unless users.present?
+        LOG.info "No user(s) found for moiet" + (moieties.length == 1 ? "y '#{moieties.first}'" : "ies: #{moieties * ', '}")
+        puts "Please enter a user ID or username for the user."
+        userthing = gets.chomp
+        if userthing[/[A-Za-z]/]
+          users = User.where(username: userthing)
+        else
+          users = User.where(id: userthing)
+        end
+        
+        unless users.present?
+          puts "No user(s) found for '#{userthing}'. Would you like to create a new user for this moiety? (#{moiety}) (y/N)"
+          while input = gets.chomp.strip.downcase && input != 'y' && input != 'n' && input != ''
+            puts "Unrecognized input."
+          end
+          input = 'n' if input.empty?
+          if input == 'y'
+            User.create!(username: moiety, password: moiety, email: moiety)
+            LOG.info "User created for #{moiety}."
+          else
+            LOG.warn "Skipping user for #{moiety}. Will likely cause errors."
+          end
+          users = User.where(username: moiety)
+        end
+      end
+      user = users.first
+      @user_cache[author.unique_id] = user
+      @usermoiety_cache[user.try(:username).try(:downcase)] = user
+    end
+    def icon_for_face(face)
+      return @icon_cache[face.unique_id] if @icon_cache.key?(face.unique_id)
+      return nil unless face.imageURL
+      icon = Icon.where(url: face.imageURL).first
+      unless icon.present?
+        gallery = gallery_for_author(face.author)
+        gallery.icons << Icon.create!(user: user_for_author(face.author), url: face.imageURL, keyword: face.keyword)
+        icon = Icon.where(url: face.imageURL).first
+      end
+      @icon_cache[face.unique_id] = icon
+    end
+    
+    def board_from_chapterlist(chapter_list)
+      return @board_cache[chapter_list] if @board_cache.key?(chapter_list)
+      chapter_list.group ||= @group
+      board_name = FIC_NAMESTRINGS[chapter_list.group]
+      boards = Board.where('lower(name) = ?', board_name.downcase)
+      unless boards.present?
+        Board.create!(name: board_name, creator: user_for_author(chapter_list.authors.first))
+        boards = Board.where('lower(name) = ?', board_name.downcase)
+      end
+      board = boards.first
+      @board_cache[chapter_list] = board
+    end
+    def boardsection_from_chapter(chapter)
+      return nil unless chapter.sections.present?
+      section_string = chapter.sections * ' > '
+      board = board_from_chapterlist(chapter.chapter_list)
+      @boardsection_cache[board] ||= {}
+      return @boardsection_cache[board][section_string] if @boardsection_cache[board].key?(section_string)
+      boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board: board)
+      unless boardsections.present?
+        BoardSection.create!(board: board, name: section_string)
+        boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board: board)
+      end
+      boardsection = boardsections.first
+      @boardsection_cache[board][section_string] = boardsection
+    end
+    def do_writables_from_message(writable, message)
+      writable.user = user_for_author(message.author)
+      writable.character = character_for_author(message.author)
+      writable.icon = icon_for_face(message.face)
+      writable.content = message.content.strip
+      writable.created_at = message.time
+      writable.updated_at = message.edittime
+    end
+    def post_from_entry(entry, board)
+      post_cache_id = entry.chapter.id + "#entry#" + entry.id
+      return @post_cache[post_cache_id] if @post_cache.key?(post_cache_id)
+      chapter = entry.chapter
+      post = Post.new
+      post.board = board
+      post.subject = chapter.entry_title
+      post.status = chapter.time_completed ? Post::STATUS_COMPLETE : (chapter.time_hiatus ? Post::STATUS_HIATUS : Post::STATUS_ACTIVE)
+      post.section = boardsection_from_chapter(chapter)
+      
+      do_writables_from_message(post, entry)
+      post.save!
+      
+      @post_cache[entry] = post
+    end
+    def reply_from_comment(comment, threaded=false, thread_id=nil)
+      reply_cache_id = comment.chapter.id + "#" + comment.id
+      return @reply_cache[reply_cache_id] if @reply_cache.key?(reply_cache_id)
+      reply = Reply.new
+      reply.post = post_from_entry(comment.chapter.entry)
+      reply.thread_id = thread_id if threaded && thread_id
+      reply.skip_post_update = true
+      reply.skip_notify = true
+      
+      do_writables_from_message(reply, comment)
+      reply.save!
+      
+      if threaded && comment.parent == comment.chapter.entry
+        reply.thread_id = reply.id
+        reply.skip_post_update = true
+        reply.skip_notify = true
+        reply.save!
+      end
+      @reply_cache[reply_cache_id] = reply
     end
     
     def output(options={})
@@ -583,6 +749,7 @@
       (LOG.fatal "No chapters given!" and return) unless chapter_list
       
       chapter_list.each do |chapter|
+        (LOG.error "Chapter has no entry: #{chapter}" and next) unless chapter.entry.present?
         threaded = false
         chapter.replies.each do |reply|
           next if reply.children.length <= 1
@@ -595,6 +762,15 @@
           threaded = true
         end
         puts "#{chapter} is " + (!threaded ? 'un' : '') + "threaded"
+        
+        board = board_from_chapterlist(chapter_list)
+        post = post_from_entry(chapter.entry, board)
+        thread_id = nil
+        chapter.replies.each do |reply|
+          repl = reply_from_comment(reply, threaded, thread_id)
+          thread_id = repl.thread_id if threaded
+        end
+        LOG.info "Did chapter #{chapter}."
       end
     end
   end
