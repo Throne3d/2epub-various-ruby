@@ -637,6 +637,7 @@
       cached_moiety = moieties.find {|moiety_val| @usermoiety_cache.key?(moiety_val) }
       return @usermoiety_cache[cached_moiety] if cached_moiety
       LOG.warn("- Character has many moieties (#{author.moiety})") if moieties.length > 1
+      LOG.warn("- Character has no default face: #{author}") unless author.default_face.present?
       
       users = User.where('lower(username) = ?', moieties.map(&:downcase))
       unless users.present?
@@ -717,6 +718,10 @@
       writable.user = user_for_author(message.author)
       writable.character = character_for_author(message.author)
       writable.icon = icon_for_face(message.face)
+      if writable.character.present? and writable.character.default_icon_id.blank? and message.author.default_face == message.face
+        LOG.info "- Setting a default icon for #{writable.character.name}: #{writable.icon.id}"
+        writable.character.default_icon = writable.icon
+      end
       writable.content = message.content.strip
       writable.created_at = message.time
       writable.updated_at = message.edittime
