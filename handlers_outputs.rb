@@ -668,7 +668,8 @@
       icon = Icon.where(url: face.imageURL).first
       unless icon.present?
         gallery = gallery_for_author(face.author)
-        gallery.icons << Icon.create!(user: user_for_author(face.author), url: face.imageURL, keyword: face.keyword)
+        icon = Icon.create!(user: user_for_author(face.author), url: face.imageURL, keyword: face.keyword)
+        gallery.icons << icon if gallery
         icon = Icon.where(url: face.imageURL).first
       end
       @icon_cache[face.unique_id] = icon
