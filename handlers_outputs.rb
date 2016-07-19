@@ -709,7 +709,7 @@
       writable.updated_at = message.edittime
     end
     def post_from_entry(entry, board)
-      post_cache_id = entry.chapter.id + "#entry#" + entry.id
+      post_cache_id = entry.id + '#entry'
       return @post_cache[post_cache_id] if @post_cache.key?(post_cache_id)
       chapter = entry.chapter
       post = Post.new
@@ -724,7 +724,7 @@
       @post_cache[entry] = post
     end
     def reply_from_comment(comment, threaded=false, thread_id=nil)
-      reply_cache_id = comment.chapter.id + "#" + comment.id
+      reply_cache_id = comment.chapter.entry.id + '#' + comment.id
       return @reply_cache[reply_cache_id] if @reply_cache.key?(reply_cache_id)
       reply = Reply.new
       reply.post = post_from_entry(comment.chapter.entry)
