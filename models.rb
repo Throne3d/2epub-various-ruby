@@ -718,7 +718,7 @@
     def time
       return unless @time
       return @time unless @time.is_a?(String)
-      @time = DateTime.strptime(@time)
+      @time = DateTime.parse(@time)
       return @time
     end
     def time_display
@@ -728,7 +728,7 @@
     def edittime
       return unless @edittime
       return @edittime unless @edittime.is_a?(String)
-      @edittime = DateTime.strptime(@edittime)
+      @edittime = DateTime.parse(@edittime)
       return @edittime
     end
     def edittime_display
