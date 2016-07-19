@@ -636,7 +636,7 @@
       unless users.present?
         LOG.info "No user(s) found for moiet" + (moieties.length == 1 ? "y '#{moieties.first}'" : "ies: #{moieties * ', '}")
         puts "Please enter a user ID or username for the user."
-        userthing = gets.chomp
+        userthing = STDIN.gets.chomp
         if userthing[/[A-Za-z]/]
           users = User.where(username: userthing)
         else
