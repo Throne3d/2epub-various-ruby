@@ -4,46 +4,6 @@
   require 'date'
   include GlowficEpubMethods
   
-  MOIETIES = {
-    "Adalene" => ["lurkingkobold", "wish-i-may"],
-    "Adiva" => ["gothamsheiress", "adivasheadvoices"],
-    "Ajzira" => ["lost-in-translation", "hearing-shadows"],
-    "AndaisQ" => ["fortheliving", "quite-enchanted", "andomega", "in-like-a", "hemomancer", "white-ram", "power-in-the", "strangely-literal", "sonofsnow", "dontbelieveinfairies", "pavingstone"],
-    "Anthusiasm" => ["queenoftrash"],
-    "armokGoB" => ["armokgob"],
-    "atheistcanuck" => ["ambrovimvor"],
-    "Benedict" => ["unblinkered", "penitencelost"],
-    "Calima" => ["tenn-ambar-metta"],
-    "Ceitfianna" => ["balancingminds", "mm-ceit"],
-    "ChristyHotwater" => ["slgemp141"],
-    "CuriousDiscoverer" => ["mage-see-mage-do", "abodyinmotion", "superego-medico", "not-without-scars", "breeds-contempt", "curiousdiscoverer", "come-forth-winter", "copycast", "of-all-trades", "ignite-the-light", "there-is-no-such-thing-as", "unadalturedstrength", "tailedmonstrosity", "curiousbox"],
-    "Endovior" => ["withmanyfingers"],
-    "ErinFlight" => ["thrown-in", "regards-the-possibilities", "back-from-nowhere", "vive-la-revolution"],
-    "Eva" => ["kaolinandbone", "evesystem", "all-the-worlds-have", "walksonmusic", "eternally-aggrieved"],
-    "Kel" => ["kelardry", "dotted-lines", "botanical-engineer"], #BlueSkySprite
-    "kuuskytkolme" => ["can-i-help", "can-i-stay", "can-i-go"],
-    "Link" => ["meletiti-entelecheiai", "chibisilian"],
-    "lintamande" => ["lintamande"],
-    "Liz" => ["sun-guided"],
-    "Lynette" => ["darkeningofthelight", "princeofsalem"],
-    "Maggie" => ["maggie-of-the-owls", "whatamithinking", "iamnotpolaris", "amongstherpeers", "amongstthewinds", "asteptotheright", "jumptotheleft", "themainattraction", "swordofdamocles", "swordofeden", "feyfortune", "mutatis-mutandis", "mindovermagic", "ragexserenity", "here-together"],
-    "Marri" => ["revivificar"],
-    "Moriwen" => ["actualantichrist"],
-    "Nemo" => ["magnifiedandeducated", "connecticut-yankee", "unprophesied-of-ages", "nemoconsequentiae", "wormcan", "off-to-be-the-wizard", "whole-new-can"],
-    "pdv" => ["against-all-trouble"],
-    "roboticlin" => ["roboticlin"],
-    "Rockeye" => ["witchwatcher", "rockeye-stonetoe", "sturdycoldsteel", "characterquarry", "allforthehive", "neuroihive", "smallgod", "magictechsupport"],
-    "Sigma" => ["spiderzone"], #Ezra
-    "Teceler" => ["scatteredstars", "onwhatwingswedareaspire", "space-between"],
-    "TheOneButcher" => ["theonebutcher"],
-    "Timepoof" => ["timepoof"],
-    "Unbitwise" => ["unbitwise", "wind-on-my-face", "synchrosyntheses"],
-    "Verdancy" => ["better-living", "forestsofthe"],
-    "Yadal" => ["yorisandboxcharacter", "kamikosandboxcharacter"],
-    "Zack" => ["intomystudies"]
-    #, "Unknown":["hide-and-seek", "antiprojectionist", "vvvvvvibrant", "fine-tuned"]
-  }
-  
   def self.built_moieties?
     @built_moieties ||= false
   end
@@ -51,9 +11,14 @@
     @built_moieties = val
   end
   def self.build_moieties()
-    return MOIETIES if self.built_moieties?
+    return @moieties if self.built_moieties?
     
-    url = 'http://pastebin.com/raw/nAqFiV5a'
+    url = MOIETY_LIST_URL
+    file_data = get_page_data(url, where: 'temp', replace: true).strip
+    @moieties = JSON.parse(file_data)
+    @moieties ||= {}
+    
+    url = COLLECTION_LIST_URL
     file_data = get_page_data(url, where: 'temp', replace: true).strip
     file_data.split(/\r?\n/).each do |line|
       line = line.strip
@@ -68,18 +33,18 @@
       collection = Nokogiri::HTML(collection_data)
       
       moiety_key = nil
-      MOIETIES.keys.each do |key|
+      @moieties.keys.each do |key|
         moiety_key = key if key.downcase.strip == collection_name.downcase.strip
       end
       if moiety_key.nil?
         moiety_key = collection_name
-        MOIETIES[moiety_key] = []
+        @moieties[moiety_key] = []
       end
       
-      MOIETIES[moiety_key] << collection_id
+      @moieties[moiety_key] << collection_id
       count = 0
       collection.css('#members_people_body a').each do |user_element|
-        MOIETIES[moiety_key] << user_element.text.strip.gsub('_', '-')
+        @moieties[moiety_key] << user_element.text.strip.gsub('_', '-')
         count += 1
       end
       
@@ -90,7 +55,7 @@
   
   def self.moieties
     build_moieties unless self.built_moieties?
-    MOIETIES
+    @moieties
   end
   
   class Model

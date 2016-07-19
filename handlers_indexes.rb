@@ -804,7 +804,7 @@ module GlowficIndexHandlers
       if @group == :report
         report_json = ""
         @group_folder = "web_cache/#{@group}"
-        url = "http://pastebin.com/raw/srSHuGik"
+        url = REPORT_LIST_URL
         file_path = get_page_location(url, where: @group_folder)
         if File.file?(file_path)
           open(file_path) do |old|
