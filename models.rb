@@ -817,12 +817,12 @@
     end
     
     def face
-      return @face if @face and not @face.is_a?(String)
-      return unless @face and @face.is_a?(String)
+      return unless @face.present?
+      return @face if @face.is_a?(Face)
       
       if chapter_list
         temp_face = chapter_list.get_face_by_id(@face)
-        new_face = site_handler.get_updated_face(temp_face)
+        new_face = site_handler.get_updated_face(temp_face) if site_handler
         new_face = temp_face unless new_face
         if new_face
           @face = new_face
@@ -1043,21 +1043,11 @@
     end
     
     def default_face
-      return @default_face if @default_face and not @default_face.is_a?(String)
-      return unless @default_face and @default_face.is_a?(String)
+      return unless @default_face.present?
+      return @default_face if @default_face.is_a?(Face)
       
       if chapter_list
         temp_face = chapter_list.get_face_by_id(@default_face)
-        new_face = site_handler.get_updated_face(temp_face)
-        new_face = temp_face unless new_face
-        if new_face
-          @default_face = new_face
-          chapter_list.replace_face(new_face)
-        end
-      end
-      
-      if site_handler and (not @default_face or @default_face.is_a?(String))
-        temp_face = site_handler.get_face_by_id(@default_face)
         if temp_face
           @default_face = temp_face
           chapter_list.replace_face(temp_face)
@@ -1066,6 +1056,7 @@
       
       @default_face.author = self if @default_face and not @default_face.is_a?(String)
       LOG.error "Failed to generate a face object, is still string; bad (#{@default_face})" if @default_face.is_a?(String)
+      LOG.error "Default_face was non-nil, now nil? oops." unless @default_face.present?  
       @default_face
     end
     
