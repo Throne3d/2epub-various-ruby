@@ -586,6 +586,7 @@
       @post_cache = {}
       @reply_cache = {}
       @post_not_skips = {}
+      @user_moiety_rewrite = {}
       @confirm_dupes = (options.key?(:confirm_dupes) ? options[:confirm_dupes] : DEBUGGING)
     end
     
@@ -641,6 +642,12 @@
       
       users = User.where('lower(username) = ?', moieties.map(&:downcase))
       unless users.present?
+        rewrites = moieties.map{|moiety| @user_moiety_rewrite.keys.detect{|key| key.downcase == moiety.downcase} }.compact.map{|key| @user_moiety_rewrite[key].downcase}
+        if rewrites.present?
+          users = User.where('lower(username) = ?', rewrites)
+        end
+      end
+      unless users.present?
         LOG.info "- No user(s) found for moiet" + (moieties.length == 1 ? "y '#{moieties.first}'" : "ies: #{moieties * ', '}")
         puts "Please enter a user ID or username for the user."
         userthing = STDIN.gets.chomp
@@ -648,6 +655,10 @@
           users = User.where(username: userthing)
         else
           users = User.where(id: userthing)
+        end
+        
+        if users.present?
+          @user_moiety_rewrite[moieties.first.downcase] = users.username
         end
         
         unless users.present?
