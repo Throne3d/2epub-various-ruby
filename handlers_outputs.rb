@@ -664,10 +664,11 @@
     def icon_for_face(face)
       return @icon_cache[face.unique_id] if @icon_cache.key?(face.unique_id)
       return nil unless face.imageURL
-      icon = Icon.where(url: face.imageURL).first
+      user = user_for_author(face.author)
+      icon = Icon.where(url: face.imageURL, user_id: user.id).first
       unless icon.present?
         gallery = gallery_for_author(face.author)
-        icon = Icon.create!(user: user_for_author(face.author), url: face.imageURL, keyword: face.keyword)
+        icon = Icon.create!(user: user, url: face.imageURL, keyword: face.keyword)
         gallery.icons << icon if gallery
         icon = Icon.where(url: face.imageURL).first
       end
