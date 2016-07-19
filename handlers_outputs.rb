@@ -626,8 +626,8 @@
       return @gallery_cache[author.unique_id] if @gallery_cache.key?(author.unique_id)
       char = character_for_author(author)
       return nil unless char
-      char.gallery ||= Gallery.create!(user: char.user, name: author.name)
-      @gallery_cache[author.unique_id] = char.gallery
+      char.galleries << Gallery.create!(user: char.user, name: author.name) if char.galleries.empty?
+      @gallery_cache[author.unique_id] = char.galleries.first
     end
     def user_for_author(author)
       return @user_cache[author.unique_id] if @user_cache.key?(author.unique_id)
