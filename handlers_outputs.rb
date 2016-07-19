@@ -672,12 +672,17 @@
       return @icon_cache[face.unique_id] if @icon_cache.key?(face.unique_id)
       return nil unless face.imageURL
       user = user_for_author(face.author)
-      icon = Icon.where(url: face.imageURL, user_id: user.id).first
+      gallery = gallery_for_author(face.author)
+      icon = Icon.where(url: face.imageURL, user_id: user.id).includes(:galleries).select{|icon| icon.galleries.include?(gallery)}.first
+      unless icon.present?
+        icon = Icon.where(url: face.imageURL, user_id: user.id).first
+        gallery.icons << icon if gallery && icon.present?
+      end
       unless icon.present?
         gallery = gallery_for_author(face.author)
         icon = Icon.create!(user: user, url: face.imageURL, keyword: face.keyword)
         gallery.icons << icon if gallery
-        icon = Icon.where(url: face.imageURL).first
+        icon = Icon.where(url: face.imageURL, user_id: user.id).includes(:galleries).select{|icon| icon.galleries.include?(gallery)}.first
       end
       @icon_cache[face.unique_id] = icon
     end
