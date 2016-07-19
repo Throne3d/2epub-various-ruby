@@ -143,6 +143,7 @@
     test: "Pedro & Throne3d",
     temp_starlight: "Alicorn & Pedro"
   }
+  FIC_AUTHORSTRINGS.default = "Unknown"
   FIC_NAMESTRINGS = {
     effulgence: "Effulgence",
     incandescence: "Incandescence",
@@ -168,6 +169,7 @@
     test: "Test EPUB",
     temp_starlight: "Starlight"
   }
+  FIC_NAMESTRINGS.default_proc = proc {|hash, key| hash[key] = key.titleize }
   
   def date_display(date, strf="%Y-%m-%d %H:%M")
     date.try(:strftime, strf)
