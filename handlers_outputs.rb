@@ -596,6 +596,7 @@
       if author.screenname.present?
         chars = Character.where(user_id: user.id, screenname: author.screenname)
       end
+      chars = Character.where(user_id: user.id, name: author.name) if author.name.present? && !chars.present?
       unless chars.present?
         # unique_ids:
         # dreamwidth#{author_id} (is already done or else there is some real weirdness going on)
