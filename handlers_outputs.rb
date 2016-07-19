@@ -602,7 +602,7 @@
         # constellation#user#{user_id}
         # constellation#{character_id}
         if author.unique_id.start_with?('constellation#user#')
-          chars = [user] # character is user (or nil?) if it's a user post
+          chars = [] # character is nil if it's a user post
         elsif author.unique_id.start_with?('constellation#')
           char_id = author.unique_id.sub('constellation#', '')
           chars = Character.where(user_id: user.id, id: char_id)
