@@ -588,7 +588,7 @@
           replies.each do |reply_hash|
             reply_hash["post_type"] = PostType::REPLY
             reply_hash["chapter"] = self
-            reply = Reply.new
+            reply = Comment.new
             reply.from_json! reply_hash
             self.replies << reply
           end
@@ -997,7 +997,7 @@
     end
   end
 
-  class Reply < Message
+  class Comment < Message
     message_serialize_ignore
     def initialize(params={})
       super(params)

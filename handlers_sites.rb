@@ -597,7 +597,7 @@
           params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P (%Z)")
         end
         
-        reply = Reply.new(params)
+        reply = Comment.new(params)
       end
     end
     
@@ -1151,7 +1151,7 @@
       else
         params[:parent] = @previous_message if @previous_message
         
-        reply = Reply.new(params)
+        reply = Comment.new(params)
         @previous_message = reply
       end
     end
