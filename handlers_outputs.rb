@@ -725,7 +725,7 @@
         matching_posts = section.posts.where('lower(subject) = ?', lowercase_title)
         matching_posts = matching_posts.not(id: @post_not_skips[lowercase_title]) if @post_not_skips.key?(lowercase_title)
         
-        matching_posts.select {|post| post.replies.length == chapter.replies.length && post.replies.order('id asc').first.content.strip.gsub(/\<[^\<\>]+\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') == chapter.replies.first.content.strip.gsub(/\<[^\<\>]+\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') }
+        matching_posts = matching_posts.select {|post| post.replies.length == chapter.replies.length && post.replies.order('id asc').first.content.strip.gsub(/\<[^\<\>]*?\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') == chapter.replies.first.content.strip.gsub(/\<[^\<\>]*?\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') }
         # If they're the same length, check if they have the same content for their first reply (skipping HTML tags and linebreaks and dupe spaces).
         
         if matching_posts.present?
