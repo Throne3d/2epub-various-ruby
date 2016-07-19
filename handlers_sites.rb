@@ -116,7 +116,10 @@
       @face_cache = {} # {"alicornutopia" => {"pen" => "(url)"}}
       @face_id_cache = {} # {"alicornutopia#pen" => "(url)"}
       # When retrieved in get_face_by_id
+      @face_param_cache = {}
       @author_id_cache = {}
+      @author_param_cache = {}
+      
       @moiety_cache = {}
       
       @downloaded = []
@@ -145,7 +148,6 @@
       end
       return comm_link
     end
-    
     def get_permalink_for(message)
       if message.post_type == "PostType::ENTRY"
         set_url_params(clear_url_params(message.chapter.url), {view: :flat})
@@ -157,7 +159,6 @@
         end
       end
     end
-    
     def get_undiscretioned(url, options = {})
       current_page = options.key?(:current_page) ? options[:current_page] : (options.key?(:current) ? options[:current] : nil)
       options.delete(:current_page)
@@ -201,7 +202,6 @@
       
       return current_page
     end
-    
     def get_full(chapter, options = {})
       if chapter.is_a?(GlowficEpub::Chapter)
         params = {style: :site}
@@ -242,7 +242,6 @@
       @success = true
       return page_urls
     end
-    
     def get_updated(chapter, options = {})
       return nil unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
@@ -389,7 +388,6 @@
       LOG.error "ERROR: #{chapter.title}: #{@error}" unless @success
       return chapter
     end
-    
     def get_moiety_by_profile(profile)
       return @moiety_cache[profile] if @moiety_cache.key?(profile)
       user_id = profile.gsub('_', '-')
@@ -406,8 +404,20 @@
       icon_moiety
     end
     
+    def set_face_cache(face)
+      face_id = face.unique_id
+      face_id = face_id[0..-2].strip if face_id.end_with?(',')
+      user_profile = face_id.split('#').first
+      user_hash = @face_cache[user_profile] || @face_cache[user_profile.gsub('_', '-')]
+      if user_hash
+        user_hash[face.keyword] = face
+        user_hash[:default] = face if user_hash[:default].try(:unique_id) == face.unique_id
+      end
+      @chapter_list.replace_face(face)
+      @face_id_cache[face_id] = face
+    end
     def get_face_by_id(face_id, default=nil)
-      face_id = face_id[0..-2].strip if face_id.end_with?(",")
+      face_id = face_id[0..-2].strip if face_id.end_with?(',')
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       user_profile = face_id.split('#').first
       face_name = face_id.sub("#{user_profile}#", "")
@@ -457,8 +467,9 @@
               icon_hash[:default] = face
               params[:author].default_face = face if params[:author]
             end
+            @face_param_cache[face.unique_id] = params
             
-            @chapter_list.add_face(face)
+            @chapter_list.replace_face(face)
           end
         end
         
@@ -467,7 +478,7 @@
         @face_cache[user_profile] = icon_hash
       end
       
-      icons_hash = @face_cache.key?(user_profile) ? @face_cache[user_profile] : @face_cache[user_profile.gsub('_', '-')]
+      icons_hash = @face_cache[user_profile] || @face_cache[user_profile.gsub('_', '-')]
       @face_id_cache[face_id] = icons_hash[face_name] if icons_hash.key?(face_name)
       @face_id_cache[face_id] = icons_hash[:default] if (face_name.downcase == "default" or face_name == :default) and icons_hash.key?(:default)
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
@@ -476,13 +487,24 @@
       @icon_errors << face_id unless @icon_errors.include?(face_id)
       return default
     end
-    
     def get_updated_face(face, default=nil)
       return nil unless face
-      get_face_by_id(face.unique_id, default)
+      return get_face_by_id(face.unique_id, default) if @face_param_cache.key?(face.unique_id)
+      
+      done_face = get_face_by_id(face.unique_id, default)
+      face_hash = @face_param_cache[face.unique_id]
+      face.from_json! face_hash
+      set_face_cache(face)
+      
+      face
     end
     
-    def get_author_by_id(author_id, default=nil)
+    def set_author_cache(author)
+      author_id = author.unique_id.gsub('_', '-')
+      author_id = author_id.sub("dreamwidth#", "") if author_id.start_with?("dreamwidth#")
+      @author_id_cache[author_id] = author
+    end
+    def get_author_by_id(author_id, default=nil, hash=false)
       author_id = author_id.gsub('_', '-')
       author_id = author_id.sub("dreamwidth#", "") if author_id.start_with?("dreamwidth#")
       return @author_id_cache[author_id] if @author_id_cache.key?(author_id)
@@ -502,12 +524,21 @@
       params[:display] = (params.key?(:name) and params[:name].downcase != params[:screenname].downcase) ? "#{params[:name]} (#{params[:screenname]})" : "#{params[:screenname]}"
       params[:unique_id] = "dreamwidth##{author_id}"
       
+      
       author = Author.new(params)
+      @author_param_cache[author.unique_id] = params
       @author_id_cache[author_id] = author
     end
-    
     def get_updated_author(author, default=nil)
-      get_author_by_id(author.unique_id, default)
+      return nil unless author
+      return get_author_by_id(author.unique_id, default) if @author_param_cache.key?(author.unique_id)
+      
+      done_author = get_author_by_id(author.unique_id, default)
+      author_hash = @author_param_cache[author.unique_id]
+      author.from_json! author_hash
+      set_author_cache(author)
+      
+      author
     end
     
     def make_message(message_element, options = {})
@@ -596,7 +627,6 @@
         reply = Comment.new(params)
       end
     end
-    
     def get_replies(chapter, options = {})
       return nil unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
@@ -696,7 +726,9 @@
     def initialize(options = {})
       super options
       @face_id_cache = {} # {"6951" => "[is a face: ahein, imgur..., etc.]"}
+      @face_param_cache = {}
       @author_id_cache = {}
+      @author_param_cache = {}
       @char_page_cache = {}
       # When retrieved in get_face_by_id
       @moiety_cache = {}
@@ -711,7 +743,6 @@
         "https://vast-journey-9935.herokuapp.com/replies/#{message.id}#reply-#{message.id}"
       end
     end
-    
     def get_full(chapter, options = {})
       if chapter.is_a?(GlowficEpub::Chapter)
         params = {per_page: :all}
@@ -731,7 +762,6 @@
       
       return page_urls
     end
-    
     def get_updated(chapter, options = {})
       return nil unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
@@ -810,7 +840,6 @@
       LOG.info "#{is_new ? 'New' : 'Updated'}: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
       return chapter
     end
-    
     def get_moiety_by_id(character_id)
       char_page = giri_or_cache("https://vast-journey-9935.herokuapp.com/characters/#{character_id}/", replace: false)
       LOG.debug "nokogiri'd profile page"
@@ -828,6 +857,26 @@
       moiety
     end
     
+    def set_face_cache(face)
+      face_id = face.unique_id
+      face_id = face_id.sub("constellation#", "") if face_id.start_with?("constellation#")
+      icon_id = face_id.split('#').last
+      character_id = face_id.sub("##{icon_id}", '')
+      character_id = nil if character_id == face_id
+      character_id = nil if character_id.blank?
+      @face_id_cache[icon_id] = face
+      
+      @chapter_list.replace_face(face)
+      @face_id_cache[face_id] = face if icon_id == 'none' and character_id.try(:start_with?, 'user#')
+      
+      if character_id
+        @face_id_cache[face.unique_id] = face
+        char_hash = @char_page_cache[character_id]
+        icon_numid = face.unique_id.sub("#{character_id}#", '')
+        char_hash[icon_numid] = face
+      end
+      face
+    end
     def get_face_by_id(face_id, default=nil)
       face_id = face_id.sub("constellation#", "") if face_id.start_with?("constellation#")
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
@@ -837,16 +886,17 @@
       character_id = face_id.sub("##{icon_id}", '')
       
       character_id = nil if character_id == face_id
-      character_id = nil if character_id.nil? or character_id.empty?
+      character_id = nil if character_id.blank?
       
-      if icon_id == "none" and character_id.start_with?("user#")
+      if icon_id == "none" and character_id.try(:start_with?, 'user#')
         face_params = {}
         face_params[:imageURL] = nil
         face_params[:keyword] = "none"
         face_params[:unique_id] = "#{character_id}#none"
         face_params[:author] = get_author_by_id(character_id)
         face = Face.new(face_params)
-        @chapter_list.add_face(face)
+        @chapter_list.replace_face(face)
+        @face_param_cache[face.unique_id] = face_params
         @face_id_cache[face_id] = face
         return face
       end
@@ -910,8 +960,9 @@
               params[:author].default_face = face if params[:author]
             end
             
-            @chapter_list.add_face(face)
-            @face_id_cache[params[:unique_id]] = face
+            @chapter_list.replace_face(face)
+            @face_id_cache[face.unique_id] = face
+            @face_param_cache[face.unique_id] = params
           end
           LOG.debug "got #{icon_hash.keys.length} icon(s)"
           @char_page_cache[character_id] = icon_hash
@@ -955,8 +1006,9 @@
           params[:chapter_list] = @chapter_list
           face = Face.new(params)
           
-          @chapter_list.add_face(face)
-          @face_id_cache[params[:unique_id]] = face
+          @chapter_list.replace_face(face)
+          @face_id_cache[face.unique_id] = face
+          @face_param_cache[face.unique_id] = params
           
           LOG.debug "Found an icon for character #{character_id}: ID ##{icon_numid} (on userpage ##{user_id})"
         end
@@ -974,8 +1026,9 @@
       params[:unique_id] = "constellation##{icon_id}"
       params[:chapter_list] = @chapter_list
       face = Face.new(params)
-      @chapter_list.add_face(face)
+      @chapter_list.replace_face(face)
       @face_id_cache[icon_id] = face
+      @face_param_cache[face.unique_id] = params
       
       return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
       
@@ -985,12 +1038,29 @@
       @icon_errors << face_id unless @icon_errors.include?(face_id)
       return default
     end
-    
     def get_updated_face(face, default=nil)
       return nil unless face
-      get_face_by_id(face.unique_id, default)
+      return get_face_by_id(face.unique_id, default) if @face_param_cache.key?(face.unique_id)
+      
+      done_face = get_face_by_id(face.unique_id, default)
+      
+      face_hash = @face_param_cache[face.unique_id]
+      if face_hash.present?
+        face.from_json! face_hash
+      elsif done_face.present?
+        LOG.error "Face was created, param cache was not set. Face not updating despite being supposed to. #{face}"
+      end
+      set_face_cache(face)
+      
+      face
     end
     
+    def set_author_cache(author)
+      character_id = author.unique_id
+      character_id = character_id.sub("constellation#", "") if character_id.start_with?("constellation#")
+      @author_id_cache[character_id] = author
+      author
+    end
     def get_author_by_id(character_id, default=nil)
       character_id = character_id.sub("constellation#", "") if character_id.start_with?("constellation#")
       return @author_id_cache[character_id] if @author_id_cache.key?(character_id)
@@ -1013,6 +1083,7 @@
         
         author = Author.new(params)
         @author_id_cache["user##{user_id}"] = author
+        @author_param_cache[author.unique_id] = params
         return author
       else
         char_page_url = "https://vast-journey-9935.herokuapp.com/characters/#{character_id}/"
@@ -1033,12 +1104,20 @@
         
         author = Author.new(params)
         @author_id_cache[character_id] = author
-        return author #because I like my hard returns, dammit!
+        @author_param_cache[author.unique_id] = params
+        return author
       end
     end
-    
     def get_updated_author(author, default=nil)
-      get_author_by_id(author.unique_id, default)
+      return nil unless author
+      return get_author_by_id(author.unique_id, default) if @author_param_cache.key?(author.unique_id)
+      
+      done_author = get_author_by_id(author.unique_id, default)
+      author_hash = @author_param_cache[author.unique_id]
+      author.from_json! author_hash
+      set_author_cache(author)
+      
+      author
     end
     
     def make_message(message_element, options = {})
@@ -1146,7 +1225,6 @@
         @previous_message = reply
       end
     end
-  
     def get_replies(chapter, options = {})
       return nil unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
