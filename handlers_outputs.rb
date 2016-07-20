@@ -853,7 +853,7 @@
         end
         
         @msgs = []
-        LOG.info "(#{i}/#{chapter_count}) Chapter #{chapter}"
+        LOG.info "(#{i+1}/#{chapter_count}) Chapter #{chapter}"
         
         board = board_for_chapterlist(chapter_list)
         (@msgs.each {|msg| LOG.info msg} and next) if post_for_entry?(chapter.entry, board)
