@@ -758,6 +758,13 @@
       boardsection ||= boardsections.first
       @boardsection_cache[board][section_string] = boardsection
     end
+    def postgroup_for_chapter(chapter)
+      return nil unless chapter.present?
+      postgroup = boardsection_for_chapter(chapter)
+      postgroup = board_for_chapterlist(chapter.chapter_list) unless postgroup.present?
+      LOG.error "-- Failed to find a 'postgroup' for #{chapter}" unless postgroup
+      postgroup
+    end
     def do_writables_from_message(writable, message)
       writable.user = user_for_author(message.author)
       writable.character = character_for_author(message.author)
@@ -772,9 +779,9 @@
       post_cache_id = entry.id + (entry.chapter.thread ? "##{entry.chapter.thread}" : '') + '#entry'
       unless @post_cache.key?(post_cache_id)
         chapter = entry.chapter
-        section = boardsection_for_chapter(chapter) or board_for_chapterlist(entry.chapter_list)
+        postgroup = postgroup_for_chapter(chapter)
         lowercase_title = chapter.entry_title.downcase
-        matching_posts = section.posts.where('lower(subject) = ?', lowercase_title)
+        matching_posts = postgroup.posts.where('lower(subject) = ?', lowercase_title)
         matching_posts = matching_posts.not(id: @post_not_skips[lowercase_title]) if @post_not_skips.key?(lowercase_title)
         
         matching_posts = matching_posts.select {|post| post.replies.length == chapter.replies.length && (post.replies.count == 0 || post.replies.order('id asc').first.content.strip.gsub(/\<[^\<\>]*?\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') == chapter.replies.first.content.strip.gsub(/\<[^\<\>]*?\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ')) }
