@@ -654,9 +654,10 @@
       end
       @gallery_cache[author.unique_id] = char.galleries.first
     end
-    def user_for_author(author)
+    def user_for_author(author, options={})
       return @user_cache[author.unique_id] if @user_cache.key?(author.unique_id)
       return nil unless author.unique_id
+      set_coauthors = options.key?(:set_coauthors) ? options[:set_coauthors] : @set_coauthors
       moieties = author.moiety.try(:split, ' ').try(:uniq)
       moieties = ['Unknown Author'] unless moieties.present?
       moiety = moieties.first
@@ -700,6 +701,13 @@
         end
       end
       user ||= users.first
+      if set_coauthors
+        board = board_for_chapterlist(@chapter_list)
+        if board.present? && board.creator_id != user.id && !board.coauthors.include?(user)
+          board.coauthors << user
+          LOG.info "- Added coauthor to board: #{user.id}"
+        end
+      end
       @user_cache[author.unique_id] = user
       @usermoiety_cache[user.try(:username).try(:downcase)] = user
     end
@@ -727,9 +735,14 @@
       board_name = FIC_NAMESTRINGS[chapter_list.group]
       boards = Board.where('lower(name) = ?', board_name.downcase)
       unless boards.present?
-        board = Board.create!(name: board_name, creator: user_for_author(chapter_list.authors.first))
+        first_user = user_for_author(chapter_list.authors.first, set_coauthors: false)
+        board = Board.create!(name: board_name, creator: first_user)
+        LOG.info "- Created board for chapterlist, name '#{board_name}' with creator ID #{first_user.id}"
+        @set_coauthors = true if @set_coauthors == :if_new_board
       end
+      @set_coauthors = false if @set_coauthors == :if_new_board
       board ||= boards.first
+      @set_coauthors = board.posts.empty? if @set_coauthors == :if_empty_board
       @board_cache[chapter_list] = board
     end
     def boardsection_for_chapter(chapter)
@@ -740,10 +753,17 @@
       return @boardsection_cache[board][section_string] if @boardsection_cache[board].key?(section_string)
       boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board_id: board.id)
       unless boardsections.present?
-        boardsection = BoardSection.create!(board: board, name: section_string)
+        boardsection = BoardSection.create!(board: board, name: section_string, section_order: board.board_sections.count)
       end
       boardsection ||= boardsections.first
       @boardsection_cache[board][section_string] = boardsection
+    end
+    def postgroup_for_chapter(chapter)
+      return nil unless chapter.present?
+      postgroup = boardsection_for_chapter(chapter)
+      postgroup = board_for_chapterlist(chapter.chapter_list) unless postgroup.present?
+      LOG.error "-- Failed to find a 'postgroup' for #{chapter}" unless postgroup
+      postgroup
     end
     def do_writables_from_message(writable, message)
       writable.user = user_for_author(message.author)
@@ -759,12 +779,12 @@
       post_cache_id = entry.id + (entry.chapter.thread ? "##{entry.chapter.thread}" : '') + '#entry'
       unless @post_cache.key?(post_cache_id)
         chapter = entry.chapter
-        section = boardsection_for_chapter(chapter) or board_for_chapterlist(entry.chapter_list)
+        postgroup = postgroup_for_chapter(chapter)
         lowercase_title = chapter.entry_title.downcase
-        matching_posts = section.posts.where('lower(subject) = ?', lowercase_title)
+        matching_posts = postgroup.posts.where('lower(subject) = ?', lowercase_title)
         matching_posts = matching_posts.not(id: @post_not_skips[lowercase_title]) if @post_not_skips.key?(lowercase_title)
         
-        matching_posts = matching_posts.select {|post| post.replies.length == chapter.replies.length && post.replies.order('id asc').first.content.strip.gsub(/\<[^\<\>]*?\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') == chapter.replies.first.content.strip.gsub(/\<[^\<\>]*?\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') }
+        matching_posts = matching_posts.select {|post| post.replies.length == chapter.replies.length && (post.replies.count == 0 || post.replies.order('id asc').first.content.strip.gsub(/\<[^\<\>]*?\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') == chapter.replies.first.content.strip.gsub(/\<[^\<\>]*?\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ')) }
         # If they're the same length, check if they have the same content for their first reply (skipping HTML tags and linebreaks and dupe spaces).
         
         if matching_posts.present?
@@ -803,8 +823,10 @@
       post.subject = chapter.entry_title
       post.status = chapter.time_completed ? Post::STATUS_COMPLETE : (chapter.time_hiatus ? Post::STATUS_HIATUS : Post::STATUS_ACTIVE)
       post.section = boardsection_for_chapter(chapter)
+      post.section_order = post.section.posts.count if post.section.present? && !@skip_post_ordering
       
       do_writables_from_message(post, entry)
+      board.created_at = post.created_at unless board.created_at
       post.edited_at = post.updated_at
       post.last_user = post.user
       post.save!
@@ -835,6 +857,9 @@
     def output(options={})
       chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : (@chapters ? @chapters : nil)
       (LOG.fatal "No chapters given!" and return) unless chapter_list
+      @chapter_list = chapter_list
+      @skip_post_ordering = options.include?(:skip_post_ordering) ? options[:skip_post_ordering] : false
+      @set_coauthors = options.include?(:set_coauthors) ? options[:set_coauthors] : :if_empty_board # alternatively :if_new_board
       
       Post.record_timestamps = false
       Reply.record_timestamps = false
@@ -864,13 +889,18 @@
           thread_id = repl.thread_id if threaded
           if (i+1) % 100 == 0
             old_status = post.status
+            repl.skip_notify = true
+            repl.skip_post_update = false
             post.save!
+            repl.save!
+            board.update_column(:updated_at, post.updated_at) if board.updated_at.present? && post.updated_at.present? && post.updated_at > board.updated_at
             post.update_column(:status, old_status)
           end
         end
         
         old_status = post.status
         post.save!
+        board.update_column(:updated_at, post.updated_at) if board.updated_at.present? && post.updated_at.present? && post.updated_at > board.updated_at
         post.update_column(:status, old_status)
       end
       Post.record_timestamps = true
