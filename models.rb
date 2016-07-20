@@ -154,6 +154,7 @@
       end
       
       json_hash.each do |var, val|
+        var = var.to_s unless var.is_a?(String)
         self.instance_variable_set('@'+var, val)
       end
     end
@@ -308,6 +309,7 @@
       end
         
       json_hash.each do |var, val|
+        var = var.to_s unless var.is_a?(String)
         self.instance_variable_set('@'+var, val)
       end
       
@@ -586,6 +588,7 @@
       end
       
       json_hash.each do |var, val|
+        var = var.to_s unless var.is_a?(String)
         self.instance_variable_set('@'+var, val) unless var == "replies" or var == "entry"
       end
       
@@ -1009,6 +1012,7 @@
       end
       
       json_hash.each do |var, val|
+        var = var.to_s unless var.is_a?(String)
         self.instance_variable_set('@'+var, val) unless var == 'parent' or var == 'face' or var == 'author'
       end
       
