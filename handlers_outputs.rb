@@ -889,13 +889,18 @@
           thread_id = repl.thread_id if threaded
           if (i+1) % 100 == 0
             old_status = post.status
+            repl.skip_notify = true
+            repl.skip_post_update = false
             post.save!
+            repl.save!
+            board.update_column(:updated_at, post.updated_at) if board.updated_at.present? && post.updated_at.present? && post.updated_at > board.updated_at
             post.update_column(:status, old_status)
           end
         end
         
         old_status = post.status
         post.save!
+        board.update_column(:updated_at, post.updated_at) if board.updated_at.present? && post.updated_at.present? && post.updated_at > board.updated_at
         post.update_column(:status, old_status)
       end
       Post.record_timestamps = true
