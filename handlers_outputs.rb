@@ -624,7 +624,7 @@
         default_icon = icon_for_face(author.default_face)
         if char.present? && default_icon.present?
           char.update_attributes(default_icon: default_icon)
-          LOG.info "- Set a default icon for #{char.name}: #{default_icon.id}"
+          LOG.debug "- Set a default icon for #{char.name}: #{default_icon.id}"
         end
       else
         LOG.warn("- Character has no default face: #{author}")
@@ -636,11 +636,11 @@
       char = character_for_author(author)
       return nil unless char
       if char.galleries.empty?
-        LOG.info "- Created gallery for #{author.name}"
+        LOG.debug "- Created gallery for #{author.name}"
         char.galleries.build(user: char.user, name: author.name)
         char.save!
       else
-        LOG.info "- #{author.name} has an uncached gallery; using it. (ID #{char.galleries.first.id})"
+        LOG.debug "- #{author.name} has an uncached gallery; using it. (ID #{char.galleries.first.id})"
       end
       @gallery_cache[author.unique_id] = char.galleries.first
     end
