@@ -681,7 +681,7 @@
           end
           input = 'n' if input.empty?
           if input == 'y'
-            user = User.create!(username: moiety, password: moiety, email: moiety)
+            user = User.create!(username: moiety, password: moiety.downcase, email: moiety.downcase.gsub(/[^\w\-_\.+]/, '') + '@example.com')
             LOG.info "- User created for #{moiety}."
           else
             LOG.warn "- Skipping user for #{moiety}. Will likely cause errors."
