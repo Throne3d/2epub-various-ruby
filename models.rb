@@ -302,22 +302,22 @@
       
       LOG.debug "Chapters.from_json! (group: #{group})"
       
-      authors = json_hash["authors"] or json_hash["@authors"]
-      faces = json_hash["faces"] or json_hash["@faces"]
-      chapters = json_hash["chapters"] or json_hash["@chapters"]
+      authors = json_hash['authors']
+      faces = json_hash['faces']
+      chapters = json_hash['chapters']
       
       @authors = []
       @faces = []
       unless trash_messages
         authors.each do |author_hash|
-          author_hash["chapter_list"] = self
+          author_hash['chapter_list'] = self
           author = Author.new
           author.from_json! author_hash
           add_author(author)
         end
         
         faces.each do |face_hash|
-          face_hash["chapter_list"] = self
+          face_hash['chapter_list'] = self
           face = Face.new
           face.from_json! face_hash
           add_face(face)
@@ -326,7 +326,7 @@
       
       @chapters = []
       chapters.each do |chapter_hash|
-        chapter_hash["chapter_list"] = self
+        chapter_hash['chapter_list'] = self
         chapter = Chapter.new(trash_messages: trash_messages)
         chapter.from_json! chapter_hash
         @chapters << chapter
@@ -585,12 +585,12 @@
       self.authors
       
       if not @trash_messages
-        entry = json_hash["entry"] or json_hash["@entry"]
-        replies = json_hash["replies"] or json_hash["@replies"]
+        entry = json_hash['entry']
+        replies = json_hash['replies']
         if entry
           entry_hash = entry
-          entry_hash["post_type"] = PostType::ENTRY
-          entry_hash["chapter"] = self
+          entry_hash['post_type'] = PostType::ENTRY
+          entry_hash['chapter'] = self
           entry = Entry.new
           entry.from_json! entry_hash
           self.entry = entry
@@ -598,8 +598,8 @@
         if replies
           self.replies = []
           replies.each do |reply_hash|
-            reply_hash["post_type"] = PostType::REPLY
-            reply_hash["chapter"] = self
+            reply_hash['post_type'] = PostType::REPLY
+            reply_hash['chapter'] = self
             reply = Comment.new
             reply.from_json! reply_hash
             self.replies << reply
@@ -992,9 +992,9 @@
         chapter.entry_title = self.entry_title if self.entry_title
       end
       
-      parent = json_hash['parent'] or json_hash['@parent']
-      author = json_hash['author'] or json_hash['@author']
-      face = json_hash['face'] or json_hash['@face']
+      parent = json_hash['parent']
+      author = json_hash['author']
+      face = json_hash['face']
       
       if parent
         self.parent = parent
