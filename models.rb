@@ -82,10 +82,18 @@
     
     def self.serialize_ignore? thing
       return false if @serialize_ignore.nil?
+      return false unless thing.is_a?(String) or thing.is_a?(Symbol)
       thing = thing.to_sym if thing.is_a? String
       @serialize_ignore.include? thing
     end
     def self.serialize_ignore(*things)
+      return @serialize_ignore if things.length == 0
+      self.serialize_ignore!(*things)
+    end
+    def serialize_ignore
+      @serialize_ignore
+    end
+    def self.serialize_ignore!(*things)
       things = things.first if things.length == 1 and things.first.is_a? Array
       things = things.map do |thing|
         (thing.is_a? String) ? thing.to_sym : thing
@@ -124,8 +132,14 @@
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
-        var_sym = var_str.to_sym
-        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
+        if var_str[0] == '@' and var_str[1] != '@'
+          var_str = var_str[1..-1]
+          var_sym = var_str.to_sym
+        elsif var.is_a?(Symbol)
+          var_sym = var
+        else
+          var_sym = var_str.to_sym
+        end
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       hash
@@ -140,8 +154,8 @@
       end
       
       json_hash.each do |var, val|
-        var = "@#{var}" unless var.to_s.start_with?("@")
-        self.instance_variable_set var, val
+        var = var.to_s unless var.is_a?(String)
+        self.instance_variable_set('@'+var, val)
       end
     end
   end
@@ -149,7 +163,7 @@
   class Chapters < Model
     attr_reader :chapters, :faces, :authors, :group, :trash_messages
     attr_accessor :group, :old_authors, :old_faces, :sort_chapters
-    serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces
+    serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces, :kept_authors, :kept_faces, :failed_authors, :failed_faces
     def initialize(options = {})
       @chapters = []
       @faces = []
@@ -181,8 +195,6 @@
       add_author(arg)
     end
     def get_author_by_id(author_id)
-      unpack!
-      
       found_author = authors.find {|author| author.unique_id == author_id}
       if old_authors.present? and not found_author
         found_author = old_authors.find {|author| author.unique_id == author_id}
@@ -193,11 +205,16 @@
     def keep_old_author(author_id)
       return nil unless old_authors.present?
       @kept_authors ||= []
+      @failed_authors ||= []
       return get_author_by_id(author_id) if @kept_authors.include?(author_id)
+      return if @failed_authors.include?(author_id)
       found_author = old_authors.find {|author| author.unique_id == author_id}
       if found_author.present?
         add_author(found_author)
         @kept_authors << author_id
+      else
+        LOG.error "Failed to find an old author for ID #{author_id}"
+        @failed_authors << author_id
       end
       found_author
     end
@@ -209,8 +226,6 @@
       add_face(arg)
     end
     def get_face_by_id(face_id)
-      unpack!
-      
       found_face = faces.find {|face| face.unique_id == face_id}
       if old_faces.present? and not found_face
         old_faces.find {|face| face.unique_id == face_id}
@@ -221,11 +236,16 @@
     def keep_old_face(face_id)
       return nil unless old_faces.present?
       @kept_faces ||= []
+      @failed_faces ||= []
       return get_face_by_id(face_id) if @kept_faces.include?(face_id)
+      return if @failed_faces.include?(face_id)
       found_face = old_faces.find {|face| face.unique_id == face_id}
       if found_face.present?
         add_face(found_face)
         @kept_faces << face_id
+      else
+        LOG.error "Failed to find an old face for ID #{face_id}"
+        @failed_faces << face_id
       end
       found_face
     end
@@ -289,29 +309,28 @@
       end
         
       json_hash.each do |var, val|
-        varname = (var.start_with?("@")) ? var[1..-1] : var
-        var = (var.start_with?("@") ? var : "@#{var}")
-        self.instance_variable_set var, val
+        var = var.to_s unless var.is_a?(String)
+        self.instance_variable_set('@'+var, val)
       end
       
       LOG.debug "Chapters.from_json! (group: #{group})"
       
-      authors = json_hash["authors"] or json_hash["@authors"]
-      faces = json_hash["faces"] or json_hash["@faces"]
-      chapters = json_hash["chapters"] or json_hash["@chapters"]
+      authors = json_hash['authors']
+      faces = json_hash['faces']
+      chapters = json_hash['chapters']
       
       @authors = []
       @faces = []
       unless trash_messages
         authors.each do |author_hash|
-          author_hash["chapter_list"] = self
+          author_hash['chapter_list'] = self
           author = Author.new
           author.from_json! author_hash
           add_author(author)
         end
         
         faces.each do |face_hash|
-          face_hash["chapter_list"] = self
+          face_hash['chapter_list'] = self
           face = Face.new
           face.from_json! face_hash
           add_face(face)
@@ -320,7 +339,7 @@
       
       @chapters = []
       chapters.each do |chapter_hash|
-        chapter_hash["chapter_list"] = self
+        chapter_hash['chapter_list'] = self
         chapter = Chapter.new(trash_messages: trash_messages)
         chapter.from_json! chapter_hash
         @chapters << chapter
@@ -544,15 +563,18 @@
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
-        var_sym = var_str.to_sym
-        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
-        
-        if var_str["authors"]
-          authors = self.instance_variable_get(var)
-          authors = authors.map {|author| (author.is_a?(Author) ? author.unique_id : author)}
-          hash[var_sym] = authors
+        if var_str[0] == '@' and var_str[1] != '@'
+          var_str = var_str[1..-1]
+          var_sym = var_str.to_sym
+        elsif var.is_a?(Symbol)
+          var_sym = var
+        else
+          var_sym = var_str.to_sym
         end
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
+      end
+      if @authors
+        hash[:authors] = @authors.map{|author| author.is_a?(Author) ? author.unique_id : author}
       end
       hash
     end
@@ -566,9 +588,8 @@
       end
       
       json_hash.each do |var, val|
-        varname = (var.start_with?("@")) ? var[1..-1] : var
-        var = (var.start_with?("@") ? var : "@#{var}")
-        self.instance_variable_set var, val unless varname == "replies" or varname == "entry"
+        var = var.to_s unless var.is_a?(String)
+        self.instance_variable_set('@'+var, val) unless var == "replies" or var == "entry"
       end
       
       LOG.debug "Chapter.from_json! (title: '#{title}', url: '#{url}')"
@@ -579,12 +600,12 @@
       self.authors
       
       if not @trash_messages
-        entry = json_hash["entry"] or json_hash["@entry"]
-        replies = json_hash["replies"] or json_hash["@replies"]
+        entry = json_hash['entry']
+        replies = json_hash['replies']
         if entry
           entry_hash = entry
-          entry_hash["post_type"] = PostType::ENTRY
-          entry_hash["chapter"] = self
+          entry_hash['post_type'] = PostType::ENTRY
+          entry_hash['chapter'] = self
           entry = Entry.new
           entry.from_json! entry_hash
           self.entry = entry
@@ -592,8 +613,8 @@
         if replies
           self.replies = []
           replies.each do |reply_hash|
-            reply_hash["post_type"] = PostType::REPLY
-            reply_hash["chapter"] = self
+            reply_hash['post_type'] = PostType::REPLY
+            reply_hash['chapter'] = self
             reply = Comment.new
             reply.from_json! reply_hash
             self.replies << reply
@@ -657,15 +678,18 @@
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
-        var_sym = var_str.to_sym
-        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
-        
-        if var_str["author"]
-          author = self.instance_variable_get(var)
-          hash[var_sym] = author if author.is_a?(String)
-          hash[var_sym] = author.unique_id if author.is_a?(Author)
+        if var_str[0] == '@' and var_str[1] != '@'
+          var_str = var_str[1..-1]
+          var_sym = var_str.to_sym
+        elsif var.is_a?(Symbol)
+          var_sym = var
+        else
+          var_sym = var_str.to_sym
         end
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
+      end
+      if @author
+        hash[:author] = (author.is_a?(Author) ? author.unique_id : author)
       end
       hash
     end
@@ -679,6 +703,7 @@
   class Message < Model #post or entry
     attr_accessor :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no
     @@date_format = "%Y-%m-%d %H:%M"
+    @@serialize_destroy = [:@children, :@allowed_params, :@push_title, :@push_author, :@post_type]
     
     def self.message_serialize_ignore
       serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_author, :post_type
@@ -717,8 +742,9 @@
     end
     
     def keep_old_stuff
-      chapter.chapter_list.try(:keep_old_author, author_id) if author_id
-      chapter.chapter_list.try(:keep_old_face, face_id) if face_id
+      return unless chapter && chapter.chapter_list
+      chapter.chapter_list.keep_old_author(author_id) if author_id
+      chapter.chapter_list.keep_old_face(face_id) if face_id
     end
     
     def time
@@ -935,10 +961,21 @@
     
     def as_json(options={})
       hash = {}
+      
+      @@serialize_destroy.each do |var|
+        self.remove_instance_variable var if self.instance_variable_defined? var
+      end
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
-        var_str = var_str[1..-1] if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
-        hash[var_str] = self.instance_variable_get var unless serialize_ignore?(var_str)
+        if var_str[0] == '@' and var_str[1] != '@'
+          var_str = var_str[1..-1]
+          var_sym = var_str.to_sym
+        elsif var.is_a?(Symbol)
+          var_sym = var
+        else
+          var_sym = var_str.to_sym
+        end
+        hash[var_str] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if @parent
         if @parent.is_a?(Message)
@@ -975,9 +1012,8 @@
       end
       
       json_hash.each do |var, val|
-        varname = (var.start_with?("@")) ? var[1..-1] : var
-        var = (var.start_with?("@") ? var : "@#{var}")
-        self.instance_variable_set var, val unless varname == "parent" or varname == "face" or varname == "author"
+        var = var.to_s unless var.is_a?(String)
+        self.instance_variable_set('@'+var, val) unless var == 'parent' or var == 'face' or var == 'author'
       end
       
       if post_type == PostType::ENTRY
@@ -985,9 +1021,9 @@
         chapter.entry_title = self.entry_title if self.entry_title
       end
       
-      parent = json_hash['parent'] or json_hash['@parent']
-      author = json_hash['author'] or json_hash['@author']
-      face = json_hash['face'] or json_hash['@face']
+      parent = json_hash['parent']
+      author = json_hash['author']
+      face = json_hash['face']
       
       if parent
         self.parent = parent
@@ -1070,8 +1106,14 @@
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
-        var_sym = var_str.to_sym
-        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
+        if var_str[0] == '@' and var_str[1] != '@'
+          var_str = var_str[1..-1]
+          var_sym = var_str.to_sym
+        elsif var.is_a?(Symbol)
+          var_sym = var
+        else
+          var_sym = var_str.to_sym
+        end
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if default_face
