@@ -608,7 +608,7 @@
         if author.unique_id.start_with?('constellation#user#')
           chars = [] # character is nil if it's a user post
           skip_creation = true
-        elsif
+        elsif author.unique_id.start_with?('constellation#')
           char_id = author.unique_id.sub('constellation#', '')
           chars = Character.where(user_id: user.id, id: char_id)
         end
