@@ -740,7 +740,9 @@
       writable.icon = icon_for_face(message.face)
       writable.content = message.content.strip
       writable.created_at = message.time
-      writable.updated_at = message.edittime
+      writable.updated_at = message.edittime if message.edittime.present?
+      writable.updated_at ||= writable.created_at
+      writable
     end
     def post_for_entry?(entry, board=nil)
       post_cache_id = entry.id + (entry.chapter.thread ? "##{entry.chapter.thread}" : '') + '#entry'
@@ -792,6 +794,7 @@
       post.section = boardsection_for_chapter(chapter)
       
       do_writables_from_message(post, entry)
+      post.edited_at = post.updated_at
       post.last_user = post.user
       post.save!
       
@@ -822,6 +825,8 @@
       chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : (@chapters ? @chapters : nil)
       (LOG.fatal "No chapters given!" and return) unless chapter_list
       
+      Post.record_timestamps = false
+      Reply.record_timestamps = false
       chapter_list.each do |chapter|
         (LOG.error "Chapter has no entry: #{chapter}" and next) unless chapter.entry.present?
         threaded = false
@@ -842,15 +847,22 @@
         (@msgs.each {|msg| LOG.info msg} and next) if post_for_entry?(chapter.entry, board)
         post = post_for_entry(chapter.entry, board)
         thread_id = nil
-        chapter.replies.each do |reply|
+        chapter.replies.each_with_index do |reply, i|
           repl = reply_for_comment(reply, threaded, thread_id, reply == chapter.replies.last)
           thread_id = repl.thread_id if threaded
+          if (i+1) % 100 == 0
+            old_status = post.status
+            post.save!
+            post.update_column(:status, old_status)
+          end
         end
         
         old_status = post.status
         post.save!
         post.update_column(:status, old_status)
       end
+      Post.record_timestamps = true
+      Reply.record_timestamps = true
       LOG.info "Finished outputting #{@group} to Rails."
     end
   end
