@@ -205,32 +205,49 @@ module GlowficIndexHandlers
       @strip_li_end = (@group == :incandescence or @group == :silmaril)
       @strip_li_end = options[:strip_li_end] if options.key?(:strip_li_end)
     end
-    def get_chapters(section, section_list, &block)
-      #More "get_chapter", but oh well.
+    def get_chapters(section, section_list, index=1, &block)
       #puts "Find chapters in (#{section_list}): #{section.text}"
       
       chapters = section.css('> ol > li')
       if chapters and not chapters.empty?
-        chapters.each do |chapter|
-          get_chapters(chapter, section_list, &block)
+        chapters.each_with_index do |chapter, i|
+          get_chapters(chapter, section_list, i, &block)
         end
       else
-        chapter_link = section.at_css('a')
-        return unless chapter_link
-        chapter_text = get_text_on_line(chapter_link, after: false).strip
-        chapter_text_extras = get_text_on_line(chapter_link, include_node: false, before: false).strip
-        open_count = chapter_text.scan("(").count - chapter_text.scan(")").count
-        if open_count > 0 and chapter_text_extras.start_with?(")")
-          chapter_text += ")"
-          chapter_text_extras = chapter_text_extras[1..-1]
+        chapter_link = section.at_css('> a')
+        if chapter_link
+          chapter_links = [chapter_link]
+        else
+          chapter_links = section.css("> ul > li a")
+          return unless chapter_links.present?
+          sublist = section.at_css('> ul')
+          subsection_text = ""
+          curr_element = sublist.previous
+          while curr_element
+            subsection_text = curr_element.text + subsection_text
+            curr_element = curr_element.previous
+          end
+          subsection_text.strip!
+          subsection_text = index.to_s if subsection_text.empty?
+          section_list = section_list + [subsection_text]
         end
-        chapter_text_extras = nil if chapter_text_extras.empty?
-        chapter_url = chapter_link.try(:[], :href)
-        return unless chapter_url
         
-        chapter_details = chapter_from_toc(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list)
-        if block_given?
-          yield chapter_details
+        chapter_links.each do |chapter_link|
+          chapter_text = get_text_on_line(chapter_link, after: false).strip
+          chapter_text_extras = get_text_on_line(chapter_link, include_node: false, before: false).strip
+          open_count = chapter_text.scan("(").count - chapter_text.scan(")").count
+          if open_count > 0 and chapter_text_extras.start_with?(")")
+            chapter_text += ")"
+            chapter_text_extras = chapter_text_extras[1..-1]
+          end
+          chapter_text_extras = nil if chapter_text_extras.empty?
+          chapter_url = chapter_link.try(:[], :href)
+          next unless chapter_url
+          
+          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list)
+          if block_given?
+            yield chapter_details
+          end
         end
       end
     end
@@ -251,7 +268,7 @@ module GlowficIndexHandlers
           subsection_text = i.to_s if subsection_text.empty?
           each_section(section, section_list + [subsection_text], &block)
         else
-          yield section, section_list
+          yield section, section_list, i
         end
       end
     end
@@ -267,13 +284,13 @@ module GlowficIndexHandlers
       return nil unless entry
       
       previous_sections = []
-      each_section(entry, []) do |section, section_list|
-        get_chapters(section, section_list) do |chapter_details|
+      each_section(entry, []) do |section, section_list, section_index|
+        get_chapters(section, section_list, section_index) do |chapter_details|
           chapter_list << chapter_details
           sections = chapter_details.sections
           sections.each_with_index do |section, i|
             if previous_sections.length <= i or previous_sections[i] != section
-              puts "Section (depth #{i+1}): #{section}"
+              LOG.info "- Section (depth #{i+1}): #{section}"
             end
           end
           previous_sections = sections
