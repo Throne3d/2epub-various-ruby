@@ -171,6 +171,7 @@ def main(args)
     unhandled_chapters = []
     instance_handlers = {}
     chapter_count = chapter_list.count
+    diff = true
     chapter_list.each_with_index do |chapter, i|
       site_handler = GlowficSiteHandlers.get_handler_for(chapter)
       
@@ -184,13 +185,15 @@ def main(args)
       instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
       handler = instance_handlers[site_handler]
       
+      diff = false
       handler.get_updated(chapter, notify: true) do |msg|
         LOG.info "(#{i+1}/#{chapter_count}) " + msg
+        diff = msg.start_with?('New') || msg.start_with?('Updated')
       end
       
-      set_chapters_data(chapter_list, group) unless process == :qget
+      set_chapters_data(chapter_list, group) if diff && process != :qget
     end
-    set_chapters_data(chapter_list, group) if process == :qget
+    set_chapters_data(chapter_list, group) if process == :qget or !diff
   elsif (process == :process or process == :report)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
@@ -203,6 +206,7 @@ def main(args)
     instance_handlers = {}
     chapter_count = chapter_list.count
     chapter_list.each_with_index do |chapter, i|
+    diff = true
       site_handler = site_handlers.select {|c| c.handles? chapter}
       
       if site_handler.nil? or site_handler.empty? or site_handler.length > 1
@@ -222,13 +226,15 @@ def main(args)
       
       only_attrs = (process == :report ? [:time, :edittime] : nil)
       
+      diff = true
       handler.get_replies(chapter, notify: true, only_attrs: only_attrs) do |msg|
         LOG.info "(#{i+1}/#{chapter_count}) " + msg
+        diff = false if msg[": unchanged, cached"]
       end
       
-      set_chapters_data(chapter_list, group) unless process == :report
+      set_chapters_data(chapter_list, group) if diff && process != :report
     end
-    set_chapters_data(chapter_list, group) if process == :report
+    set_chapters_data(chapter_list, group) if process == :report or !diff
   elsif (process == :output_epub)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
