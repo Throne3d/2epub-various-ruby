@@ -297,7 +297,12 @@
         
         LOG.debug "Content is different for #{chapter}" if changed
         if pages_exist and not changed
-          LOG.info "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (checked #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
+          msg_str = "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (checked #{@download_count} page#{@download_count != 1 ? 's' : ''})"
+          if block_given?
+            yield msg_str
+          elsif notify
+            LOG.info msg_str
+          end
           return chapter
         end
       end
@@ -384,8 +389,20 @@
       end
       
       page_count = (comment_count < 50) ? 1 : (comment_count * 1.0 / 25).ceil
-      LOG.info "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{page_count} page#{page_count != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify and @success
-      LOG.error "ERROR: #{chapter.title}: #{@error}" unless @success
+      msg_str = if success
+        "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{page_count} page#{page_count != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})"
+      else
+        "ERROR: #{chapter.title}: #{@error}"
+      end
+      if success
+        if block_given?
+          yield msg_str
+        elsif notify
+          LOG.info msg_str
+        end
+      else
+        LOG.error msg_str
+      end
       return chapter
     end
     def get_moiety_by_profile(profile)
@@ -710,7 +727,12 @@
         end
       end
       
-      LOG.info "#{chapter.title}: parsed #{pages.length} page#{pages.length == 1 ? '' : 's'}" if notify
+      msg_str = "#{chapter.title}: parsed #{pages.length} page#{pages.length == 1 ? '' : 's'}"
+      if block_given?
+        yield msg_str
+      elsif notify
+        LOG.info msg_str
+      end
       
       chapter.processed = message_attributes
       chapter.replies=@replies
@@ -817,7 +839,12 @@
         
         LOG.debug "Content is different for #{chapter}" if changed
         if pages_exist and not changed
-          LOG.info "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (checked #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
+          msg_str = "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (checked #{@download_count} page#{@download_count != 1 ? 's' : ''})"
+          if block_given?
+            yield msg_str
+          elsif notify
+            LOG.info msg_str
+          end
           return chapter
         end
         
@@ -842,7 +869,12 @@
       
       pages = get_full(chapter, options.merge({new: (not changed)}))
       chapter.pages = pages
-      LOG.info "#{is_new ? 'New' : 'Updated'}: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})" if notify
+      msg_str = "#{is_new ? 'New' : 'Updated'}: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})"
+      if block_given?
+        yield msg_str
+      elsif notify
+        LOG.info msg_str
+      end
       return chapter
     end
     def get_moiety_by_id(character_id)
@@ -1335,8 +1367,12 @@
       pages_effectual = (@replies.length * 1.0 / 25).ceil
       pages_effectual = 1 if pages_effectual < 1
       
-      LOG.info "#{chapter.title}: parsed #{pages_effectual} page#{pages_effectual == 1 ? '' : 's'}" + (@notify_extras.present? ? ", #{@notify_extras * ', '}" : '') if notify
-      
+      msg_str = "#{chapter.title}: parsed #{pages_effectual} page#{pages_effectual == 1 ? '' : 's'}" + (@notify_extras.present? ? ", #{@notify_extras * ', '}" : '')
+      if block_given?
+        yield msg_str
+      elsif notify
+        LOG.info msg_str
+      end
       chapter.processed = message_attributes
       chapter.replies=@replies
     end

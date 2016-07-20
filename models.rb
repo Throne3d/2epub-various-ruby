@@ -267,11 +267,17 @@
     def length
       chapters.length
     end
+    def count
+      chapters.count
+    end
     def empty?
       chapters.empty?
     end
     def each(&block)
       chapters.each(&block)
+    end
+    def each_with_index(&block)
+      chapter.each_with_index(&block)
     end
     def from_json! string
       json_hash = if string.is_a? String

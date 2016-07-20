@@ -170,7 +170,8 @@ def main(args)
     
     unhandled_chapters = []
     instance_handlers = {}
-    chapter_list.each do |chapter|
+    chapter_count = chapter_list.count
+    chapter_list.each_with_index do |chapter, i|
       site_handler = GlowficSiteHandlers.get_handler_for(chapter)
       
       if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?) or (site_handler.is_a?(Array) and site_handler.length > 1)
@@ -183,7 +184,9 @@ def main(args)
       instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
       handler = instance_handlers[site_handler]
       
-      handler.get_updated(chapter, notify: true)
+      handler.get_updated(chapter, notify: true) do |msg|
+        LOG.info "(#{i}/#{chapter_count}) " + msg
+      end
       
       set_chapters_data(chapter_list, group) unless process == :qget
     end
@@ -198,7 +201,8 @@ def main(args)
     site_handlers.select! {|c| c.is_a? Class and c < GlowficSiteHandlers::SiteHandler }
     
     instance_handlers = {}
-    chapter_list.each do |chapter|
+    chapter_count = chapter_list.count
+    chapter_list.each_with_index do |chapter, i|
       site_handler = site_handlers.select {|c| c.handles? chapter}
       
       if site_handler.nil? or site_handler.empty? or site_handler.length > 1
@@ -218,7 +222,9 @@ def main(args)
       
       only_attrs = (process == :report ? [:time, :edittime] : nil)
       
-      handler.get_replies(chapter, notify: true, only_attrs: only_attrs)
+      handler.get_replies(chapter, notify: true, only_attrs: only_attrs) do |msg|
+        LOG.info "(#{i}/#{chapter_count}) " + msg
+      end
       
       set_chapters_data(chapter_list, group) unless process == :report
     end
