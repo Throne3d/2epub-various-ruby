@@ -740,7 +740,7 @@
       return @boardsection_cache[board][section_string] if @boardsection_cache[board].key?(section_string)
       boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board_id: board.id)
       unless boardsections.present?
-        boardsection = BoardSection.create!(board: board, name: section_string)
+        boardsection = BoardSection.create!(board: board, name: section_string, section_order: board.board_sections.count)
       end
       boardsection ||= boardsections.first
       @boardsection_cache[board][section_string] = boardsection
@@ -803,6 +803,7 @@
       post.subject = chapter.entry_title
       post.status = chapter.time_completed ? Post::STATUS_COMPLETE : (chapter.time_hiatus ? Post::STATUS_HIATUS : Post::STATUS_ACTIVE)
       post.section = boardsection_for_chapter(chapter)
+      post.section_order = post.section.posts.count if post.section.present? && !@skip_post_ordering
       
       do_writables_from_message(post, entry)
       post.edited_at = post.updated_at
@@ -835,6 +836,7 @@
     def output(options={})
       chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : (@chapters ? @chapters : nil)
       (LOG.fatal "No chapters given!" and return) unless chapter_list
+      @skip_post_ordering = options.include?(:skip_post_ordering) ? options[:skip_post_ordering] : false
       
       Post.record_timestamps = false
       Reply.record_timestamps = false
