@@ -9,4 +9,4 @@ if __FILE__ == $0
 end
 result = RubyProf.stop
 printer = RubyProf::MultiPrinter.new(result)
-printer.print(:path => '.', :profile => 'profile', :min_percent => 0.5)
+printer.print(:path => '.', :profile => 'profile', :min_percent => 0.05)
