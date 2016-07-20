@@ -593,7 +593,6 @@
     def character_for_author(author)
       return @char_cache[author.unique_id] if @char_cache.key?(author.unique_id)
       return nil unless author.unique_id
-      LOG.warn("- Character has no default face: #{author}") unless author.default_face.present?
       user = user_for_author(author)
       chars = nil
       author.screenname = author.unique_id.sub('dreamwidth#', '') if !author.screenname.present? && author.unique_id.start_with?('dreamwidth#')
@@ -623,6 +622,16 @@
       end
       char = chars.first
       @char_cache[author.unique_id] = char
+      if author.default_face.present?
+        default_icon = icon_for_face(author.default_face)
+        if char.present? && default_icon.present?
+          char.update_attributes(default_icon: default_icon)
+          LOG.info "- Set a default icon for #{char.name}: #{default_icon.id}"
+        end
+      else
+        LOG.warn("- Character has no default face: #{author}")
+      end
+      char
     end
     def gallery_for_author(author)
       return @gallery_cache[author.unique_id] if @gallery_cache.key?(author.unique_id)
@@ -681,8 +690,8 @@
       @usermoiety_cache[user.try(:username).try(:downcase)] = user
     end
     def icon_for_face(face)
+      return nil unless face.present? and face.imageURL.present?
       return @icon_cache[face.unique_id] if @icon_cache.key?(face.unique_id)
-      return nil unless face.imageURL
       user = user_for_author(face.author)
       gallery = gallery_for_author(face.author)
       icon = Icon.where(url: face.imageURL, user_id: user.id).includes(:galleries).select{|icon| icon.galleries.include?(gallery)}.first
@@ -729,10 +738,6 @@
       writable.user = user_for_author(message.author)
       writable.character = character_for_author(message.author)
       writable.icon = icon_for_face(message.face)
-      if writable.character.present? and writable.character.default_icon_id.blank? and message.author.default_face == message.face
-        writable.character.default_icon = writable.icon
-        LOG.info "- Set a default icon for #{writable.character.name}: #{writable.icon.id}"
-      end
       writable.content = message.content.strip
       writable.created_at = message.time
       writable.updated_at = message.edittime
