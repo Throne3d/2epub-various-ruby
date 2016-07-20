@@ -638,8 +638,11 @@
       char = character_for_author(author)
       return nil unless char
       if char.galleries.empty?
-        char.galleries << Gallery.create!(user: char.user, name: author.name)
+        LOG.info "- Created gallery for #{author.name}"
+        char.galleries.build(user: char.user, name: author.name)
         char.save!
+      else
+        LOG.info "- #{author.name} has an uncached gallery; using it. (ID #{char.galleries.first.id})"
       end
       @gallery_cache[author.unique_id] = char.galleries.first
     end
@@ -795,6 +798,7 @@
       post.section = boardsection_for_chapter(chapter)
       
       do_writables_from_message(post, entry)
+      post.last_user = post.user
       post.save!
       
       @post_cache[post_cache_id] = post
@@ -802,29 +806,20 @@
     def reply_for_comment(comment, threaded=false, thread_id=nil, do_update=false)
       reply_cache_id = comment.chapter.entry.id + '#' + comment.id
       return @reply_cache[reply_cache_id] if @reply_cache.key?(reply_cache_id)
-      reply = Reply.new
-      reply.post = post_for_entry(comment.chapter.entry)
+      
+      post = post_for_entry(comment.chapter.entry)
+      reply = post.replies.build
       reply.thread_id = thread_id if threaded && thread_id
       reply.skip_notify = true
       
       do_writables_from_message(reply, comment)
       
-      if do_update
-        reply.skip_post_update = false
-        old_status = reply.post.status
-        old_updated_at = reply.post.updated_at
-        reply.save!
-        reply.post.update_column(:status, old_status)
-      else
-        reply.skip_post_update = true
-        reply.save!
-      end
+      reply.skip_post_update = !do_update
       
       if threaded && comment.parent == comment.chapter.entry
         reply.thread_id = reply.id
         reply.skip_post_update = true
         reply.skip_notify = true
-        reply.save!
       end
       @reply_cache[reply_cache_id] = reply
     end
@@ -857,6 +852,10 @@
           repl = reply_for_comment(reply, threaded, thread_id, reply == chapter.replies.last)
           thread_id = repl.thread_id if threaded
         end
+        
+        old_status = post.status
+        post.save!
+        post.update_column(:status, old_status)
       end
       LOG.info "Finished outputting #{@group} to Rails."
     end
