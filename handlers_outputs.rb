@@ -828,21 +828,22 @@
       
       Post.record_timestamps = false
       Reply.record_timestamps = false
-      chapter_list.each do |chapter|
-        (LOG.error "Chapter has no entry: #{chapter}" and next) unless chapter.entry.present?
+      chapter_count = chapter_list.count
+      chapter_list.each_with_index do |chapter, i|
+        (LOG.error "(#{i}/#{chapter_count}) Chapter has no entry: #{chapter}" and next) unless chapter.entry.present?
         threaded = false
         ([chapter.entry] + chapter.replies).each do |reply|
           next if reply.children.length <= 1
           if reply.children.length == 2 && reply.children.first.children.empty?
             reply.children.last.parent = reply.children.first
-            (puts "unbranched #{reply}" and next) if reply.children.length <= 1
-            puts "unbranching failed somehow? reply: #{reply}, children: #{reply.children}, children parents: #{reply.children.map(&:parent)}"
+            (LOG.info "unbranched #{reply}" and next) if reply.children.length <= 1
+            LOG.error "unbranching failed somehow? reply: #{reply}, children: #{reply.children}, children parents: #{reply.children.map(&:parent)}"
           end
           threaded = true
         end
         
         @msgs = []
-        puts "Chapter #{chapter}"
+        LOG.info "(#{i}/#{chapter_count}) Chapter #{chapter}"
         
         board = board_for_chapterlist(chapter_list)
         (@msgs.each {|msg| LOG.info msg} and next) if post_for_entry?(chapter.entry, board)
