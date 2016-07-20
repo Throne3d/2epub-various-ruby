@@ -277,7 +277,7 @@
       chapters.each(&block)
     end
     def each_with_index(&block)
-      chapter.each_with_index(&block)
+      chapters.each_with_index(&block)
     end
     def from_json! string
       json_hash = if string.is_a? String

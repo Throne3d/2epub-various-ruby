@@ -185,7 +185,7 @@ def main(args)
       handler = instance_handlers[site_handler]
       
       handler.get_updated(chapter, notify: true) do |msg|
-        LOG.info "(#{i}/#{chapter_count}) " + msg
+        LOG.info "(#{i+1}/#{chapter_count}) " + msg
       end
       
       set_chapters_data(chapter_list, group) unless process == :qget
@@ -223,7 +223,7 @@ def main(args)
       only_attrs = (process == :report ? [:time, :edittime] : nil)
       
       handler.get_replies(chapter, notify: true, only_attrs: only_attrs) do |msg|
-        LOG.info "(#{i}/#{chapter_count}) " + msg
+        LOG.info "(#{i+1}/#{chapter_count}) " + msg
       end
       
       set_chapters_data(chapter_list, group) unless process == :report

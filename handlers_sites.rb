@@ -389,12 +389,12 @@
       end
       
       page_count = (comment_count < 50) ? 1 : (comment_count * 1.0 / 25).ceil
-      msg_str = if success
+      msg_str = if @success
         "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{page_count} page#{page_count != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})"
       else
         "ERROR: #{chapter.title}: #{@error}"
       end
-      if success
+      if @success
         if block_given?
           yield msg_str
         elsif notify
@@ -663,7 +663,12 @@
         if chapter.replies.empty?
           LOG.error "#{chapter.title}: cached data contains no replies; not using"
         else
-          LOG.info "#{chapter.title}: unchanged, cached data used"
+          msg_str = "#{chapter.title}: unchanged, cached data used"
+          if block_given?
+            yield msg_str
+          elsif notify
+            LOG.info msg_str
+          end
           return chapter.replies
         end
       end
@@ -1282,7 +1287,12 @@
         if chapter.replies.empty?
           LOG.error "#{chapter.title}: cached data contains no replies; not using"
         else
-          LOG.info "#{chapter.title}: unchanged, cached data used"
+          msg_str = "#{chapter.title}: unchanged, cached data used"
+          if block_given?
+            yield msg_str
+          elsif notify
+            LOG.info msg_str
+          end
           return chapter.replies
         end
       end
