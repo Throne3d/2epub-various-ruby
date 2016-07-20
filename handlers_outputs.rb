@@ -572,4 +572,298 @@
       end
     end
   end
+  
+  class RailsHandler < OutputHandler
+    def initialize(options={})
+      super options
+      @icon_cache = {}
+      @char_cache = {}
+      @gallery_cache = {}
+      @user_cache = {}
+      @usermoiety_cache = {}
+      @boardsection_cache = {}
+      @board_cache = {}
+      @post_cache = {}
+      @reply_cache = {}
+      @post_not_skips = {}
+      @user_moiety_rewrite = {}
+      @confirm_dupes = (options.key?(:confirm_dupes) ? options[:confirm_dupes] : DEBUGGING)
+    end
+    
+    def character_for_author(author)
+      return @char_cache[author.unique_id] if @char_cache.key?(author.unique_id)
+      return nil unless author.unique_id
+      user = user_for_author(author)
+      chars = nil
+      author.screenname = author.unique_id.sub('dreamwidth#', '') if !author.screenname.present? && author.unique_id.start_with?('dreamwidth#')
+      
+      chars = Character.where(user_id: user.id, screenname: author.screenname) if author.screenname.present?
+      chars = Character.where(user_id: user.id, name: author.name) if author.name.present? && !chars.present?
+      unless chars.present?
+        # unique_ids:
+        # dreamwidth#{author_id}
+        # constellation#user#{user_id}
+        # constellation#{character_id}
+        skip_creation = false
+        if author.unique_id.start_with?('constellation#user#')
+          chars = [] # character is nil if it's a user post
+          skip_creation = true
+        elsif author.unique_id.start_with?('constellation#')
+          char_id = author.unique_id.sub('constellation#', '')
+          chars = Character.where(user_id: user.id, id: char_id)
+        end
+        
+        unless skip_creation or chars.present?
+          char = Character.create!(user: user, name: author.name, screenname: author.screenname)
+          LOG.info "- Created character '#{author.name}' for author '#{user.username}'."
+        end
+      end
+      char ||= chars.first
+      @char_cache[author.unique_id] = char
+      if author.default_face.present?
+        default_icon = icon_for_face(author.default_face)
+        if char.present? && default_icon.present?
+          char.update_attributes(default_icon: default_icon)
+          LOG.debug "- Set a default icon for #{char.name}: #{default_icon.id}"
+        end
+      else
+        LOG.warn("- Character has no default face: #{author}")
+      end
+      char
+    end
+    def gallery_for_author(author)
+      return @gallery_cache[author.unique_id] if @gallery_cache.key?(author.unique_id)
+      char = character_for_author(author)
+      return nil unless char
+      if char.galleries.empty?
+        LOG.debug "- Created gallery for #{author.name}"
+        char.galleries.build(user: char.user, name: author.name)
+        char.save!
+      else
+        LOG.debug "- #{author.name} has an uncached gallery; using it. (ID #{char.galleries.first.id})"
+      end
+      @gallery_cache[author.unique_id] = char.galleries.first
+    end
+    def user_for_author(author)
+      return @user_cache[author.unique_id] if @user_cache.key?(author.unique_id)
+      return nil unless author.unique_id
+      moieties = author.moiety.split(' ').uniq.map(&:downcase)
+      moiety = moieties.first
+      cached_moiety = moieties.find {|moiety_val| @usermoiety_cache.key?(moiety_val) }
+      return @usermoiety_cache[cached_moiety] if cached_moiety
+      LOG.warn("- Character has many moieties (#{author.moiety})") if moieties.length > 1
+      
+      users = User.where('lower(username) = ?', moieties.map(&:downcase))
+      unless users.present?
+        rewrites = moieties.map{|moiety| @user_moiety_rewrite.keys.detect{|key| key.downcase == moiety.downcase} }.compact.map{|key| @user_moiety_rewrite[key].downcase}
+        if rewrites.present?
+          users = User.where('lower(username) = ?', rewrites)
+        end
+      end
+      unless users.present?
+        LOG.info "- No user(s) found for moiet" + (moieties.length == 1 ? "y '#{moieties.first}'" : "ies: #{moieties * ', '}")
+        puts "Please enter a user ID or username for the user."
+        userthing = STDIN.gets.chomp
+        if userthing[/[A-Za-z]/]
+          users = User.where(username: userthing)
+        else
+          users = User.where(id: userthing)
+        end
+        
+        if users.present?
+          @user_moiety_rewrite[moieties.first.downcase] = users.username
+        end
+        
+        unless users.present?
+          puts "No user(s) found for '#{userthing}'. Would you like to create a new user for this moiety? (#{moiety}) (y/N)"
+          while (input = STDIN.gets.chomp.strip.downcase) && input != 'y' && input != 'n' && input != ''
+            puts "Unrecognized input."
+          end
+          input = 'n' if input.empty?
+          if input == 'y'
+            user = User.create!(username: moiety, password: moiety, email: moiety)
+            LOG.info "- User created for #{moiety}."
+          else
+            LOG.warn "- Skipping user for #{moiety}. Will likely cause errors."
+          end
+        end
+      end
+      user ||= users.first
+      @user_cache[author.unique_id] = user
+      @usermoiety_cache[user.try(:username).try(:downcase)] = user
+    end
+    def icon_for_face(face)
+      return nil unless face.present? and face.imageURL.present?
+      return @icon_cache[face.unique_id] if @icon_cache.key?(face.unique_id)
+      user = user_for_author(face.author)
+      gallery = gallery_for_author(face.author)
+      icon = Icon.where(url: face.imageURL, user_id: user.id).includes(:galleries).select{|icon| icon.galleries.include?(gallery)}.first
+      unless icon.present?
+        icon = Icon.where(url: face.imageURL, user_id: user.id).first
+        gallery.icons << icon if gallery && icon.present?
+      end
+      unless icon.present?
+        gallery = gallery_for_author(face.author)
+        icon = Icon.create!(user: user, url: face.imageURL, keyword: face.keyword)
+        gallery.icons << icon if gallery
+      end
+      @icon_cache[face.unique_id] = icon
+    end
+    
+    def board_for_chapterlist(chapter_list)
+      return @board_cache[chapter_list] if @board_cache.key?(chapter_list)
+      chapter_list.group ||= @group
+      board_name = FIC_NAMESTRINGS[chapter_list.group]
+      boards = Board.where('lower(name) = ?', board_name.downcase)
+      unless boards.present?
+        board = Board.create!(name: board_name, creator: user_for_author(chapter_list.authors.first))
+      end
+      board ||= boards.first
+      @board_cache[chapter_list] = board
+    end
+    def boardsection_for_chapter(chapter)
+      return nil unless chapter.sections.present?
+      section_string = chapter.sections * ' > '
+      board = board_for_chapterlist(chapter.chapter_list)
+      @boardsection_cache[board] ||= {}
+      return @boardsection_cache[board][section_string] if @boardsection_cache[board].key?(section_string)
+      boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board_id: board.id)
+      unless boardsections.present?
+        boardsection = BoardSection.create!(board: board, name: section_string)
+      end
+      boardsection ||= boardsections.first
+      @boardsection_cache[board][section_string] = boardsection
+    end
+    def do_writables_from_message(writable, message)
+      writable.user = user_for_author(message.author)
+      writable.character = character_for_author(message.author)
+      writable.icon = icon_for_face(message.face)
+      writable.content = message.content.strip
+      writable.created_at = message.time
+      writable.updated_at = message.edittime if message.edittime.present?
+      writable.updated_at ||= writable.created_at
+      writable
+    end
+    def post_for_entry?(entry, board=nil)
+      post_cache_id = entry.id + (entry.chapter.thread ? "##{entry.chapter.thread}" : '') + '#entry'
+      unless @post_cache.key?(post_cache_id)
+        chapter = entry.chapter
+        section = boardsection_for_chapter(chapter) or board_for_chapterlist(entry.chapter_list)
+        lowercase_title = chapter.entry_title.downcase
+        matching_posts = section.posts.where('lower(subject) = ?', lowercase_title)
+        matching_posts = matching_posts.not(id: @post_not_skips[lowercase_title]) if @post_not_skips.key?(lowercase_title)
+        
+        matching_posts = matching_posts.select {|post| post.replies.length == chapter.replies.length && post.replies.order('id asc').first.content.strip.gsub(/\<[^\<\>]*?\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') == chapter.replies.first.content.strip.gsub(/\<[^\<\>]*?\>/, '').gsub(/\r?\n/, '').gsub(/\s{2,}/, ' ') }
+        # If they're the same length, check if they have the same content for their first reply (skipping HTML tags and linebreaks and dupe spaces).
+        
+        if matching_posts.present?
+          matching_post_ids = matching_posts.map(&:id)
+          @msgs << "- Chapter is duplicate. IDs: #{matching_post_ids * ', '}."
+          if @confirm_dupes
+            first_reply = chapter.replies.first
+            puts "First reply content: #{first_reply.content}" if first_reply.present?
+            puts "Please verify if this is a duplicate (Y) and should be skipped or not (n) and should be reprocessed."
+            while (input = STDIN.gets.chomp.strip.downcase) && input != 'y' && input != 'n' && input != ''
+              puts "Unrecognized input."
+            end
+            input = 'y' if input.empty?
+          else
+            input = 'y'
+          end
+          if input == 'y'
+            @msgs.last << " Noted duplicate."
+            @post_cache[post_cache_id] = matching_posts.first
+          else
+            @msgs.last << " Noted not duplicates."
+            @post_not_skips[lowercase_title] ||= []
+            @post_not_skips[lowercase_title] += matching_post_ids
+          end
+        end
+      end
+      @post_cache.key?(post_cache_id)
+    end
+    def post_for_entry(entry, board=nil)
+      board ||= board_for_chapterlist(entry.chapter_list)
+      post_cache_id = entry.id + (entry.chapter.thread ? "##{entry.chapter.thread}" : '') + '#entry'
+      return @post_cache[post_cache_id] if @post_cache.key?(post_cache_id)
+      chapter = entry.chapter
+      post = Post.new
+      post.board = board
+      post.subject = chapter.entry_title
+      post.status = chapter.time_completed ? Post::STATUS_COMPLETE : (chapter.time_hiatus ? Post::STATUS_HIATUS : Post::STATUS_ACTIVE)
+      post.section = boardsection_for_chapter(chapter)
+      
+      do_writables_from_message(post, entry)
+      post.edited_at = post.updated_at
+      post.last_user = post.user
+      post.save!
+      
+      @post_cache[post_cache_id] = post
+    end
+    def reply_for_comment(comment, threaded=false, thread_id=nil, do_update=false)
+      reply_cache_id = comment.chapter.entry.id + '#' + comment.id
+      return @reply_cache[reply_cache_id] if @reply_cache.key?(reply_cache_id)
+      
+      post = post_for_entry(comment.chapter.entry)
+      reply = post.replies.build
+      reply.thread_id = thread_id if threaded && thread_id
+      reply.skip_notify = true
+      
+      do_writables_from_message(reply, comment)
+      
+      reply.skip_post_update = !do_update
+      
+      if threaded && comment.parent == comment.chapter.entry
+        reply.thread_id = reply.id
+        reply.skip_post_update = true
+        reply.skip_notify = true
+      end
+      @reply_cache[reply_cache_id] = reply
+    end
+    
+    def output(options={})
+      chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : (@chapters ? @chapters : nil)
+      (LOG.fatal "No chapters given!" and return) unless chapter_list
+      
+      Post.record_timestamps = false
+      Reply.record_timestamps = false
+      chapter_list.each do |chapter|
+        (LOG.error "Chapter has no entry: #{chapter}" and next) unless chapter.entry.present?
+        threaded = false
+        ([chapter.entry] + chapter.replies).each do |reply|
+          next if reply.children.length <= 1
+          if reply.children.length == 2 && reply.children.first.children.empty?
+            reply.children.last.parent = reply.children.first
+            (puts "unbranched #{reply}" and next) if reply.children.length <= 1
+            puts "unbranching failed somehow? reply: #{reply}, children: #{reply.children}, children parents: #{reply.children.map(&:parent)}"
+          end
+          threaded = true
+        end
+        
+        @msgs = []
+        puts "Chapter #{chapter}"
+        
+        board = board_for_chapterlist(chapter_list)
+        (@msgs.each {|msg| LOG.info msg} and next) if post_for_entry?(chapter.entry, board)
+        post = post_for_entry(chapter.entry, board)
+        thread_id = nil
+        chapter.replies.each_with_index do |reply, i|
+          repl = reply_for_comment(reply, threaded, thread_id, reply == chapter.replies.last)
+          thread_id = repl.thread_id if threaded
+          if (i+1) % 100 == 0
+            old_status = post.status
+            post.save!
+            post.update_column(:status, old_status)
+          end
+        end
+        
+        old_status = post.status
+        post.save!
+        post.update_column(:status, old_status)
+      end
+      Post.record_timestamps = true
+      Reply.record_timestamps = true
+      LOG.info "Finished outputting #{@group} to Rails."
+    end
+  end
 end

@@ -563,6 +563,7 @@ module GlowficIndexHandlers
       elsif not url_path.start_with?("http://") and not url_path.start_with?("https://")
         url_path = File.join((current_url.split("/")[0..-2]) * '/', url_path)
       end
+      url_path = url_path.sub(/(users|boards|galleries|characters)\/(\d+)(\?|$)?/, '\1/\2/\3')
       url_path
     end
     
