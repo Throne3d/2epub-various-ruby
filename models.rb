@@ -149,7 +149,7 @@
   class Chapters < Model
     attr_reader :chapters, :faces, :authors, :group, :trash_messages
     attr_accessor :group, :old_authors, :old_faces, :sort_chapters
-    serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces
+    serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces, :kept_authors, :kept_faces, :failed_authors, :failed_faces
     def initialize(options = {})
       @chapters = []
       @faces = []
@@ -181,8 +181,6 @@
       add_author(arg)
     end
     def get_author_by_id(author_id)
-      unpack!
-      
       found_author = authors.find {|author| author.unique_id == author_id}
       if old_authors.present? and not found_author
         found_author = old_authors.find {|author| author.unique_id == author_id}
@@ -193,11 +191,16 @@
     def keep_old_author(author_id)
       return nil unless old_authors.present?
       @kept_authors ||= []
+      @failed_authors ||= []
       return get_author_by_id(author_id) if @kept_authors.include?(author_id)
+      return if @failed_authors.include?(author_id)
       found_author = old_authors.find {|author| author.unique_id == author_id}
       if found_author.present?
         add_author(found_author)
         @kept_authors << author_id
+      else
+        LOG.error "Failed to find an old author for ID #{author_id}"
+        @failed_authors << author_id
       end
       found_author
     end
@@ -209,8 +212,6 @@
       add_face(arg)
     end
     def get_face_by_id(face_id)
-      unpack!
-      
       found_face = faces.find {|face| face.unique_id == face_id}
       if old_faces.present? and not found_face
         old_faces.find {|face| face.unique_id == face_id}
@@ -221,11 +222,16 @@
     def keep_old_face(face_id)
       return nil unless old_faces.present?
       @kept_faces ||= []
+      @failed_faces ||= []
       return get_face_by_id(face_id) if @kept_faces.include?(face_id)
+      return if @failed_faces.include?(face_id)
       found_face = old_faces.find {|face| face.unique_id == face_id}
       if found_face.present?
         add_face(found_face)
         @kept_faces << face_id
+      else
+        LOG.error "Failed to find an old face for ID #{face_id}"
+        @failed_faces << face_id
       end
       found_face
     end
