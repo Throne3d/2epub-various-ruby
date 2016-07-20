@@ -87,6 +87,13 @@
       @serialize_ignore.include? thing
     end
     def self.serialize_ignore(*things)
+      return @serialize_ignore if things.length == 0
+      self.serialize_ignore!(*things)
+    end
+    def serialize_ignore
+      @serialize_ignore
+    end
+    def self.serialize_ignore!(*things)
       things = things.first if things.length == 1 and things.first.is_a? Array
       things = things.map do |thing|
         (thing.is_a? String) ? thing.to_sym : thing
