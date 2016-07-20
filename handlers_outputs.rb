@@ -826,6 +826,7 @@
       post.section_order = post.section.posts.count if post.section.present? && !@skip_post_ordering
       
       do_writables_from_message(post, entry)
+      board.created_at = post.created_at unless board.created_at
       post.edited_at = post.updated_at
       post.last_user = post.user
       post.save!
