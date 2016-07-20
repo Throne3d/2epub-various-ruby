@@ -647,7 +647,8 @@
     def user_for_author(author)
       return @user_cache[author.unique_id] if @user_cache.key?(author.unique_id)
       return nil unless author.unique_id
-      moieties = author.moiety.split(' ').uniq.map(&:downcase)
+      moieties = author.moiety..try(:split, ' ').try(:uniq)
+      moieties = ['Unknown Author'] unless moieties.present?
       moiety = moieties.first
       cached_moiety = moieties.find {|moiety_val| @usermoiety_cache.key?(moiety_val) }
       return @usermoiety_cache[cached_moiety] if cached_moiety
@@ -665,9 +666,9 @@
         puts "Please enter a user ID or username for the user."
         userthing = STDIN.gets.chomp
         if userthing[/[A-Za-z]/]
-          users = User.where(username: userthing)
+          users = User.where('lower(username) = ?', userthing)
         else
-          users = User.where(id: userthing)
+          users = User.where(id: userthing.to_i)
         end
         
         if users.present?
@@ -681,7 +682,7 @@
           end
           input = 'n' if input.empty?
           if input == 'y'
-            user = User.create!(username: moiety, password: moiety, email: moiety)
+            user = User.create!(username: moiety, password: moiety.downcase, email: moiety.downcase.gsub(/[^\w\-_\.+]/, '') + '@example.com')
             LOG.info "- User created for #{moiety}."
           else
             LOG.warn "- Skipping user for #{moiety}. Will likely cause errors."
