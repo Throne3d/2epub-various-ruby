@@ -666,9 +666,9 @@
         puts "Please enter a user ID or username for the user."
         userthing = STDIN.gets.chomp
         if userthing[/[A-Za-z]/]
-          users = User.where(username: userthing)
+          users = User.where('lower(username) = ?', userthing)
         else
-          users = User.where(id: userthing)
+          users = User.where(id: userthing.to_i)
         end
         
         if users.present?
