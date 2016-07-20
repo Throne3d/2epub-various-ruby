@@ -82,6 +82,7 @@
     
     def self.serialize_ignore? thing
       return false if @serialize_ignore.nil?
+      return false unless thing.is_a?(String) or thing.is_a?(Symbol)
       thing = thing.to_sym if thing.is_a? String
       @serialize_ignore.include? thing
     end
