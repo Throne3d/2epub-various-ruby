@@ -844,7 +844,7 @@
         end
         
         @msgs = []
-        puts "Chapter #{chapter}."
+        puts "Chapter #{chapter}"
         
         board = board_for_chapterlist(chapter_list)
         (@msgs.each {|msg| LOG.info msg} and next) if post_for_entry?(chapter.entry, board)
