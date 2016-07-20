@@ -120,6 +120,9 @@
       @author_id_cache = {}
       @author_param_cache = {}
       
+      @page_list = []
+      @repeated_page_cache = {}
+      
       @moiety_cache = {}
       
       @downloaded = []
@@ -685,7 +688,14 @@
       LOG.debug "Thread comment: \"#{threadcmt}\"" if chapter.thread
       
       pages.each do |page_url|
-        page = get_undiscretioned(page_url, replace: false, where: @group_folder)
+        page = nil
+        comments = nil
+        @repeated_page_cache[@group_folder] ||= {}
+        if @repeated_page_cache[@group_folder].key?(page_url)
+          page = @repeated_page_cache[@group_folder][page_url][:page]
+          comments = @repeated_page_cache[@group_folder][page_url][:comments]
+        end
+        page = get_undiscretioned(page_url, replace: false, where: @group_folder) unless page.present?
         unless page
           LOG.error "Page failed to load (discretion advised warning?)"
           break
@@ -700,7 +710,10 @@
         
         page_no = get_url_param(page_url, 'page')
         
-        comments = page_content.css('.comment-wrapper.full')
+        comments = page_content.css('.comment-wrapper.full') unless comments.present?
+        if @page_list.include?(page_url)
+          @repeated_page_cache[@group_folder][page_url] = {page: page, comments: comments} unless @repeated_page_cache[@group_folder].key?(page_url)
+        end
         comments.each do |comment|
           comment_element = comment.at_css('.comment')
           
@@ -730,6 +743,7 @@
             @reply_ids << reply.id unless @reply_ids.include?(reply.id)
           end
         end
+        @page_list << page_url
       end
       
       msg_str = "#{chapter.title}: parsed #{pages.length} page#{pages.length == 1 ? '' : 's'}"
