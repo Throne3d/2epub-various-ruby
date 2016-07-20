@@ -657,7 +657,7 @@
     def user_for_author(author)
       return @user_cache[author.unique_id] if @user_cache.key?(author.unique_id)
       return nil unless author.unique_id
-      moieties = author.moiety..try(:split, ' ').try(:uniq)
+      moieties = author.moiety.try(:split, ' ').try(:uniq)
       moieties = ['Unknown Author'] unless moieties.present?
       moiety = moieties.first
       cached_moiety = moieties.find {|moiety_val| @usermoiety_cache.key?(moiety_val) }
@@ -853,7 +853,7 @@
         end
         
         @msgs = []
-        LOG.info "(#{i}/#{chapter_count}) Chapter #{chapter}"
+        LOG.info "(#{i+1}/#{chapter_count}) Chapter #{chapter}"
         
         board = board_for_chapterlist(chapter_list)
         (@msgs.each {|msg| LOG.info msg} and next) if post_for_entry?(chapter.entry, board)
