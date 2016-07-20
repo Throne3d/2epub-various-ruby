@@ -723,8 +723,9 @@
     end
     
     def keep_old_stuff
-      chapter.chapter_list.try(:keep_old_author, author_id) if author_id
-      chapter.chapter_list.try(:keep_old_face, face_id) if face_id
+      return unless chapter && chapter.chapter_list
+      chapter.chapter_list.keep_old_author(author_id) if author_id
+      chapter.chapter_list.keep_old_face(face_id) if face_id
     end
     
     def time
