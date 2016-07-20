@@ -654,9 +654,10 @@
       end
       @gallery_cache[author.unique_id] = char.galleries.first
     end
-    def user_for_author(author)
+    def user_for_author(author, options={})
       return @user_cache[author.unique_id] if @user_cache.key?(author.unique_id)
       return nil unless author.unique_id
+      set_coauthors = options.key?(:set_coauthors) ? options[:set_coauthors] : @set_coauthors
       moieties = author.moiety.try(:split, ' ').try(:uniq)
       moieties = ['Unknown Author'] unless moieties.present?
       moiety = moieties.first
@@ -700,6 +701,10 @@
         end
       end
       user ||= users.first
+      if set_coauthors
+        board = board_for_chapterlist(@chapter_list)
+        board.coauthors << user if board.present? && board.creator_id != user.id && !board.coauthors.include?(user)
+      end
       @user_cache[author.unique_id] = user
       @usermoiety_cache[user.try(:username).try(:downcase)] = user
     end
@@ -727,9 +732,12 @@
       board_name = FIC_NAMESTRINGS[chapter_list.group]
       boards = Board.where('lower(name) = ?', board_name.downcase)
       unless boards.present?
-        board = Board.create!(name: board_name, creator: user_for_author(chapter_list.authors.first))
+        board = Board.create!(name: board_name, creator: user_for_author(chapter_list.authors.first, set_coauthors: false))
+        @set_coauthors = true if @set_coauthors == :if_new_board
       end
+      @set_coauthors = false if @set_coauthors == :if_new_board
       board ||= boards.first
+      @set_coauthors = board.posts.empty? if @set_coauthors == :if_empty_board
       @board_cache[chapter_list] = board
     end
     def boardsection_for_chapter(chapter)
@@ -836,7 +844,9 @@
     def output(options={})
       chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : (@chapters ? @chapters : nil)
       (LOG.fatal "No chapters given!" and return) unless chapter_list
+      @chapter_list = chapter_list
       @skip_post_ordering = options.include?(:skip_post_ordering) ? options[:skip_post_ordering] : false
+      @set_coauthors = options.include?(:set_coauthors) ? options[:set_coauthors] : :if_empty_board # alternatively :if_new_board
       
       Post.record_timestamps = false
       Reply.record_timestamps = false
