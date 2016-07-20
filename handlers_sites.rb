@@ -117,6 +117,7 @@
       @face_id_cache = {} # {"alicornutopia#pen" => "(url)"}
       # When retrieved in get_face_by_id
       @face_param_cache = {}
+      @face_issue_cache = []
       @author_id_cache = {}
       @author_param_cache = {}
       
@@ -507,16 +508,17 @@
       @icon_errors << face_id unless @icon_errors.include?(face_id)
       return default
     end
-    def get_updated_face(face, default=nil)
+    def get_updated_face(face)
       return nil unless face
-      return get_face_by_id(face.unique_id, default) if @face_param_cache.key?(face.unique_id)
+      return get_face_by_id(face.unique_id) if @face_param_cache.key?(face.unique_id)
       
-      done_face = get_face_by_id(face.unique_id, default)
+      done_face = get_face_by_id(face.unique_id, nil)
       face_hash = @face_param_cache[face.unique_id]
       if face_hash.present?
         face.from_json! face_hash
-      elsif done_face.present?
+      elsif done_face.present? && !@face_issue_cache.include?(face.unique_id)
         LOG.error "Face was created, param cache was not set. Face not updating despite being supposed to. #{face}"
+        @face_issue_cache << face.unique_id
       end
       set_face_cache(face)
       
@@ -553,11 +555,11 @@
       @author_param_cache[author.unique_id] = params
       @author_id_cache[author_id] = author
     end
-    def get_updated_author(author, default=nil)
+    def get_updated_author(author)
       return nil unless author
-      return get_author_by_id(author.unique_id, default) if @author_param_cache.key?(author.unique_id)
+      return get_author_by_id(author.unique_id) if @author_param_cache.key?(author.unique_id)
       
-      done_author = get_author_by_id(author.unique_id, default)
+      done_author = get_author_by_id(author.unique_id)
       author_hash = @author_param_cache[author.unique_id]
       author.from_json! author_hash
       set_author_cache(author)
@@ -1098,11 +1100,11 @@
       @icon_errors << face_id unless @icon_errors.include?(face_id)
       return default
     end
-    def get_updated_face(face, default=nil)
+    def get_updated_face(face)
       return nil unless face
-      return get_face_by_id(face.unique_id, default) if @face_param_cache.key?(face.unique_id)
+      return get_face_by_id(face.unique_id) if @face_param_cache.key?(face.unique_id)
       
-      done_face = get_face_by_id(face.unique_id, default)
+      done_face = get_face_by_id(face.unique_id)
       
       face_hash = @face_param_cache[done_face.unique_id] || @face_param_cache[done_face.unique_id.sub('constellation#', '')]
       if face_hash.present?
@@ -1169,11 +1171,11 @@
         return author
       end
     end
-    def get_updated_author(author, default=nil)
+    def get_updated_author(author)
       return nil unless author
-      return get_author_by_id(author.unique_id, default) if @author_param_cache.key?(author.unique_id)
+      return get_author_by_id(author.unique_id) if @author_param_cache.key?(author.unique_id)
       
-      done_author = get_author_by_id(author.unique_id, default)
+      done_author = get_author_by_id(author.unique_id)
       author_hash = @author_param_cache[author.unique_id]
       author.from_json! author_hash
       set_author_cache(author)
