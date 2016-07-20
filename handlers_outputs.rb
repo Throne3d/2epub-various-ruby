@@ -703,7 +703,10 @@
       user ||= users.first
       if set_coauthors
         board = board_for_chapterlist(@chapter_list)
-        board.coauthors << user if board.present? && board.creator_id != user.id && !board.coauthors.include?(user)
+        if board.present? && board.creator_id != user.id && !board.coauthors.include?(user)
+          board.coauthors << user
+          LOG.info "- Added coauthor to board: #{user.id}"
+        end
       end
       @user_cache[author.unique_id] = user
       @usermoiety_cache[user.try(:username).try(:downcase)] = user
@@ -732,7 +735,9 @@
       board_name = FIC_NAMESTRINGS[chapter_list.group]
       boards = Board.where('lower(name) = ?', board_name.downcase)
       unless boards.present?
-        board = Board.create!(name: board_name, creator: user_for_author(chapter_list.authors.first, set_coauthors: false))
+        first_user = user_for_author(chapter_list.authors.first, set_coauthors: false)
+        board = Board.create!(name: board_name, creator: first_user)
+        LOG.info "- Created board for chapterlist, name '#{board_name}' with creator ID #{first_user.id}"
         @set_coauthors = true if @set_coauthors == :if_new_board
       end
       @set_coauthors = false if @set_coauthors == :if_new_board
