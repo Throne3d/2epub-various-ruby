@@ -141,8 +141,7 @@
       end
       
       json_hash.each do |var, val|
-        var = "@#{var}" unless var.to_s.start_with?("@")
-        self.instance_variable_set var, val
+        self.instance_variable_set('@'+var, val)
       end
     end
   end
@@ -296,9 +295,7 @@
       end
         
       json_hash.each do |var, val|
-        varname = (var.start_with?("@")) ? var[1..-1] : var
-        var = (var.start_with?("@") ? var : "@#{var}")
-        self.instance_variable_set var, val
+        self.instance_variable_set('@'+var, val)
       end
       
       LOG.debug "Chapters.from_json! (group: #{group})"
@@ -573,9 +570,7 @@
       end
       
       json_hash.each do |var, val|
-        varname = (var.start_with?("@")) ? var[1..-1] : var
-        var = (var.start_with?("@") ? var : "@#{var}")
-        self.instance_variable_set var, val unless varname == "replies" or varname == "entry"
+        self.instance_variable_set('@'+var, val) unless var == "replies" or var == "entry"
       end
       
       LOG.debug "Chapter.from_json! (title: '#{title}', url: '#{url}')"
@@ -983,9 +978,7 @@
       end
       
       json_hash.each do |var, val|
-        varname = (var.start_with?("@")) ? var[1..-1] : var
-        var = (var.start_with?("@") ? var : "@#{var}")
-        self.instance_variable_set var, val unless varname == "parent" or varname == "face" or varname == "author"
+        self.instance_variable_set('@'+var, val) unless var == 'parent' or var == 'face' or var == 'author'
       end
       
       if post_type == PostType::ENTRY
