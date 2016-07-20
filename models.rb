@@ -132,8 +132,14 @@
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
-        var_sym = var_str.to_sym
-        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
+        if var_str[0] == '@' and var_str[1] != '@'
+          var_str = var_str[1..-1]
+          var_sym = var_str.to_sym
+        elsif var.is_a?(Symbol)
+          var_sym = var
+        else
+          var_sym = var_str.to_sym
+        end
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       hash
@@ -555,15 +561,18 @@
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
-        var_sym = var_str.to_sym
-        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
-        
-        if var_str["authors"]
-          authors = self.instance_variable_get(var)
-          authors = authors.map {|author| (author.is_a?(Author) ? author.unique_id : author)}
-          hash[var_sym] = authors
+        if var_str[0] == '@' and var_str[1] != '@'
+          var_str = var_str[1..-1]
+          var_sym = var_str.to_sym
+        elsif var.is_a?(Symbol)
+          var_sym = var
+        else
+          var_sym = var_str.to_sym
         end
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
+      end
+      if @authors
+        hash[:authors] = @authors.map{|author| author.is_a?(Author) ? author.unique_id : author}
       end
       hash
     end
@@ -666,15 +675,18 @@
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
-        var_sym = var_str.to_sym
-        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
-        
-        if var_str["author"]
-          author = self.instance_variable_get(var)
-          hash[var_sym] = author if author.is_a?(String)
-          hash[var_sym] = author.unique_id if author.is_a?(Author)
+        if var_str[0] == '@' and var_str[1] != '@'
+          var_str = var_str[1..-1]
+          var_sym = var_str.to_sym
+        elsif var.is_a?(Symbol)
+          var_sym = var
+        else
+          var_sym = var_str.to_sym
         end
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
+      end
+      if @author
+        hash[:author] = (author.is_a?(Author) ? author.unique_id : author)
       end
       hash
     end
@@ -952,8 +964,15 @@
       end
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
-        var_str = var_str[1..-1] if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
-        hash[var_str] = self.instance_variable_get var unless serialize_ignore?(var_str)
+        if var_str[0] == '@' and var_str[1] != '@'
+          var_str = var_str[1..-1]
+          var_sym = var_str.to_sym
+        elsif var.is_a?(Symbol)
+          var_sym = var
+        else
+          var_sym = var_str.to_sym
+        end
+        hash[var_str] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if @parent
         if @parent.is_a?(Message)
@@ -1083,8 +1102,14 @@
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
-        var_sym = var_str.to_sym
-        var_sym = var_str[1..-1].to_sym if var_str.length > 1 and var_str.start_with?("@") and not var_str.start_with?("@@")
+        if var_str[0] == '@' and var_str[1] != '@'
+          var_str = var_str[1..-1]
+          var_sym = var_str.to_sym
+        elsif var.is_a?(Symbol)
+          var_sym = var
+        else
+          var_sym = var_str.to_sym
+        end
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if default_face
