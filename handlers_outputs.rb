@@ -366,6 +366,8 @@
       url_thing = (first_last == :first ? first_update : (first_last == :last ? last_update : latest_update))
       @errors << "#{chapter} has no url_thing! (first_last: #{first_last})" unless url_thing
       
+      show_last_author = !completed if show_last_author == :unless_completed
+      
       if chapter.report_flags and not chapter.report_flags_processed?
         chapter.report_flags = chapter.report_flags.scan(@col_scan).map{|thing| thing[0] }.uniq.map do |thing|
           thing = thing[1..-1] if thing.start_with?('#')
@@ -394,6 +396,12 @@
       
       @errors << "#{chapter}: both completed and hiatused" if completed and hiatus
       
+      section_string = ''
+      if show_sections && chapter.sections.present?
+        str = chapter.sections * ' > '
+        @cont_replace.each {|key, val| str = str.sub(key, val)}
+        section_string = ' (' + str + ')'
+      end
       str = "[*]"
       str << '[size=85]' + chapter.report_flags.strip + '[/size] ' if chapter.report_flags and not chapter.report_flags.strip.empty?
       str << "[url=#{url_thing.permalink}]" if url_thing
@@ -403,7 +411,7 @@
       str << '[/color]' if completed
       str << '[/color]' if hiatus
       str << '[/url]' if url_thing
-      str << ' (' + chapter.sections * '>' + ')' if show_sections and chapter.sections.present?
+      str << section_string
       str << ',' unless chapter.entry_title and chapter.entry_title[/[?,.!;…\-–—]$/] #ends with punctuation (therefore 'don't add a comma')
       str << ' '
       str << "#{chapter.title_extras || '(no extras)'}"
@@ -417,6 +425,8 @@
     end
     def output(options = {})
       chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : (@chapters ? @chapters : nil)
+      show_earlier = options.include?(:show_earlier) ? options[:show_earlier] : false
+      @cont_replace = options.include?(:cont_replace) ? options[:cont_replace] : {/^ZZ+\d+-/ => ''}
       date = options.include?(:date) ? options[:date] : DateTime.now.to_date
       @date = date
       (LOG.fatal "No chapters given!" and return) unless chapter_list
@@ -496,7 +506,7 @@
             upd_chapters.sort! { |x,y| y[:last_update].time <=> x[:last_update].time }
             first_last = :last
             new_after = today_time + 3
-            show_last_author = true
+            show_last_author = :unless_completed
           end
           upd_chapters.each do |chapter_thing|
             LOG.info chapterthing_displaytext(chapter_thing, first_last: first_last, completed_before: late_time, new_after: new_after, show_last_author: show_last_author)
@@ -542,12 +552,12 @@
               LOG.info "[/list][/spoiler-box]"
             end
           end
-        elsif not upd_chapters.empty?
+        elsif show_earlier && !upd_chapters.empty?
           LOG.info "Earlier:"
           LOG.info "[list]"
           upd_chapters.sort! { |x,y| y[:latest_update].time <=> x[:latest_update].time }
           upd_chapters.each do |chapter_thing|
-            LOG.info chapterthing_displaytext(chapter_thing, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true, show_last_author: true)
+            LOG.info chapterthing_displaytext(chapter_thing, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true, show_last_author: :unless_completed)
           end
           LOG.info "[/list]"
         end
