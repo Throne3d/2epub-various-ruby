@@ -614,12 +614,11 @@
         end
         
         unless skip_creation or chars.present?
-          Character.create!(user: user, name: author.name, screenname: author.screenname)
-          chars = Character.where(user_id: user.id, screenname: author.screenname)
+          char = Character.create!(user: user, name: author.name, screenname: author.screenname)
           LOG.info "- Created character '#{author.name}' for author '#{user.username}'."
         end
       end
-      char = chars.first
+      char ||= chars.first
       @char_cache[author.unique_id] = char
       if author.default_face.present?
         default_icon = icon_for_face(author.default_face)
@@ -682,15 +681,14 @@
           end
           input = 'n' if input.empty?
           if input == 'y'
-            User.create!(username: moiety, password: moiety, email: moiety)
+            user = User.create!(username: moiety, password: moiety, email: moiety)
             LOG.info "- User created for #{moiety}."
           else
             LOG.warn "- Skipping user for #{moiety}. Will likely cause errors."
           end
-          users = User.where(username: moiety)
         end
       end
-      user = users.first
+      user ||= users.first
       @user_cache[author.unique_id] = user
       @usermoiety_cache[user.try(:username).try(:downcase)] = user
     end
@@ -708,7 +706,6 @@
         gallery = gallery_for_author(face.author)
         icon = Icon.create!(user: user, url: face.imageURL, keyword: face.keyword)
         gallery.icons << icon if gallery
-        icon = Icon.where(url: face.imageURL, user_id: user.id).includes(:galleries).select{|icon| icon.galleries.include?(gallery)}.first
       end
       @icon_cache[face.unique_id] = icon
     end
@@ -719,10 +716,9 @@
       board_name = FIC_NAMESTRINGS[chapter_list.group]
       boards = Board.where('lower(name) = ?', board_name.downcase)
       unless boards.present?
-        Board.create!(name: board_name, creator: user_for_author(chapter_list.authors.first))
-        boards = Board.where('lower(name) = ?', board_name.downcase)
+        board = Board.create!(name: board_name, creator: user_for_author(chapter_list.authors.first))
       end
-      board = boards.first
+      board ||= boards.first
       @board_cache[chapter_list] = board
     end
     def boardsection_for_chapter(chapter)
@@ -733,10 +729,9 @@
       return @boardsection_cache[board][section_string] if @boardsection_cache[board].key?(section_string)
       boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board_id: board.id)
       unless boardsections.present?
-        BoardSection.create!(board: board, name: section_string)
-        boardsections = BoardSection.where('lower(name) = ?', section_string.downcase).where(board_id: board.id)
+        boardsection = BoardSection.create!(board: board, name: section_string)
       end
-      boardsection = boardsections.first
+      boardsection ||= boardsections.first
       @boardsection_cache[board][section_string] = boardsection
     end
     def do_writables_from_message(writable, message)
