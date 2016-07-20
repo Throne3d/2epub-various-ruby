@@ -934,8 +934,12 @@
           @char_page_errors << character_id
         else
           icon_hash = {}
-          default_icon = char_page_c.at_css('> .character-icon')
-          icons = [default_icon] + icons if default_icon
+          default_icon = char_page_c.at_css('.character-icon')
+          if default_icon
+            icons << default_icon
+          else
+            LOG.warn "No default icon for #{character_id}"
+          end
           icons.each do |icon_element|
             icon_link = icon_element.at_css('a')
             icon_url = icon_link.try(:[], :href)
