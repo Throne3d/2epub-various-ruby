@@ -596,9 +596,8 @@
       user = user_for_author(author)
       chars = nil
       author.screenname = author.unique_id.sub('dreamwidth#', '') if !author.screenname.present? && author.unique_id.start_with?('dreamwidth#')
-      if author.screenname.present?
-        chars = Character.where(user_id: user.id, screenname: author.screenname)
-      end
+      
+      chars = Character.where(user_id: user.id, screenname: author.screenname) if author.screenname.present?
       chars = Character.where(user_id: user.id, name: author.name) if author.name.present? && !chars.present?
       unless chars.present?
         # unique_ids:
