@@ -557,19 +557,23 @@ module GlowficIndexHandlers
     def initialize(options = {})
       super(options)
     end
+    
+    def fix_url_folder(url)
+      url.sub(/(users|boards|galleries|characters)\/(\d+)(\?|$)/, '\1/\2/\3')
+    end
     def get_absolute_url(url_path, current_url)
       if url_path.start_with?("/")
         url_path = "https://vast-journey-9935.herokuapp.com" + url_path
       elsif not url_path.start_with?("http://") and not url_path.start_with?("https://")
         url_path = File.join((current_url.split("/")[0..-2]) * '/', url_path)
       end
-      url_path = url_path.sub(/(users|boards|galleries|characters)\/(\d+)(\?|$)?/, '\1/\2/\3')
+      url_path = fix_url_folder(url_path)
       url_path
     end
     
     def board_to_block(options = {}, &block)
       board_url = options[:board_url] if options.key?(:board_url)
-      
+      board_url = fix_url_folder(board_url)
       LOG.info "TOC Page: #{board_url}"
       
       board_toc_data = get_page_data(board_url, replace: true, headers: {"Accept" => "text/html"})
@@ -634,7 +638,7 @@ module GlowficIndexHandlers
     
     def userlist_to_block(options = {}, &block)
       user_url = options[:user_url] if options.key?(:user_url)
-      
+      user_url = fix_url_folder(user_url)
       LOG.info "TOC Page: #{user_url}"
       user_toc_data = get_page_data(user_url, replace: true, headers: {"Accept" => "text/html"})
       user_toc = Nokogiri::HTML(user_toc_data)
@@ -685,6 +689,7 @@ module GlowficIndexHandlers
     
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
+      fic_toc_url = fix_url_folder(fic_toc_url)
       
       if fic_toc_url.end_with?("/boards/")
         LOG.info "TOC Page: #{fic_toc_url}"
