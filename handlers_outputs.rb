@@ -78,7 +78,6 @@
       @files << {File.join(save_path, relative_file) => File.join('EPUB', File.dirname(relative_file))}
       @face_path_cache[face_url] = File.join("..", relative_file)
     end
-    
     def get_chapter_path(options = {})
       chapter_url = options[:chapter].url if options.key?(:chapter)
       chapter_url = options[:chapter_url] if options.key?(:chapter_url)
@@ -86,14 +85,12 @@
       
       save_path = File.join(@html_folder, get_chapter_path_bit(options))
     end
-    
     def get_relative_chapter_path(options = {})
       chapter_url = options[:chapter].url if options.key?(:chapter)
       chapter_url = options[:chapter_url] if options.key?(:chapter_url)
       
       File.join('EPUB', 'html', get_chapter_path_bit(options))
     end
-    
     def get_chapter_path_bit(options = {})
       chapter_url = options[:chapter].url if options.key?(:chapter)
       chapter_url = options[:chapter_url] if options.key?(:chapter_url)
