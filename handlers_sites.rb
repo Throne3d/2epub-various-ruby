@@ -926,12 +926,11 @@
       
       @chapter_list.replace_face(face)
       @face_id_cache[face_id] = face if icon_id == 'none' and character_id.try(:start_with?, 'user#')
+      @face_id_cache[face.unique_id] = face
       
-      if character_id
-        @face_id_cache[face.unique_id] = face
-        char_hash = @char_page_cache[character_id]
+      if character_id && @char_page_cache.key?(character_id)
+        @char_page_cache[character_id][icon_numid] = face
         icon_numid = face.unique_id.sub("#{character_id}#", '')
-        char_hash[icon_numid] = face
       end
       face
     end
