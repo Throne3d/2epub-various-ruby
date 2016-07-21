@@ -165,7 +165,8 @@
       
       @save_paths_used = []
       @rel_paths_used = []
-      chapter_list.each do |chapter|
+      chapter_count = chapter_list.count
+      chapter_list.each_with_index do |chapter, i|
         @chapter = chapter
         #messages = [@chapter.entry] + @chapter.replies
         #messages.reject! {|element| element.nil? }
@@ -219,7 +220,7 @@
         @files << {save_path => File.dirname(rel_path)}
         @save_paths_used << save_path
         @rel_paths_used << rel_path
-        LOG.info "Did chapter #{chapter}"
+        LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter}"
       end
       
       nav_array = navify_navbits(nav_bits, contents_allowed: @rel_paths_used)
