@@ -31,7 +31,6 @@ module GlowficIndexHandlers
         next if persist[:unless] && params[persist[:unless]]
         persist_data = get_prev_chapter_detail(group, detail: persist[:thing], only_present: true)
         next unless persist_data.key?(url)
-        puts "persisting #{persist[:thing]} for #{params}"
         params[persist[:thing]] = persist_data[url]
       end
       params
