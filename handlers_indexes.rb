@@ -50,33 +50,6 @@ module GlowficIndexHandlers
         {thing: :processed_epub, :if => :processed}
       ]
     end
-    def prev_pages
-      @prev_pages ||= get_prev_chapter_detail(group, detail: :pages, only_present: true)
-    end
-    def prev_check_pages
-      @prev_check_pages ||= get_prev_chapter_detail(group, detail: :check_pages, only_present: true)
-    end
-    def prev_processed
-      @prev_processed = get_prev_chapter_details(group, detail: :processed)
-    end
-    def prev_entries
-      @prev_entries ||= get_prev_chapter_detail(group, detail: :entry, only_present: true)
-    end
-    def prev_replies
-      @prev_replies ||= get_prev_chapter_detail(group, detail: :replies, only_present: true)
-    end
-    def prev_authors
-      @prev_authors ||= get_prev_chapter_detail(group, detail: :authors, only_present: true)
-    end
-    def prev_entry_titles
-      @prev_entry_titles ||= get_prev_chapter_detail(group, detail: :entry_title, only_present: true)
-    end
-    def prev_time_completed
-      @prev_time_completed ||= get_prev_chapter_detail(group, detail: :time_completed, only_present: true)
-    end
-    def prev_time_hiatus
-      @prev_time_hiatus ||= get_prev_chapter_detail(group, detail: :time_hiatus, only_present: true)
-    end
     def get_chapter_titles(chapter_link, options = {})
       backward = true
       backward = options[:backward] if options.key?(:backward)
