@@ -78,6 +78,50 @@
       @files << {File.join(save_path, relative_file) => File.join('EPUB', File.dirname(relative_file))}
       @face_path_cache[face_url] = File.join("..", relative_file)
     end
+    def get_comment_path(comment_url)
+      return comment_url unless comment_url.start_with?('http://') or comment_url.start_with?('https://')
+      return comment_url unless comment_url['.dreamwidth.org/'] or comment_url['vast-journey-9935.herokuapp.com/']
+      comment_url = comment_url.gsub('&amp;', '&')
+      short_url = Chapter.shortenURL(comment_url)
+      fragment = (comment_url['#'] ? comment_url.split('#').last : '')
+      if comment_url['.dreamwidth.org/']
+        thread_thing = short_url.split('?').first.split('#').first
+        comment_id = fragment[/(comment|cmt)-?(\d+)/].try(:split, /t-?/).try(:last)
+        comment_id ||= short_url.split('thread=').last.split('&').first.split('#').first if short_url[/(\?|&)thread=(\d+)/]
+        comment_id = "cmt" + comment_id if comment_id
+      elsif comment_url['vast-journey-9935.herokuapp.com/']
+        thread_thing = short_url.split('/').first
+        comment_id = fragment[/reply-(\d+)/].try(:split, '-').try(:last)
+        comment_id ||= short_url.split('/replies/').last.split('?').first.split('#').first if short_url[/\/replies\/\d+/]
+      else
+        LOG.error "chapter was not from dreamwidth or constellation? #{comment_url}"
+        return comment_url
+      end
+      
+      #TODO: somehow map the dreamwidth comment IDs to the internal IDs? if they're not already? they should be. hm.
+      comment_path = nil
+      @chapters.each do |chapter|
+        next unless chapter.shortURL.start_with?(thread_thing)
+        next if chapter.thread.present? && !comment_id.present?
+        if comment_id
+          reply = chapter.replies.detect {|reply| reply.id == comment_id}
+          if reply
+            if reply == chapter.replies.first
+              comment_path = get_chapter_path_bit(chapter: chapter)
+            else
+              comment_path = get_chapter_path_bit(chapter: chapter) + "#comment-#{reply.id}"
+            end
+          else
+            next
+          end
+        end
+        unless comment_path
+          comment_path = get_chapter_path_bit(chapter: chapter)
+        end
+        break if comment_path
+      end
+      comment_path || comment_url
+    end
     def get_chapter_path(options = {})
       chapter_url = options[:chapter].url if options.key?(:chapter)
       chapter_url = options[:chapter_url] if options.key?(:chapter_url)
@@ -232,6 +276,11 @@
           next unless img_src
           next unless img_src.start_with?('http://') or img_src.start_with?('https://')
           img_element[:src] = get_face_path(img_src)
+        end
+        page.css('a').each do |a_element|
+          a_href = a_element.try(:[], :href)
+          next unless a_href
+          a_element[:href] = get_comment_path(a_href)
         end
         
         open(save_path, 'w') do |file|
