@@ -74,7 +74,7 @@
     constellation: [:constellation, :const, :glowfic2, :sandbox3],
     sandbox: [:sandbox, :alicorn],
     marri: [:marri, :marrinikari],
-    peterverse: [:peter, :pedro, :peterverse],
+    peterverse: [:pedro, :peterverse],
     maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"],
     throne: [:throne, :throne3d, :theotrics],
     lintamande: [:lintamande, :elves],
