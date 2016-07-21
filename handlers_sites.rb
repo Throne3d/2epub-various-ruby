@@ -946,8 +946,8 @@
       @face_id_cache[face.unique_id] = face
       
       if character_id && @char_page_cache.key?(character_id)
-        @char_page_cache[character_id][icon_numid] = face
-        icon_numid = face.unique_id.sub("#{character_id}#", '')
+        @char_page_cache[character_id][icon_id] = face
+        icon_id = face.unique_id.sub("#{character_id}#", '')
       end
       face
     end
