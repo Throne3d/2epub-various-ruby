@@ -545,6 +545,9 @@
     def smallURL
       @smallURL ||= Chapter.shortenURL(@url)
     end
+    def shortURL
+      smallURL
+    end
     def url=(val)
       @smallURL = nil
       @url=val
