@@ -986,8 +986,11 @@
       end
       if @parent
         if @parent.is_a?(Message)
-          hash['parent'] = [chapter.smallURL, chapter.entry.id, @parent.id] if @parent.post_type == PostType::REPLY
-          hash['parent'] = [chapter.smallURL, @parent.id] if @parent.post_type == PostType::ENTRY
+          if @parent.post_type == PostType::ENTRY
+            hash['parent'] = [chapter.smallURL, @parent.id]
+          else
+            hash['parent'] = [chapter.smallURL, (chapter.entry.present? ? chapter.entry.id : nil), @parent.id]
+          end
         else
           hash['parent'] = @parent
         end
