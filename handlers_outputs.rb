@@ -39,6 +39,9 @@
       return @face_path_cache[face_url] if @face_path_cache.key?(face_url)
       LOG.debug "get_face_path('#{face_url}')"
       
+      face_url = face_url.gsub(' ', '%20')
+      face.imageURL = face_url if face.is_a?(Face) && face.imageURL != face_url
+      
       uri = URI.parse(face_url)
       save_path = @group_folder
       uri_path = uri.path
