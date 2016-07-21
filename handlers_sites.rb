@@ -37,6 +37,29 @@
       @downcache = {}
       @giricache = {}
     end
+    def already_processed(chapter, options = {})
+      only_attrs = options.key?(:attributes) ? options[:attributes] : (options.key?(:only) ? options[:only] : (options.key?(:only_attrs) ? options[:only_attrs] : nil))
+      except_attrs = options.key?(:except) ? options[:except] : (options.key?(:except_attrs) ? options[:except_attrs] : nil)
+      raise("Not allowed both :only and :expect on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs and except_attrs
+      message_attributes = (only_attrs ? only_attrs : msg_attrs)
+      message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
+      message_attributes.uniq!
+      if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
+        if chapter.replies.empty?
+          LOG.error "#{chapter.title}: cached data contains no replies; not using"
+          return false
+        else
+          msg_str = "#{chapter.title}: unchanged, cached data used"
+          if block_given?
+            yield msg_str
+          elsif notify
+            LOG.info msg_str
+          end
+          return true
+        end
+      end
+      false
+    end
     def down_or_cache(page, options = {})
       where = options.key?(:where) ? options[:where] : nil
       @downcache[where] = [] unless @downcache.key?(where)
@@ -658,30 +681,11 @@
         reply = Comment.new(params)
       end
     end
-    def get_replies(chapter, options = {})
+    def get_replies(chapter, options = {}, &block)
       return nil unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
       
-      only_attrs = options.key?(:attributes) ? options[:attributes] : (options.key?(:only) ? options[:only] : (options.key?(:only_attrs) ? options[:only_attrs] : nil))
-      except_attrs = options.key?(:except) ? options[:except] : (options.key?(:except_attrs) ? options[:except_attrs] : nil)
-      raise("Not allowed both :only and :expect on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs and except_attrs
-      
-      message_attributes = (only_attrs ? only_attrs : msg_attrs)
-      message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
-      message_attributes.uniq!
-      if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
-        if chapter.replies.empty?
-          LOG.error "#{chapter.title}: cached data contains no replies; not using"
-        else
-          msg_str = "#{chapter.title}: unchanged, cached data used"
-          if block_given?
-            yield msg_str
-          elsif notify
-            LOG.info msg_str
-          end
-          return chapter.replies
-        end
-      end
+      return chapter.replies if already_processed(chapter, options, &block)
       
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
@@ -1298,30 +1302,11 @@
         @previous_message = reply
       end
     end
-    def get_replies(chapter, options = {})
+    def get_replies(chapter, options = {}, &block)
       return nil unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
       
-      only_attrs = options.key?(:attributes) ? options[:attributes] : (options.key?(:only) ? options[:only] : (options.key?(:only_attrs) ? options[:only_attrs] : nil))
-      except_attrs = options.key?(:except) ? options[:except] : (options.key?(:except_attrs) ? options[:except_attrs] : nil)
-      raise("Not allowed both :only and :expect on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs and except_attrs
-      
-      message_attributes = (only_attrs ? only_attrs : msg_attrs)
-      message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
-      message_attributes.uniq!
-      if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
-        if chapter.replies.empty?
-          LOG.error "#{chapter.title}: cached data contains no replies; not using"
-        else
-          msg_str = "#{chapter.title}: unchanged, cached data used"
-          if block_given?
-            yield msg_str
-          elsif notify
-            LOG.info msg_str
-          end
-          return chapter.replies
-        end
-      end
+      return chapter.replies if already_processed(chapter, options, &block)
       
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
