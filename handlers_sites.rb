@@ -243,6 +243,8 @@
         page_urls << this_page
       end
       
+      chapter.processed = false if chapter.is_a?(GlowficEpub::Chapter)
+      
       @success = true
       return page_urls
     end
@@ -810,6 +812,8 @@
       current_page_data = down_or_cache(chapter_url, where: @group_folder)
       @download_count+=1
       LOG.debug "Got a page in get_full"
+      
+      chapter.processed = false if chapter.is_a?(GlowficEpub::Chapter)
       
       return page_urls
     end
