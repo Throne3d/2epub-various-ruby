@@ -573,6 +573,8 @@
       in_context = (options.key?(:in_context) ? options[:in_context] : true)
       message_attributes = options.key?(:message_attributes) ? options[:message_attributes] : msg_attrs
       
+      Time.zone = 'UTC'
+      
       message_id = message_element["id"].sub("comment-", "").sub("entry-", "")
       message_type = (message_element["id"]["entry"]) ? PostType::ENTRY : PostType::REPLY
       
@@ -1188,6 +1190,8 @@
       #message_element is the ".post-container"
       message_attributes = options.key?(:message_attributes) ? options[:message_attributes] : msg_attrs
       
+      Time.zone = 'Eastern Time (US & Canada)'
+      
       message_anchor = message_element.at_css("> a[name]")
       if message_anchor
         message_id = message_anchor[:name].split("reply-").last
@@ -1316,8 +1320,6 @@
       
       pages = chapter.pages
       (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
-      
-      Time.zone = 'Eastern Time (US & Canada)'
       
       @entry_title = nil
       @chapter = chapter
