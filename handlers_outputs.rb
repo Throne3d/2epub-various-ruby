@@ -170,6 +170,7 @@
       @files = [{style_path => 'EPUB/style'}]
       
       @show_authors = FIC_SHOW_AUTHORS.include?(@group)
+      @changed = false
       
       @save_paths_used = []
       @rel_paths_used = []
@@ -183,6 +184,17 @@
         save_path = get_chapter_path(chapter: chapter, group: @group)
         (LOG.info "Duplicate chapter not added again" and next) if @save_paths_used.include?(save_path)
         rel_path = get_relative_chapter_path(chapter: chapter)
+        
+        @files << {save_path => File.dirname(rel_path)}
+        @save_paths_used << save_path
+        @rel_paths_used << rel_path
+        
+        if chapter.processed_epub?
+          chapter.processed_epub = File.file?(save_path)
+          LOG.error "#{chapter}: cached data was not found." unless chapter.processed_epub?
+        end
+        
+        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used." and next) if chapter.processed_epub?
         
         @messages = []
         message = @chapter.entry
@@ -225,9 +237,8 @@
         open(save_path, 'w') do |file|
           file.write page.to_xhtml(indent_text: '', encoding: 'UTF-8')
         end
-        @files << {save_path => File.dirname(rel_path)}
-        @save_paths_used << save_path
-        @rel_paths_used << rel_path
+        chapter.processed_epub = true
+        @changed = true
         LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter}"
       end
       
@@ -281,6 +292,7 @@
         nav nav_array
       end
       epub.save(epub_path)
+      @changed
     end
   end
   

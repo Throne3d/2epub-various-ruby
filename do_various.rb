@@ -252,7 +252,8 @@ def main(args)
     
     handler = GlowficOutputHandlers::EpubHandler
     handler = handler.new(chapter_list: chapter_list, group: group)
-    handler.output
+    changed = handler.output
+    set_chapters_data(chapter_list, group) if changed
   elsif (process == :output_report)
     date = option.sub("output_report","").sub("#{group}","")
     date = date.gsub(/[^\d]/,' ').strip

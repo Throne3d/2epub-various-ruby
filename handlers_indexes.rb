@@ -46,7 +46,8 @@ module GlowficIndexHandlers
         {thing: :authors, :if => :processed},
         {thing: :entry_title, :if => :processed},
         {thing: :time_completed, :if => :processed},
-        {thing: :time_hiatus, :if => :processed}
+        {thing: :time_hiatus, :if => :processed},
+        {thing: :processed_epub, :if => :processed}
       ]
     end
     def prev_pages

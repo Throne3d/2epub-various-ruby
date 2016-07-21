@@ -348,13 +348,13 @@
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed, :report_flags_processed, :chapter_list
+    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_epub
     
     param_transform :name => :title, :name_extras => :title_extras
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
     
     def allowed_params
-      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :report_flags, :processed]
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :report_flags, :processed, :processed_epub]
     end
     
     def unpack!
@@ -369,8 +369,19 @@
     def processed
       processed?
     end
+    def processed=(val)
+      @processed_epub = false
+      @processed=val
+    end
     def processed?
      @processed ||= false
+    end
+    
+    def processed_epub
+      processed_epub?
+    end
+    def processed_epub?
+      @processed_epub ||= false
     end
     
     def report_flags_processed?
