@@ -37,14 +37,18 @@
       @downcache = {}
       @giricache = {}
     end
-    def already_processed(chapter, options = {})
+    def message_attributes(options = {})
+      @message_attributes unless options.present?
       only_attrs = options.key?(:attributes) ? options[:attributes] : (options.key?(:only) ? options[:only] : (options.key?(:only_attrs) ? options[:only_attrs] : nil))
       except_attrs = options.key?(:except) ? options[:except] : (options.key?(:except_attrs) ? options[:except_attrs] : nil)
       raise("Not allowed both :only and :expect on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs and except_attrs
       message_attributes = (only_attrs ? only_attrs : msg_attrs)
       message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       message_attributes.uniq!
-      if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes.uniq
+      @message_attributes = message_attributes
+    end
+    def already_processed(chapter, options = {})
+      if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes(options)
         if chapter.replies.empty?
           LOG.error "#{chapter.title}: cached data contains no replies; not using"
           return false
