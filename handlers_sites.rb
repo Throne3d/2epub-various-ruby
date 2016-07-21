@@ -409,6 +409,7 @@
       end
       return chapter
     end
+    
     def get_moiety_by_profile(profile)
       return @moiety_cache[profile] if @moiety_cache.key?(profile)
       user_id = profile.gsub('_', '-')
@@ -898,6 +899,7 @@
       end
       return chapter
     end
+    
     def get_moiety_by_id(character_id)
       char_page = giri_or_cache("https://vast-journey-9935.herokuapp.com/characters/#{character_id}/", replace: false)
       LOG.debug "nokogiri'd profile page"
