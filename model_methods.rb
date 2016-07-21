@@ -70,22 +70,26 @@
     incandescence: [:incandescence, :incan],
     pixiethreads: [:pixiethreads, :pix],
     radon: [:radon, :absinthe],
+    opalescence: [:opal, :opalescence],
+    zodiac: [:zodiac],
+    silmaril: [:silm, :silmaril],
+    
     glowfic: [:othersandbox, :sandbox2, :glowfic],
     constellation: [:constellation, :const, :glowfic2, :sandbox3],
+    
+    mwf_leaf: [:mwf_leaf, :mwf_1, :mwf, :leaf],
+    mwf_lioncourt: [:mwf_lion, :mwf_lioncourt, :mwf_2, :lioncourt, :lion],
+    
     sandbox: [:sandbox, :alicorn],
     marri: [:marri, :marrinikari],
     peterverse: [:pedro, :peterverse],
     maggie: [:maggie, :maggieoftheowls, :"maggie-of-the-owls"],
     throne: [:throne, :throne3d, :theotrics],
     lintamande: [:lintamande, :elves],
+    
     test: [:test],
     temp_starlight: [:temp_starlight, :starlight],
-    report: [:report, :daily],
-    mwf_leaf: [:mwf_leaf, :mwf_1, :mwf, :leaf],
-    mwf_lioncourt: [:mwf_lion, :mwf_lioncourt, :mwf_2, :lioncourt, :lion],
-    opalescence: [:opal, :opalescence],
-    zodiac: [:zodiac],
-    silmaril: [:silm, :silmaril]
+    report: [:report, :daily]
   }
   FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie, :throne, :lintamande, :test, :report, :mwf_leaf, :mwf_lioncourt]
   FIC_TOCS = {
