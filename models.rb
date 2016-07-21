@@ -714,7 +714,6 @@
   class Message < Model #post or entry
     attr_accessor :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no
     @@date_format = "%Y-%m-%d %H:%M"
-    @@serialize_destroy = [:@children, :@allowed_params, :@push_title, :@push_author, :@post_type]
     
     def self.message_serialize_ignore
       serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_author, :post_type
@@ -973,9 +972,6 @@
     def as_json(options={})
       hash = {}
       
-      @@serialize_destroy.each do |var|
-        self.remove_instance_variable var if self.instance_variable_defined? var
-      end
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
         if var_str[0] == '@' and var_str[1] != '@'
