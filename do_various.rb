@@ -171,27 +171,37 @@ def main(args)
     unhandled_chapters = []
     instance_handlers = {}
     chapter_count = chapter_list.count
+    has_changed = false
     diff = true
-    chapter_list.each_with_index do |chapter, i|
-      site_handler = GlowficSiteHandlers.get_handler_for(chapter)
-      
-      if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?) or (site_handler.is_a?(Array) and site_handler.length > 1)
-        LOG.error "ERROR: No site handler for #{chapter.title}!" if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?)
-        LOG.error "ERROR: Too many site handlers for #{chapter.title}! [#{site_handler * ', '}]" if (site_handler.is_a?(Array) and site_handler.length > 1)
-        unhandled_chapters << chapter
-        next
+    begin
+      chapter_list.each_with_index do |chapter, i|
+        site_handler = GlowficSiteHandlers.get_handler_for(chapter)
+        
+        if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?) or (site_handler.is_a?(Array) and site_handler.length > 1)
+          LOG.error "ERROR: No site handler for #{chapter.title}!" if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?)
+          LOG.error "ERROR: Too many site handlers for #{chapter.title}! [#{site_handler * ', '}]" if (site_handler.is_a?(Array) and site_handler.length > 1)
+          unhandled_chapters << chapter
+          next
+        end
+        
+        instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
+        handler = instance_handlers[site_handler]
+        
+        diff = false
+        handler.get_updated(chapter, notify: true) do |msg|
+          LOG.info "(#{i+1}/#{chapter_count}) " + msg
+          diff = msg.start_with?('New') || msg.start_with?('Updated')
+        end
+        has_changed = true if diff
+        
+        set_chapters_data(chapter_list, group) if diff && process != :qget
       end
-      
-      instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
-      handler = instance_handlers[site_handler]
-      
-      diff = false
-      handler.get_updated(chapter, notify: true) do |msg|
-        LOG.info "(#{i+1}/#{chapter_count}) " + msg
-        diff = msg.start_with?('New') || msg.start_with?('Updated')
+    rescue StandardError, Interrupt => e
+      if process == :qget && has_changed
+        puts "Encountered an error. Saving changed data then re-raising."
+        set_chapters_data(chapter_list, group)
       end
-      
-      set_chapters_data(chapter_list, group) if diff && process != :qget
+      raise e
     end
     set_chapters_data(chapter_list, group) if process == :qget or !diff
   elsif (process == :process or process == :report)
