@@ -865,8 +865,9 @@
           end
         end #Check if all the pages exist, in case someone deleted them
         
-        LOG.debug "Content is different for #{chapter}" if changed
-        if pages_exist and not changed
+        if changed
+          LOG.debug "Content is different for #{chapter}" 
+        elsif pages_exist # and not changed
           msg_str = "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (checked #{@download_count} page#{@download_count != 1 ? 's' : ''})"
           if block_given?
             yield msg_str
