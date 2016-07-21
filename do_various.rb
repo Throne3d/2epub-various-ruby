@@ -46,7 +46,7 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
+  processes = {tocs: :tocs, toc: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", epubdo: :epubdo, repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key)
       process = value
@@ -82,6 +82,11 @@ def main(args)
     main("tocs_#{group}")
     main("get_#{group}")
     main("process_#{group}")
+  elsif (process == :epubdo)
+    main("tocs_#{group}")
+    main("qget_#{group}")
+    main("report_#{group}")
+    main("output_epub_#{group}")
   elsif (process == :repdo)
     main("tocs_#{group}")
     main("qget_#{group}")
@@ -252,7 +257,8 @@ def main(args)
     
     handler = GlowficOutputHandlers::EpubHandler
     handler = handler.new(chapter_list: chapter_list, group: group)
-    handler.output
+    changed = handler.output
+    set_chapters_data(chapter_list, group) if changed
   elsif (process == :output_report)
     date = option.sub("output_report","").sub("#{group}","")
     date = date.gsub(/[^\d]/,' ').strip

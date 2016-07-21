@@ -39,6 +39,9 @@
       return @face_path_cache[face_url] if @face_path_cache.key?(face_url)
       LOG.debug "get_face_path('#{face_url}')"
       
+      face_url = face_url.gsub(' ', '%20')
+      face.imageURL = face_url if face.is_a?(Face) && face.imageURL != face_url
+      
       uri = URI.parse(face_url)
       save_path = @group_folder
       uri_path = uri.path
@@ -75,7 +78,6 @@
       @files << {File.join(save_path, relative_file) => File.join('EPUB', File.dirname(relative_file))}
       @face_path_cache[face_url] = File.join("..", relative_file)
     end
-    
     def get_chapter_path(options = {})
       chapter_url = options[:chapter].url if options.key?(:chapter)
       chapter_url = options[:chapter_url] if options.key?(:chapter_url)
@@ -83,14 +85,12 @@
       
       save_path = File.join(@html_folder, get_chapter_path_bit(options))
     end
-    
     def get_relative_chapter_path(options = {})
       chapter_url = options[:chapter].url if options.key?(:chapter)
       chapter_url = options[:chapter_url] if options.key?(:chapter_url)
       
       File.join('EPUB', 'html', get_chapter_path_bit(options))
     end
-    
     def get_chapter_path_bit(options = {})
       chapter_url = options[:chapter].url if options.key?(:chapter)
       chapter_url = options[:chapter_url] if options.key?(:chapter_url)
@@ -107,23 +107,44 @@
       File.join(save_path)
     end
     
-    def navify_navbits(navbits, options = {})
-      contents_allowed = (options.key?(:contents_allowed) ? options[:contents_allowed] : [])
+    def navify_navbits(navbits)
       navified = []
       if navbits.key?(:_order)
         navbits[:_order].each do |section_name|
           thing = {label: section_name}
-          thing[:nav] = navify_navbits(navbits[section_name], options)
+          thing[:nav] = navify_navbits(navbits[section_name])
           navified << thing
         end
       end
       if navbits.key?(:_contents)
         navbits[:_contents].each do |thing|
-          (LOG.info "Ignoring NAV thing: #{thing.inspect}" and next) unless contents_allowed.empty? or contents_allowed.include?(thing[:content])
+          thing[:content] = get_relative_chapter_path(chapter: thing.delete(:chapter)) if thing.key?(:chapter)
           navified << thing
         end
       end
       navified
+    end
+    
+    def html_from_navbits(navbits)
+      html = "<ol>\n"
+      if navbits.key?(:_order)
+        navbits[:_order].each do |key|
+          html << "<li>#{key}"
+          sub_html = html_from_navbits(navbits[key])
+          html << "\n" << sub_html if sub_html.present?
+          html << "</li>\n"
+        end
+      elsif navbits.key?(:_contents)
+        navbits[:_contents].each do |content|
+          html << "<li><a href='" << File.join('html', get_chapter_path_bit(chapter: content[:chapter])) << "'>#{h(content[:label])}</a></li>\n"
+        end
+        puts "navbits contents are empty: #{navbits}" if navbits[:_contents].empty?
+      else
+        puts "navbits has nothing in it: #{navbits}"
+      end
+      html << "</ol>\n"
+      html = "" if html == "<ol>\n</ol>\n"
+      html
     end
     
     def output(chapter_list=nil)
@@ -146,26 +167,15 @@
         end
       end
       
-      nav_bits = {}
-      chapter_list.each do |chapter|
-        prev_bit = nav_bits
-        chapter.sections.each do |section|
-          prev_bit[:_order] = [] unless prev_bit.key?(:_order)
-          prev_bit[:_order] << section unless prev_bit[:_order].include?(section)
-          prev_bit[section] = {} unless prev_bit.key?(section)
-          prev_bit = prev_bit[section]
-        end
-        prev_bit[:_contents] = [] unless prev_bit.key?(:_contents)
-        prev_bit[:_contents] << {label: chapter.title, content: get_relative_chapter_path(chapter: chapter)}
-      end
-      
       @files = [{style_path => 'EPUB/style'}]
       
       @show_authors = FIC_SHOW_AUTHORS.include?(@group)
+      @changed = false
       
       @save_paths_used = []
       @rel_paths_used = []
-      chapter_list.each do |chapter|
+      chapter_count = chapter_list.count
+      chapter_list.each_with_index do |chapter, i|
         @chapter = chapter
         #messages = [@chapter.entry] + @chapter.replies
         #messages.reject! {|element| element.nil? }
@@ -174,6 +184,17 @@
         save_path = get_chapter_path(chapter: chapter, group: @group)
         (LOG.info "Duplicate chapter not added again" and next) if @save_paths_used.include?(save_path)
         rel_path = get_relative_chapter_path(chapter: chapter)
+        
+        @files << {save_path => File.dirname(rel_path)}
+        @save_paths_used << save_path
+        @rel_paths_used << rel_path
+        
+        if chapter.processed_epub?
+          chapter.processed_epub = File.file?(save_path)
+          LOG.error "#{chapter}: cached data was not found." unless chapter.processed_epub?
+        end
+        
+        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used." and next) if chapter.processed_epub?
         
         @messages = []
         message = @chapter.entry
@@ -216,13 +237,34 @@
         open(save_path, 'w') do |file|
           file.write page.to_xhtml(indent_text: '', encoding: 'UTF-8')
         end
-        @files << {save_path => File.dirname(rel_path)}
-        @save_paths_used << save_path
-        @rel_paths_used << rel_path
-        LOG.info "Did chapter #{chapter}"
+        chapter.processed_epub = true
+        @changed = true
+        LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter}"
       end
       
-      nav_array = navify_navbits(nav_bits, contents_allowed: @rel_paths_used)
+      nav_bits = {}
+      contents_allowed = @rel_paths_used
+      chapter_list.each do |chapter|
+        prev_bit = nav_bits
+        chapter.sections.each do |section|
+          prev_bit[:_order] ||= []
+          prev_bit[:_order] << section unless prev_bit[:_order].include?(section)
+          prev_bit[section] ||= {}
+          prev_bit = prev_bit[section]
+        end
+        prev_bit[:_contents] ||= []
+        if contents_allowed.present? && !contents_allowed.include?(get_relative_chapter_path(chapter: chapter))
+          LOG.info "Ignoring chapter: #{chapter}. Not in contents_allowed."
+        else
+          prev_bit[:_contents] << {label: chapter.title, chapter: chapter}
+        end
+      end
+      
+      open(File.join(@group_folder, 'toc.html'), 'w') do |toc|
+        toc.write html_from_navbits(nav_bits)
+      end
+      
+      nav_array = navify_navbits(nav_bits)
       
       @files.each do |thing|
         thing.keys.each do |key|
@@ -250,6 +292,7 @@
         nav nav_array
       end
       epub.save(epub_path)
+      @changed
     end
   end
   

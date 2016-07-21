@@ -348,13 +348,13 @@
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed, :report_flags_processed, :chapter_list
+    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_epub
     
     param_transform :name => :title, :name_extras => :title_extras
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
     
     def allowed_params
-      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :report_flags, :processed]
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :report_flags, :processed, :processed_epub]
     end
     
     def unpack!
@@ -369,8 +369,19 @@
     def processed
       processed?
     end
+    def processed=(val)
+      @processed_epub = false
+      @processed=val
+    end
     def processed?
      @processed ||= false
+    end
+    
+    def processed_epub
+      processed_epub?
+    end
+    def processed_epub?
+      @processed_epub ||= false
     end
     
     def report_flags_processed?
@@ -703,7 +714,6 @@
   class Message < Model #post or entry
     attr_accessor :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no
     @@date_format = "%Y-%m-%d %H:%M"
-    @@serialize_destroy = [:@children, :@allowed_params, :@push_title, :@push_author, :@post_type]
     
     def self.message_serialize_ignore
       serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_author, :post_type
@@ -962,9 +972,6 @@
     def as_json(options={})
       hash = {}
       
-      @@serialize_destroy.each do |var|
-        self.remove_instance_variable var if self.instance_variable_defined? var
-      end
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
         if var_str[0] == '@' and var_str[1] != '@'
@@ -979,8 +986,11 @@
       end
       if @parent
         if @parent.is_a?(Message)
-          hash['parent'] = [chapter.smallURL, chapter.entry.id, @parent.id] if @parent.post_type == PostType::REPLY
-          hash['parent'] = [chapter.smallURL, @parent.id] if @parent.post_type == PostType::ENTRY
+          if @parent.post_type == PostType::ENTRY
+            hash['parent'] = [chapter.smallURL, @parent.id]
+          else
+            hash['parent'] = [chapter.smallURL, (chapter.entry.present? ? chapter.entry.id : nil), @parent.id]
+          end
         else
           hash['parent'] = @parent
         end

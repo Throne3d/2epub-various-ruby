@@ -23,6 +23,33 @@ module GlowficIndexHandlers
       @chapter_list ||= GlowficEpub::Chapters.new
     end
     
+    def persist_chapter_data(params)
+      raise(ArgumentException, "params must be a hash") unless params.is_a?(Hash)
+      url = params[:url]
+      persists.each do |persist|
+        next if persist[:if] && !params[persist[:if]]
+        next if persist[:unless] && params[persist[:unless]]
+        persist_data = get_prev_chapter_detail(group, detail: persist[:thing], only_present: true)
+        next unless persist_data.key?(url)
+        puts "persisting #{persist[:thing]} for #{params}"
+        params[persist[:thing]] = persist_data[url]
+      end
+      params
+    end
+    def persists
+      @persists = [
+        {thing: :pages},
+        {thing: :check_pages},
+        {thing: :processed},
+        {thing: :entry, :if => :processed},
+        {thing: :replies, :if => :processed},
+        {thing: :authors, :if => :processed},
+        {thing: :entry_title, :if => :processed},
+        {thing: :time_completed, :if => :processed},
+        {thing: :time_hiatus, :if => :processed},
+        {thing: :processed_epub, :if => :processed}
+      ]
+    end
     def prev_pages
       @prev_pages ||= get_prev_chapter_detail(group, detail: :pages, only_present: true)
     end
@@ -79,23 +106,7 @@ module GlowficIndexHandlers
       params.delete(:thread) unless params[:thread]
       params.delete(:title_extras) if params.key?(:title_extras) and (not params[:title_extras] or params[:title_extras].empty?)
       
-      if prev_pages.key?(params[:url])
-        params[:pages] = prev_pages[params[:url]]
-      end
-      if prev_check_pages.key?(params[:url])
-        params[:check_pages] = prev_check_pages[params[:url]]
-      end
-      if prev_processed.key?(params[:url])
-        params[:processed] = prev_processed[params[:url]]
-        if params[:processed]
-          params[:entry] = prev_entries[params[:url]] if prev_entries.key?(params[:url])
-          params[:replies] = prev_replies[params[:url]] if prev_replies.key?(params[:url])
-          params[:authors] = prev_authors[params[:url]] if prev_authors.key?(params[:url])
-          params[:entry_title] = prev_entry_titles[params[:url]] if prev_entry_titles.key?(params[:url])
-          params[:time_completed] = prev_time_completed[params[:url]] if prev_time_completed.key?(params[:url])
-          params[:time_hiatus] = prev_time_hiatus[params[:url]] if prev_time_hiatus.key?(params[:url])
-        end
-      end
+      persist_chapter_data(params)
       return GlowficEpub::Chapter.new(params)
     end
   end
