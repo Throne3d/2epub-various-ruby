@@ -201,9 +201,10 @@ module GlowficIndexHandlers
         if chapter_link
           chapter_links = [chapter_link]
         else
-          chapter_links = section.css("> ul > li a")
-          return unless chapter_links.present?
           sublist = section.at_css('> ul')
+          return unless sublist.present?
+          chapter_links = sublist.css("> li a")
+          return unless chapter_links.present?
           subsection_text = ""
           curr_element = sublist.previous
           while curr_element
