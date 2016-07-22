@@ -512,12 +512,13 @@
       end
       same_id = authors.detect{|author| (author.is_a?(Author) ? author.unique_id : author) == (newauthor.is_a?(Author) ? newauthor.unique_id : newauthor) }
       if same_id && !authors.include?(newauthor)
-        puts "Has author with ID but not same object. Will be getting duplicate. Author: #{same_id}"
-        puts "Authors: #{same_id}"
+        LOG.debug "#{self}.add_author: author with same ID but not same object exists. Will be duped. Existing author: #{same_id}, is_a?(#{same_id.class.to_s}), newauthor(#{newauthor}), is_a?(#{newauthor.class.to_s})"
+        LOG.debug "Existing authors: #{authors.map{|author| author.to_s} * ', '}"
       end
       unless authors.include?(newauthor)
         authors << newauthor
         @moieties = nil
+        LOG.debug "New author list: #{authors.map{|author| author.to_s} * ', '}" if same_id
       end
       chapter_list.add_author(newauthor)
     end
