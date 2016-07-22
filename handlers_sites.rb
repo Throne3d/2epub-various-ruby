@@ -15,6 +15,7 @@
   
   class SiteHandler
     include GlowficEpub
+    attr_reader :group, :chapter_list
     def self.handles?(chapter)
       false
     end
