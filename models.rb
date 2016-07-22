@@ -436,10 +436,10 @@
     def authors
       @authors ||= []
       if @authors.present? and @authors.select{|thing| thing.is_a?(String)}.present?
+        puts "#{self} has nil author(s). #{@authors * ', '}" if @authors.select{|thing| thing.nil?}.present?
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
         if @authors.select{|thing| thing.nil?}.present?
-          LOG.error "#{self} has a nil author."
-          LOG.info "Authors: #{@authors * ', '}"
+          LOG.error "#{self} has a nil author post-mapping. #{@authors * ', '}"
         end
       end
       @authors
@@ -509,6 +509,11 @@
         LOG.error "add_author(nil) for #{self}"
         puts caller
         return
+      end
+      same_id = authors.detect{|author| (author.is_a?(Author) ? author.unique_id : author) == (newauthor.is_a?(Author) ? newauthor.unique_id : newauthor) }
+      if same_id && !authors.include?(newauthor)
+        puts "Has author with ID but not same object. Will be getting duplicate. Author: #{same_id}"
+        puts "Authors: #{same_id}"
       end
       unless authors.include?(newauthor)
         authors << newauthor
