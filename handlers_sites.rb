@@ -143,6 +143,7 @@
       @face_cache = {} # {"alicornutopia" => {"pen" => "(url)"}}
       @face_id_cache = {} # {"alicornutopia#pen" => "(url)"}
       # When retrieved in get_face_by_id
+      @face_url_cache = {}
       @face_param_cache = {}
       @face_issue_cache = []
       @author_id_cache = {}
@@ -474,11 +475,17 @@
         user_hash[:default] = face if user_hash[:default].try(:unique_id) == face.unique_id
       end
       @chapter_list.replace_face(face)
+      @face_url_cache[face.imageURL.sub(/https?:\/\//, '')] = face
       @face_id_cache[face_id] = face
     end
-    def get_face_by_id(face_id, default=nil)
+    def get_face_by_id(face_id, options={})
       face_id = face_id[0..-2].strip if face_id.end_with?(',')
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
+      face_url = options.key?(:face_url) ? options[:face_url] : (options.key?(:url) ? options[:url] : nil)
+      if face_url
+        face_url_noprot = face_url.sub(/https?:\/\//, '')
+        return @face_url_cache[face_url_noprot] if @face_url_cache.key?(face_url_noprot)
+      end
       user_profile = face_id.split('#').first
       face_name = face_id.sub("#{user_profile}#", "")
       face_name = "default" if face_name == face_id
@@ -486,7 +493,7 @@
       @icon_page_errors = [] unless @icon_page_errors
       @icon_errors = [] unless @icon_errors
       
-      return default if @icon_page_errors.include?(user_profile)
+      return if @icon_page_errors.include?(user_profile)
       
       unless @face_cache.key?(user_profile) or @face_cache.key?(user_profile.gsub('_', '-'))
         user_id = user_profile.gsub('_', '-')
@@ -525,9 +532,10 @@
             icon_hash[params[:keyword]] = face
             if icon_element == default_icon
               icon_hash[:default] = face
-              params[:author].default_face = face if params[:author]
+              params[:author].default_face = face if params[:author] && !params[:author].default_face.present?
             end
             @face_param_cache[face.unique_id] = params
+            @face_url_cache[icon_src.sub(/https?:\/\//, '')] = face
             
             @chapter_list.replace_face(face)
           end
@@ -543,16 +551,23 @@
       @face_id_cache[face_id] = icons_hash[:default] if (face_name.downcase == "default" or face_name == :default) and icons_hash.key?(:default)
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       
-      LOG.error "Failed to find a face for user: #{user_profile} and face: #{face_name}" unless @icon_errors.include?(face_id)
+      if face_url
+        face_url_noprot = face_url.sub(/https?:\/\//, '')
+        return @face_url_cache[face_url_noprot] if @face_url_cache.key?(face_url_noprot)
+      end
+      
+      LOG.error "Failed to find a face for user: #{user_profile} and face: #{face_name}" + (face_url.present? ? " and URL: #{face_url}" : '') unless @icon_errors.include?(face_id)
       @icon_errors << face_id unless @icon_errors.include?(face_id)
-      return default
+      return nil
     end
     def get_updated_face(face)
       return nil unless face
       return get_face_by_id(face.unique_id) if @face_param_cache.key?(face.unique_id)
       
-      done_face = get_face_by_id(face.unique_id, nil)
-      face_hash = @face_param_cache[face.unique_id]
+      params = {}
+      params[:face_url] = face.imageURL if face.imageURL.present?
+      done_face = get_face_by_id(face.unique_id, params)
+      face_hash = @face_param_cache[(done_face || face).unique_id]
       if face_hash.present?
         face.from_json! face_hash
       elsif done_face.present? && !@face_issue_cache.include?(face.unique_id)
@@ -648,7 +663,7 @@
         end
         
         face_id = "#{author_id}##{face_name}"
-        params[:face] = get_face_by_id(face_id)
+        params[:face] = get_face_by_id(face_id, face_url: face_url)
         params[:face] = @chapter_list.get_face_by_id(face_id) if params[:face].nil?
         
         if params[:face].nil? and not face_url.empty?
@@ -1131,7 +1146,7 @@
       
       done_face = get_face_by_id(face.unique_id)
       
-      face_hash = @face_param_cache[done_face.unique_id] || @face_param_cache[done_face.unique_id.sub('constellation#', '')]
+      face_hash = @face_param_cache[(done_face || face).unique_id] || @face_param_cache[(done_face || face).unique_id.sub('constellation#', '')]
       if face_hash.present?
         face.from_json! face_hash
       elsif done_face.present? && !@face_issue_cache.include?(face.unique_id)
