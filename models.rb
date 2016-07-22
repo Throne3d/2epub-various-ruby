@@ -394,7 +394,7 @@
     def site_handler
       return @site_handler unless @site_handler.nil?
       handler_type = GlowficSiteHandlers.get_handler_for(self)
-      chapter_list.site_handlers[handler_type] ||= handler_type.new(group: group)
+      chapter_list.site_handlers[handler_type] ||= handler_type.new(group: group, chapters: chapter_list)
       @site_handler ||= chapter_list.site_handlers[handler_type]
     end
     def pages
@@ -436,10 +436,10 @@
     def authors
       @authors ||= []
       if @authors.present? and @authors.select{|thing| thing.is_a?(String)}.present?
+        puts "#{self} has nil author(s). #{@authors * ', '}" if @authors.select{|thing| thing.nil?}.present?
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
         if @authors.select{|thing| thing.nil?}.present?
-          LOG.error "#{self} has a nil author."
-          LOG.info "Authors: #{@authors * ', '}"
+          LOG.error "#{self} has a nil author post-mapping. #{@authors * ', '}"
         end
       end
       @authors
@@ -510,9 +510,15 @@
         puts caller
         return
       end
+      same_id = authors.detect{|author| (author.is_a?(Author) ? author.unique_id : author) == (newauthor.is_a?(Author) ? newauthor.unique_id : newauthor) }
+      if same_id && !authors.include?(newauthor)
+        LOG.debug "#{self}.add_author: author with same ID but not same object exists. Will be duped. Existing author: #{same_id}, is_a?(#{same_id.class.to_s}), newauthor(#{newauthor}), is_a?(#{newauthor.class.to_s})"
+        LOG.debug "Existing authors: #{authors.map{|author| author.to_s} * ', '}"
+      end
       unless authors.include?(newauthor)
         authors << newauthor
         @moieties = nil
+        LOG.debug "New author list: #{authors.map{|author| author.to_s} * ', '}" if same_id
       end
       chapter_list.add_author(newauthor)
     end
@@ -866,9 +872,8 @@
       return @face if @face.is_a?(Face)
       
       if chapter_list
-        temp_face = chapter_list.get_face_by_id(@face)
+        new_face = chapter_list.get_face_by_id(@face)
         new_face = site_handler.get_updated_face(temp_face) if site_handler
-        new_face = temp_face unless new_face
         if new_face
           @face = new_face
           chapter_list.replace_face(new_face)

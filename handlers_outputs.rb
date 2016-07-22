@@ -39,7 +39,7 @@
       return @face_path_cache[face_url] if @face_path_cache.key?(face_url)
       LOG.debug "get_face_path('#{face_url}')"
       
-      face_url = face_url.gsub(' ', '%20')
+      face_url = face_url.gsub(' ', '%20').gsub('!', '%21').gsub('$', '%24').gsub("'", '%27').gsub('(', '%28').gsub(')', '%29').gsub('*', '%2A').gsub('+', '%2B').gsub(',', '%2C').gsub('=', '%3D').gsub('[', '%5B').gsub(']', '%5D')
       face.imageURL = face_url if face.is_a?(Face) && face.imageURL != face_url
       
       uri = URI.parse(face_url)
