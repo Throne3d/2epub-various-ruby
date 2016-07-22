@@ -394,7 +394,7 @@
     def site_handler
       return @site_handler unless @site_handler.nil?
       handler_type = GlowficSiteHandlers.get_handler_for(self)
-      chapter_list.site_handlers[handler_type] ||= handler_type.new(group: group)
+      chapter_list.site_handlers[handler_type] ||= handler_type.new(group: group, chapters: chapter_list)
       @site_handler ||= chapter_list.site_handlers[handler_type]
     end
     def pages
