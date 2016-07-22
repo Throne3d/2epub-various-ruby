@@ -487,6 +487,12 @@
         face_url_noprot = face_url.sub(/https?:\/\//, '')
         return @face_url_cache[face_url_noprot] if @face_url_cache.key?(face_url_noprot)
       end
+      chapter_face = @chapter_list.try(:get_face_by_id, face_id)
+      if chapter_face.present?
+        @face_id_cache[face_id] = chapter_face
+        @face_url_cache[face_url.sub(/https?:\/\//, '')] = chapter_face
+        return chapter_face
+      end
       user_profile = face_id.split('#').first
       face_name = face_id.sub("#{user_profile}#", "")
       face_name = "default" if face_name == face_id
@@ -589,6 +595,11 @@
       author_id = author_id.gsub('_', '-')
       author_id = author_id.sub("dreamwidth#", "") if author_id.start_with?("dreamwidth#")
       return @author_id_cache[author_id] if @author_id_cache.key?(author_id)
+      chapter_author = @chapter_list.try(:get_author_by_id, "dreamwidth##{author_id}")
+      if chapter_author.present?
+        @author_id_cache[author_id] = chapter_author
+        return chapter_author
+      end
       char_page = giri_or_cache("http://#{author_id}.dreamwidth.org/profile")
       LOG.debug "nokogiri'd profile page"
       
@@ -984,6 +995,13 @@
       return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id) and face_id.split('#').first.strip.empty?
       character_id = face_id.sub("##{icon_id}", '')
       
+      chapter_face = @chapter_list.try(:get_face_by_id, face_id)
+      if chapter_face.present?
+        @face_id_cache[face_id] = chapter_face
+        @face_id_cache[icon_id] = chapter_face unless @face_id_cache.key?(icon_id)
+        return chapter_face
+      end
+      
       character_id = nil if character_id == face_id
       character_id = nil if character_id.blank?
       
@@ -1168,6 +1186,12 @@
     def get_author_by_id(character_id, default=nil)
       character_id = character_id.sub("constellation#", "") if character_id.start_with?("constellation#")
       return @author_id_cache[character_id] if @author_id_cache.key?(character_id)
+      
+      chapter_author = @chapter_list.try(:get_author_by_id, "constellation##{character_id}")
+      if chapter_author.present?
+        @author_id_cache[character_id] = chapter_author
+        return chapter_author
+      end
       
       if character_id.start_with?("user#")
         user_id = character_id.sub("user#", "")
