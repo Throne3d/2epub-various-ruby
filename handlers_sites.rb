@@ -287,7 +287,12 @@
         
         @download_count = 0
         changed = false
-        check_pages.each_with_index do |check_page, i|
+        same_comment_count = false
+        check_pages.reverse.each_with_index do |check_page, i|
+          if i == check_pages.count - 1 && same_comment_count
+            LOG.debug "Same non-main pages & comment count, skipping main page."
+            next
+          end
           page_location = get_page_location(check_page, where: @group_folder)
           was_file = File.file?(page_location)
           
@@ -307,6 +312,10 @@
           
           old_content = page_old.at_css('#content')
           new_content = page_new.at_css('#content')
+          
+          old_comment_count = old_content.at_css('.entry-readlink').try(:text).try(:strip).try(:[], /\d+/)
+          new_comment_count = new_content.at_css('.entry-readlink').try(:text).try(:strip).try(:[], /\d+/)
+          same_comment_count = true if old_comment_count == new_comment_count && old_comment_count.present? && new_comment_count.present?
           
           old_content.at_css(".entry-interaction-links").try(:remove)
           new_content.at_css(".entry-interaction-links").try(:remove)
