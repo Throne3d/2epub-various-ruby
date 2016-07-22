@@ -975,7 +975,7 @@
       end
       face
     end
-    def get_face_by_id(face_id, default=nil)
+    def get_face_by_id(face_id)
       face_id = face_id.sub("constellation#", "") if face_id.start_with?("constellation#")
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       
