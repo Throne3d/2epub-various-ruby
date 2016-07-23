@@ -220,34 +220,42 @@ def main(args)
     
     instance_handlers = {}
     chapter_count = chapter_list.count
-    chapter_list.each_with_index do |chapter, i|
-    diff = true
-      site_handler = site_handlers.select {|c| c.handles? chapter}
-      
-      if site_handler.nil? or site_handler.empty? or site_handler.length > 1
-        LOG.error "ERROR: No site handler for #{chapter.title}!" if site_handler.nil? or site_handler.empty?
-        LOG.error "ERROR: Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if site_handler.length > 1
-        next
+    begin
+      chapter_list.each_with_index do |chapter, i|
+        diff = true
+        site_handler = site_handlers.select {|c| c.handles? chapter}
+        
+        if site_handler.nil? or site_handler.empty? or site_handler.length > 1
+          LOG.error "ERROR: No site handler for #{chapter.title}!" if site_handler.nil? or site_handler.empty?
+          LOG.error "ERROR: Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if site_handler.length > 1
+          next
+        end
+        
+        if chapter.pages.nil? or chapter.pages.empty?
+          LOG.error "No pages for #{chapter.title}!"
+          next
+        end
+        
+        site_handler = site_handler.first
+        instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
+        handler = instance_handlers[site_handler]
+        
+        only_attrs = (process == :report ? [:time, :edittime] : nil)
+        
+        diff = true
+        handler.get_replies(chapter, notify: true, only_attrs: only_attrs) do |msg|
+          LOG.info "(#{i+1}/#{chapter_count}) " + msg
+          diff = false if msg[": unchanged, cached"]
+        end
+        
+        set_chapters_data(chapter_list, group) if diff && process != :report
       end
-      
-      if chapter.pages.nil? or chapter.pages.empty?
-        LOG.error "No pages for #{chapter.title}!"
-        next
+    rescue StandardError, Interrupt => e
+      if process == :report
+        puts "Encountered an error. Saving changed data then re-raising."
+        set_chapters_data(chapter_list, group)
       end
-      
-      site_handler = site_handler.first
-      instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
-      handler = instance_handlers[site_handler]
-      
-      only_attrs = (process == :report ? [:time, :edittime] : nil)
-      
-      diff = true
-      handler.get_replies(chapter, notify: true, only_attrs: only_attrs) do |msg|
-        LOG.info "(#{i+1}/#{chapter_count}) " + msg
-        diff = false if msg[": unchanged, cached"]
-      end
-      
-      set_chapters_data(chapter_list, group) if diff && process != :report
+      raise e
     end
     set_chapters_data(chapter_list, group) if process == :report or !diff
   elsif (process == :output_epub)
