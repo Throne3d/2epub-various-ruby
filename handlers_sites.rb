@@ -484,6 +484,7 @@
       @face_id_cache[face_id] = face
     end
     def get_face_by_id(face_id, options={})
+      try_chapterface = options.key?(:try_chapterface) ? options[:try_chapterface] : true
       face_id = face_id[0..-2].strip if face_id.end_with?(',')
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       face_url = options.key?(:face_url) ? options[:face_url] : (options.key?(:url) ? options[:url] : nil)
@@ -491,11 +492,13 @@
         face_url_noprot = face_url.sub(/https?:\/\//, '')
         return @face_url_cache[face_url_noprot] if @face_url_cache.key?(face_url_noprot)
       end
-      chapter_face = @chapter_list.try(:get_face_by_id, face_id)
-      if chapter_face.present?
-        @face_id_cache[face_id] = chapter_face
-        @face_url_cache[face_url.sub(/https?:\/\//, '')] = chapter_face
-        return chapter_face
+      if try_chapterface
+        chapter_face = @chapter_list.try(:get_face_by_id, face_id)
+        if chapter_face.present?
+          @face_id_cache[face_id] = chapter_face
+          @face_url_cache[(face_url || chapter_face.imageURL).sub(/https?:\/\//, '')] = chapter_face
+          return chapter_face
+        end
       end
       user_profile = face_id.split('#').first
       face_name = face_id.sub("#{user_profile}#", "")
@@ -577,6 +580,7 @@
       
       params = {}
       params[:face_url] = face.imageURL if face.imageURL.present?
+      params[:try_chapterface] = false
       done_face = get_face_by_id(face.unique_id, params)
       face_hash = @face_param_cache[(done_face || face).unique_id]
       if face_hash.present?
@@ -595,15 +599,21 @@
       author_id = author_id.sub("dreamwidth#", "") if author_id.start_with?("dreamwidth#")
       @author_id_cache[author_id] = author
     end
-    def get_author_by_id(author_id, default=nil, hash=false)
+    def get_author_by_id(author_id, options={})
       author_id = author_id.gsub('_', '-')
       author_id = author_id.sub("dreamwidth#", "") if author_id.start_with?("dreamwidth#")
       return @author_id_cache[author_id] if @author_id_cache.key?(author_id)
-      chapter_author = @chapter_list.try(:get_author_by_id, "dreamwidth##{author_id}")
-      if chapter_author.present?
-        @author_id_cache[author_id] = chapter_author
-        return chapter_author
+      
+      try_chapterauthor = options.key?(:try_chapterauthor) ? options[:try_chapterauthor] : true
+      
+      if try_chapterauthor
+        chapter_author = @chapter_list.try(:get_author_by_id, "dreamwidth##{author_id}")
+        if chapter_author.present?
+          @author_id_cache[author_id] = chapter_author
+          return chapter_author
+        end
       end
+      
       char_page = giri_or_cache("http://#{author_id}.dreamwidth.org/profile")
       LOG.debug "nokogiri'd profile page"
       
@@ -629,7 +639,7 @@
       return nil unless author
       return get_author_by_id(author.unique_id) if @author_param_cache.key?(author.unique_id)
       
-      done_author = get_author_by_id(author.unique_id)
+      done_author = get_author_by_id(author.unique_id, try_chapterauthor: false)
       author_hash = @author_param_cache[author.unique_id]
       author.from_json! author_hash
       set_author_cache(author)
@@ -994,7 +1004,8 @@
       end
       face
     end
-    def get_face_by_id(face_id)
+    def get_face_by_id(face_id, options={})
+      try_chapterface = options.key?(:try_chapterface) ? options[:try_chapterface] : true
       face_id = face_id.sub("constellation#", "") if face_id.start_with?("constellation#")
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       
@@ -1002,11 +1013,13 @@
       return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id) and face_id.split('#').first.strip.empty?
       character_id = face_id.sub("##{icon_id}", '')
       
-      chapter_face = @chapter_list.try(:get_face_by_id, face_id)
-      if chapter_face.present?
-        @face_id_cache[face_id] = chapter_face
-        @face_id_cache[icon_id] = chapter_face unless @face_id_cache.key?(icon_id)
-        return chapter_face
+      if try_chapterface
+        chapter_face = @chapter_list.try(:get_face_by_id, face_id)
+        if chapter_face.present?
+          @face_id_cache[face_id] = chapter_face
+          @face_id_cache[icon_id] = chapter_face unless @face_id_cache.key?(icon_id)
+          return chapter_face
+        end
       end
       
       character_id = nil if character_id == face_id
@@ -1170,7 +1183,7 @@
       return nil unless face
       return get_face_by_id(face.unique_id) if @face_param_cache.key?(face.unique_id)
       
-      done_face = get_face_by_id(face.unique_id)
+      done_face = get_face_by_id(face.unique_id, try_chapterface: false)
       
       face_hash = @face_param_cache[(done_face || face).unique_id] || @face_param_cache[(done_face || face).unique_id.sub('constellation#', '')]
       if face_hash.present?
@@ -1190,14 +1203,18 @@
       @author_id_cache[character_id] = author
       author
     end
-    def get_author_by_id(character_id, default=nil)
+    def get_author_by_id(character_id, options={})
       character_id = character_id.sub("constellation#", "") if character_id.start_with?("constellation#")
       return @author_id_cache[character_id] if @author_id_cache.key?(character_id)
       
-      chapter_author = @chapter_list.try(:get_author_by_id, "constellation##{character_id}")
-      if chapter_author.present?
-        @author_id_cache[character_id] = chapter_author
-        return chapter_author
+      try_chapterauthor = options.key?(:try_chapterauthor) ? options[:try_chapterauthor] : true
+      
+      if try_chapterauthor
+        chapter_author = @chapter_list.try(:get_author_by_id, "constellation##{character_id}")
+        if chapter_author.present?
+          @author_id_cache[character_id] = chapter_author
+          return chapter_author
+        end
       end
       
       if character_id.start_with?("user#")
@@ -1247,7 +1264,7 @@
       return nil unless author
       return get_author_by_id(author.unique_id) if @author_param_cache.key?(author.unique_id)
       
-      done_author = get_author_by_id(author.unique_id)
+      done_author = get_author_by_id(author.unique_id, try_chapterauthor: false)
       author_hash = @author_param_cache[author.unique_id]
       author.from_json! author_hash
       set_author_cache(author)
