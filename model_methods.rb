@@ -66,19 +66,20 @@
   end
   
   FIC_NAME_MAPPING = {
-    effulgence: [:effulgence, :efful],
-    incandescence: [:incandescence, :incan],
-    pixiethreads: [:pixiethreads, :pix],
+    # put the mappings so subsets of followings come first (efful before effulgence, zod before zodiac, etc.)
+    effulgence: [:efful, :effulgence],
+    incandescence: [:incan, :incandescence],
+    pixiethreads: [:pix, :pixiethreads],
     radon: [:radon, :absinthe],
     opalescence: [:opal, :opalescence],
     zodiac: [:zodiac],
     silmaril: [:silm, :silmaril],
     
     glowfic: [:othersandbox, :sandbox2, :glowfic],
-    constellation: [:constellation, :const, :glowfic2, :sandbox3],
+    constellation: [:const, :constellation, :glowfic2, :sandbox3],
     
-    mwf_leaf: [:mwf_leaf, :mwf_1, :mwf, :leaf],
-    mwf_lioncourt: [:mwf_lion, :mwf_lioncourt, :mwf_2, :lioncourt, :lion],
+    mwf_leaf: [:mwf, :mwf_1, :leaf, :mwf_leaf],
+    mwf_lioncourt: [:mwf_2, :lion, :mwf_lion, :lioncourt, :mwf_lioncourt],
     
     sandbox: [:sandbox, :alicorn],
     marri: [:marri, :marrinikari],
