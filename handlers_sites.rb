@@ -885,6 +885,7 @@
           
           page_old_data = get_page_data(check_page, replace: false, where: @group_folder)
           unless was_file
+            LOG.debug "check page #{i}, #{check_page}, didn't exist in the group folder"
             changed = true
             break
           end
