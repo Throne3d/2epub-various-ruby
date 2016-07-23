@@ -873,7 +873,7 @@
       
       if chapter_list
         new_face = chapter_list.get_face_by_id(@face)
-        new_face = site_handler.get_updated_face(temp_face) if site_handler
+        new_face = site_handler.get_updated_face(new_face) if site_handler
         if new_face
           @face = new_face
           chapter_list.replace_face(new_face)
