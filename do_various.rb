@@ -46,22 +46,32 @@ def main(args)
   process = :""
   group = :""
   
-  processes = {tocs: :tocs, toc: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, process: :process, clean: :clean, rem: :remove, stat: :stats, :"do" => :"do", epubdo: :epubdo, repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
+  LOG.info "Option: #{option}"
+  
+  process_thing = nil
+  processes = {toc: :tocs, tocs: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, detail: :details, details: :details, process: :process, clean: :clean, rem: :remove, remove: :remove, stat: :stats, stats: :stats, :"do" => :"do", epubdo: :epubdo, repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
+  # put these in order of "shortest match" to "longest match", so "toc" before "tocs" (larger match later, subsets before)
   processes.each do |key, value|
-    if (option[0, key.length].to_sym == key)
+    if (option[0, key.length].to_sym == key || option[0, key.length].gsub(' ', '_').to_sym == key)
       process = value
+      process_thing = option[0, key.length]
     end
   end
   
   abort "Unknown option. Please try with a valid option (call with no parameters to see some examples)." if process.empty?
   
+  LOG.info "Process: #{process}"
+  option = option.sub(process_thing.to_s, '').sub(process_thing.to_s.gsub('_', ' '), '').strip.sub(/^\_/, '')
+  
+  group_thing = nil
   showAuthors = false
   unless process == :remove
     group = nil
     FIC_NAME_MAPPING.each do |key, findArr|
       findArr.each do |findSym|
-        if option.length >= findSym.length and option[-findSym.length..-1] == findSym.to_s
+        if (option[0, findSym.length].to_sym == findSym || option[0, findSym.length].gsub(' ', '_').to_sym == findSym)
           group = key
+          group_thing = option[0, findSym.length]
         end
       end
     end
@@ -70,11 +80,12 @@ def main(args)
     showAuthors = FIC_SHOW_AUTHORS.include? group
   end
   
+  option = option.sub(group_thing.to_s, '').sub(group_thing.to_s.gsub('_', ' '), '').strip.sub(/^\_/, '')
+  
   OUTFILE.set_output_params(process, (group.empty? ? nil : group))
   
-  LOG.info "Option: #{option}"
   LOG.info "Group: #{group}"
-  LOG.info "Process: #{process}"
+  LOG.info "Other params: #{option}" if option.present?
   
   LOG.info "-" * 60
   
@@ -268,7 +279,7 @@ def main(args)
     changed = handler.output
     set_chapters_data(chapter_list, group) if changed
   elsif (process == :output_report)
-    date = option.sub("output_report","").sub("#{group}","")
+    date = option
     date = date.gsub(/[^\d]/,' ').strip
     date = nil if date.empty?
     if date
