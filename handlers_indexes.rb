@@ -609,6 +609,8 @@ module GlowficIndexHandlers
         chapters.each do |chapter_row|
           thead = chapter_row.at_css('th')
           next if thead and not thead.try(:[], :colspan)
+          next if chapter_row[:colspan]
+          next if chapter_row.at_css('td').try(:[], :colspan)
           
           no_post = chapter_row.at_css('.centered.padding-10')
           next if no_post and no_post.text["No posts"]
