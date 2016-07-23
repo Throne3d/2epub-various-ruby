@@ -323,7 +323,10 @@
           new_content.at_css(".entry-interaction-links").try(:remove)
           
           changed = (old_content.inner_html != new_content.inner_html)
-          break if changed
+          if changed
+            LOG.debug "check page #{i}, #{check_page}, was different"
+            break
+          end
           LOG.debug "check page #{i} was not different"
         end
         
@@ -893,7 +896,10 @@
           new_content = page_new.at_css('#content')
           
           changed = (old_content.inner_html != new_content.inner_html)
-          break if changed
+          if changed
+            LOG.debug "check page #{i}, #{check_page}, was different"
+            break
+          end
           LOG.debug "check page #{i} was not different"
         end
         
@@ -930,7 +936,6 @@
       #Needs to be updated / hasn't been got
       @download_count = 0
       
-      chapter.check_pages = chapter.check_pages
       chapter.check_pages.each do |check_page|
         if has_cache?(check_page, where: 'temp')
           temp_data = down_or_cache(check_page, where: 'temp')
