@@ -1102,10 +1102,16 @@
   
   class Author < Model
     attr_accessor :moiety, :name, :screenname, :chapter_list, :display, :unique_id, :default_face
-    serialize_ignore :faces, :chapters, :chapter_list, :allowed_params, :default_face
+    serialize_ignore :faces, :chapters, :chapter_list, :allowed_params, :default_face, :site_handler
     
     def allowed_params
       @allowed_params ||= [:chapter_list, :moiety, :name, :screenname, :display, :unique_id, :default_face]
+    end
+    def site_handler
+      return @site_handler unless @site_handler.nil?
+      handler_type = GlowficSiteHandlers.get_handler_for(self)
+      chapter_list.site_handlers[handler_type] ||= handler_type.new(group: group, chapters: chapter_list)
+      @site_handler ||= chapter_list.site_handlers[handler_type]
     end
     
     def initialize(params={})
@@ -1134,7 +1140,16 @@
       return @default_face if @default_face.is_a?(Face)
       
       if chapter_list
-        temp_face = chapter_list.get_face_by_id(@default_face)
+        new_face = chapter_list.get_face_by_id(@default_face)
+        new_face = site_handler.get_updated_face(new_face) if site_handler
+        if new_face
+          @default_face = new_face
+          chapter_list.replace_face(new_face)
+        end
+      end
+      
+      if site_handler and (not @default_face or @default_face.is_a?(String))
+        temp_face = site_handler.get_face_by_id(@default_face)
         if temp_face
           @default_face = temp_face
           chapter_list.replace_face(temp_face)

@@ -5,10 +5,10 @@
   include GlowficEpubMethods
   include GlowficEpub::PostType
   
-  def self.get_handler_for(chapter)
+  def self.get_handler_for(thing)
     site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
     site_handlers.select! {|c| c.is_a? Class and c < GlowficSiteHandlers::SiteHandler }
-    chapter_handlers = site_handlers.select {|c| c.handles? chapter}
+    chapter_handlers = site_handlers.select {|c| c.handles? thing}
     return chapter_handlers.first if chapter_handlers.length == 1
     chapter_handlers
   end
@@ -131,13 +131,17 @@
   
   class DreamwidthHandler < SiteHandler
     attr_reader :download_count
-    def self.handles?(chapter)
-      return false if chapter.nil?
-      chapter_url = (chapter.is_a?(GlowficEpub::Chapter)) ? chapter.url : chapter
-      return false if chapter_url.nil? or chapter_url.empty?
-      
-      uri = URI.parse(chapter_url)
-      return uri.host.end_with?("dreamwidth.org")
+    def self.handles?(thing)
+      return false if thing.nil?
+      if thing.is_a?(GlowficEpub::Author)
+        return thing.unique_id.start_with?('dreamwidth#')
+      else
+        chapter_url = (thing.is_a?(GlowficEpub::Chapter)) ? thing.url : thing
+        return false if chapter_url.nil? or chapter_url.empty?
+        
+        uri = URI.parse(chapter_url)
+        return uri.host.end_with?("dreamwidth.org")
+      end
     end
     def initialize(options = {})
       super options
@@ -824,13 +828,17 @@
   
   class ConstellationHandler < SiteHandler
     attr_reader :download_count
-    def self.handles?(chapter)
-      return false if chapter.nil?
-      chapter_url = (chapter.is_a?(GlowficEpub::Chapter)) ? chapter.url : chapter
-      return false if chapter_url.nil? or chapter_url.empty?
-      
-      uri = URI.parse(chapter_url)
-      return uri.host.end_with?("vast-journey-9935.herokuapp.com")
+    def self.handles?(thing)
+      return false if thing.nil?
+      if thing.is_a?(GlowficEpub::Author)
+        return thing.unique_id.start_with?('constellation#')
+      else
+        chapter_url = (thing.is_a?(GlowficEpub::Chapter)) ? thing.url : thing
+        return false if chapter_url.nil? or chapter_url.empty?
+        
+        uri = URI.parse(chapter_url)
+        return uri.host.end_with?("vast-journey-9935.herokuapp.com")
+      end
     end
     def initialize(options = {})
       super options
