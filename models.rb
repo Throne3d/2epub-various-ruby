@@ -912,7 +912,7 @@
       end
       
       @face.author = author if author and @face and not @face.is_a?(String)
-      LOG.error "Failed to generate a face object, is still string; bad (#{@face})" if @face.is_a?(String)
+      LOG.error "Failed to generate a face object, is still string (#{@face})" if @face.is_a?(String)
       @face
     end
     def face=(face)
@@ -1138,7 +1138,7 @@
       end
       
       @default_face.author = self if @default_face and not @default_face.is_a?(String)
-      LOG.error "Failed to generate a face object, is still string; bad (#{@default_face})" if @default_face.is_a?(String)
+      LOG.error "Failed to generate a face object for default_face, is still string (#{@default_face})" if @default_face.is_a?(String)
       LOG.error "Default_face was non-nil, now nil? oops." unless @default_face.present?  
       @default_face
     end
