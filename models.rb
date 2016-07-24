@@ -198,9 +198,13 @@
     end
     def get_author_by_id(author_id)
       found_author = authors.find {|author| author.unique_id == author_id}
-      if old_authors.present? and not found_author
+      if old_authors.present? and not found_author.present?
         found_author = old_authors.find {|author| author.unique_id == author_id}
         add_author(found_author) if found_author
+      end
+      unless found_author.present?
+        LOG.debug "chapterlist(#{self}).get_author_by_id(#{author_id.inspect}) ⇒ not present"
+        LOG.debug "authors.length == #{authors.length}; " + (old_authors.present? ? "old_authors.length == #{old_authors.length}" : "No old authors")
       end
       found_author
     end
