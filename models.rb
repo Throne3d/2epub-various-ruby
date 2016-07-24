@@ -468,7 +468,7 @@
       replies.each do |reply|
         reply.keep_old_stuff
       end
-      entry.keep_old_stuff
+      entry.keep_old_stuff if entry.present?
       newval
     end
     
