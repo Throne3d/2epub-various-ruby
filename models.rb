@@ -443,10 +443,10 @@
     def authors
       @authors ||= []
       if @authors.present? and @authors.select{|thing| thing.is_a?(String)}.present?
-        puts "#{self} has nil author(s). #{@authors * ', '}" if @authors.select{|thing| thing.nil?}.present?
+        premap = @authors
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
         if @authors.select{|thing| thing.nil?}.present?
-          LOG.error "#{self} has a nil author post-mapping. #{@authors * ', '}"
+          LOG.error "#{self} has a nil author post-mapping.\n#{premap * ', '}\n⇒ #{@authors * ', '}"
         end
       end
       @authors
