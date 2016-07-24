@@ -163,7 +163,7 @@
   class Chapters < Model
     attr_reader :chapters, :faces, :authors, :group, :trash_messages
     attr_accessor :group, :old_authors, :old_faces, :sort_chapters
-    serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces, :kept_authors, :kept_faces, :failed_authors, :failed_faces
+    serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces, :kept_authors, :kept_faces, :failed_authors, :failed_faces, :unpacked
     def initialize(options = {})
       @chapters = []
       @faces = []
@@ -198,9 +198,13 @@
     end
     def get_author_by_id(author_id)
       found_author = authors.find {|author| author.unique_id == author_id}
-      if old_authors.present? and not found_author
+      if old_authors.present? and not found_author.present?
         found_author = old_authors.find {|author| author.unique_id == author_id}
         add_author(found_author) if found_author
+      end
+      unless found_author.present?
+        LOG.debug "chapterlist(#{self}).get_author_by_id(#{author_id.inspect}) ⇒ not present"
+        LOG.debug "authors.length == #{authors.length}; " + (old_authors.present? ? "old_authors.length == #{old_authors.length}" : "No old authors")
       end
       found_author
     end
@@ -355,7 +359,8 @@
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_epub
+    attr_accessor :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :sections, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_epub
+    attr_reader :entry
     
     param_transform :name => :title, :name_extras => :title_extras
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
@@ -433,6 +438,12 @@
       @replies.each do |reply|
         reply.chapter = self
       end
+      @replies
+    end
+    def entry=(newval)
+      @entry=newval
+      @entry.chapter = self
+      @entry
     end
     def sections
       if @sections.is_a?(String)
@@ -443,10 +454,10 @@
     def authors
       @authors ||= []
       if @authors.present? and @authors.select{|thing| thing.is_a?(String)}.present?
-        puts "#{self} has nil author(s). #{@authors * ', '}" if @authors.select{|thing| thing.nil?}.present?
+        premap = @authors
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
         if @authors.select{|thing| thing.nil?}.present?
-          LOG.error "#{self} has a nil author post-mapping. #{@authors * ', '}"
+          LOG.error "#{self} has a nil author post-mapping.\n#{premap * ', '}\n⇒ #{@authors * ', '}"
         end
       end
       @authors
@@ -457,6 +468,7 @@
       replies.each do |reply|
         reply.keep_old_stuff
       end
+      entry.keep_old_stuff
       newval
     end
     
@@ -788,7 +800,10 @@
     end
     
     def keep_old_stuff
-      return unless chapter && chapter.chapter_list
+      unless chapter && chapter.chapter_list
+        LOG.error "(No chapter!)" unless chapter
+        return
+      end
       chapter.chapter_list.keep_old_author(author_id) if author_id
       chapter.chapter_list.keep_old_face(face_id) if face_id
     end
