@@ -581,6 +581,26 @@
       str += ": #{smallURL}"
     end
     
+    def self.fauxID(chapter)
+      return unless chapter.url.present? && chapter.entry.present?
+      url = chapter.url
+      entry = chapter.entry
+      thread = chapter.thread
+      str = ''
+      if url['.dreamwidth.org/']
+        str << url.split('.dreamwidth.org/').first.split('/').last
+        str << '#' + entry.id
+        str << '#' + thread if thread
+      elsif url['vast-journey-9935.herokuapp.com/']
+        str << 'constellation'
+        str << '#' + entry.id
+      end
+      str
+    end
+    def fauxID
+      Chapter.fauxID(self)
+    end
+    
     def as_json(options={})
       hash = {}
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
