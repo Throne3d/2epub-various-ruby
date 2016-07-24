@@ -191,8 +191,10 @@
       authors << arg unless authors.include?(arg)
     end
     def replace_author(arg)
+      return arg if authors.include?(arg)
       authors.delete_if { |author| author.unique_id == arg.unique_id }
       add_author(arg)
+      arg
     end
     def get_author_by_id(author_id)
       found_author = authors.find {|author| author.unique_id == author_id}
@@ -222,8 +224,10 @@
       faces << arg unless faces.include?(arg)
     end
     def replace_face(arg)
+      return arg if faces.include?(arg)
       faces.delete_if { |face| face.unique_id == arg.unique_id }
       add_face(arg)
+      arg
     end
     def get_face_by_id(face_id)
       found_face = faces.find {|face| face.unique_id == face_id}
