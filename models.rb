@@ -191,8 +191,10 @@
       authors << arg unless authors.include?(arg)
     end
     def replace_author(arg)
+      return arg if authors.include?(arg)
       authors.delete_if { |author| author.unique_id == arg.unique_id }
       add_author(arg)
+      arg
     end
     def get_author_by_id(author_id)
       found_author = authors.find {|author| author.unique_id == author_id}
@@ -222,8 +224,10 @@
       faces << arg unless faces.include?(arg)
     end
     def replace_face(arg)
+      return arg if faces.include?(arg)
       faces.delete_if { |face| face.unique_id == arg.unique_id }
       add_face(arg)
+      arg
     end
     def get_face_by_id(face_id)
       found_face = faces.find {|face| face.unique_id == face_id}
@@ -912,7 +916,7 @@
       end
       
       @face.author = author if author and @face and not @face.is_a?(String)
-      LOG.error "Failed to generate a face object, is still string; bad (#{@face})" if @face.is_a?(String)
+      LOG.error "Failed to generate a face object, is still string (#{@face})" if @face.is_a?(String)
       @face
     end
     def face=(face)
@@ -1098,10 +1102,16 @@
   
   class Author < Model
     attr_accessor :moiety, :name, :screenname, :chapter_list, :display, :unique_id, :default_face
-    serialize_ignore :faces, :chapters, :chapter_list, :allowed_params, :default_face
+    serialize_ignore :faces, :chapters, :chapter_list, :allowed_params, :default_face, :site_handler
     
     def allowed_params
       @allowed_params ||= [:chapter_list, :moiety, :name, :screenname, :display, :unique_id, :default_face]
+    end
+    def site_handler
+      return @site_handler unless @site_handler.nil?
+      handler_type = GlowficSiteHandlers.get_handler_for(self)
+      chapter_list.site_handlers[handler_type] ||= handler_type.new(group: group, chapters: chapter_list)
+      @site_handler ||= chapter_list.site_handlers[handler_type]
     end
     
     def initialize(params={})
@@ -1130,7 +1140,16 @@
       return @default_face if @default_face.is_a?(Face)
       
       if chapter_list
-        temp_face = chapter_list.get_face_by_id(@default_face)
+        new_face = chapter_list.get_face_by_id(@default_face)
+        new_face = site_handler.get_updated_face(new_face) if site_handler
+        if new_face
+          @default_face = new_face
+          chapter_list.replace_face(new_face)
+        end
+      end
+      
+      if site_handler and (not @default_face or @default_face.is_a?(String))
+        temp_face = site_handler.get_face_by_id(@default_face)
         if temp_face
           @default_face = temp_face
           chapter_list.replace_face(temp_face)
@@ -1138,7 +1157,7 @@
       end
       
       @default_face.author = self if @default_face and not @default_face.is_a?(String)
-      LOG.error "Failed to generate a face object, is still string; bad (#{@default_face})" if @default_face.is_a?(String)
+      LOG.error "Failed to generate a face object for default_face, is still string (#{@default_face})" if @default_face.is_a?(String)
       LOG.error "Default_face was non-nil, now nil? oops." unless @default_face.present?  
       @default_face
     end
@@ -1157,8 +1176,8 @@
         end
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
-      if default_face
-        hash[:default_face] = (default_face.is_a?(Face) ? default_face.unique_id : default_face)
+      if @default_face
+        hash[:default_face] = (@default_face.is_a?(Face) ? @default_face.unique_id : @default_face)
       end
       hash
     end
