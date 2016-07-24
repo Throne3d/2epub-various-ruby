@@ -953,11 +953,55 @@
       @skip_post_ordering = options.include?(:skip_post_ordering) ? options[:skip_post_ordering] : false
       @set_coauthors = options.include?(:set_coauthors) ? options[:set_coauthors] : :if_empty_board # alternatively :if_new_board
       
+      puts "Would you like to (1) do detected non-duplicate chapters, (2) do chapters with inputted IDs or (3) prompt for each chapter?"
+      while (input = STDIN.gets.chomp.strip.downcase) && input != '1' && input != '2' && input != '3'
+        puts "Unrecognized input."
+      end
+      chapter_prompt = nil
+      chapter_prompt = :do_all if input == '1'
+      chapter_prompt = :do_ids if input == '2'
+      chapter_prompt = :prompt if input == '3'
+      
+      if chapter_prompt == :do_ids
+        puts "Chapter faux-IDs: #{chapter_list.map(&:fauxID).uniq.compact * ', '}"
+        puts "Please input the IDs (format: community#entry-id(#thread-id), constellation#entry-id), asterisks allowed at the end of phrases, separated by spaces:"
+        input = STDIN.gets.chomp.strip.downcase
+      end
+      
       Post.record_timestamps = false
       Reply.record_timestamps = false
       chapter_count = chapter_list.count
       chapter_list.each_with_index do |chapter, i|
         (LOG.error "(#{i}/#{chapter_count}) Chapter has no entry: #{chapter}" and next) unless chapter.entry.present?
+        if chapter_prompt == :prompt
+          puts "Chapter: #{chapter}; should do? (Y/n)"
+          while (input = STDIN.gets.chomp.strip.downcase) && input != 'y' && input != 'n' && input != ''
+            puts "Unrecognized input."
+          end
+          if input == 'n'
+            LOG.info "(#{i}/#{chapter_count}) Skipping #{chapter} at user input"
+            next
+          end
+        elsif chapter_prompt == :do_ids
+          chapter_fauxid = chapter.fauxID
+          found = false
+          chapter_do.each do |chapter_id|
+            if chapter_id.strip.downcase == chapter_fauxid.strip.downcase
+              found = true
+              break
+            end
+            next unless chapter_id.end_with?('*')
+            chapter_id_match = chapter_id[0..-2]
+            if chapter_fauxid.start_with?(chapter_id_match)
+              found = true
+              break
+            end
+          end
+          unless found
+            LOG.info "(#{i}/#{chapter_count}) Skipping #{chapter}; fauxid (#{chapter_fauxid}) doesn't match list."
+            next
+          end
+        end
         threaded = false
         ([chapter.entry] + chapter.replies).each do |reply|
           next if reply.children.length <= 1
