@@ -1150,6 +1150,11 @@
       "#{display}"
     end
     
+    def default_face_id
+      return unless @default_face.present?
+      return @default_face if @default_face.is_a?(String)
+      @default_face.unique_id
+    end
     def default_face
       return unless @default_face.present?
       return @default_face if @default_face.is_a?(Face)

@@ -551,7 +551,7 @@
             @chapter_list.replace_face(face)
             if icon_element == default_icon
               icon_hash[:default] = face
-              params[:author].default_face = face if params[:author] && !params[:author].default_face.present?
+              params[:author].default_face = face if params[:author] && !params[:author].default_face_id.present?
             end
             @face_param_cache[face.unique_id] = params
             @face_url_cache[icon_src.sub(/https?:\/\//, '')] = face
@@ -1106,7 +1106,7 @@
             @chapter_list.replace_face(face)
             if default_icon == icon_element
               icon_hash[:default] = face
-              params[:author].default_face = face if params[:author]
+              params[:author].default_face = face if params[:author] && !params[:author].default_face_id.present?
             end
             
             @face_id_cache[face.unique_id] = face
