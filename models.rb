@@ -163,7 +163,7 @@
   class Chapters < Model
     attr_reader :chapters, :faces, :authors, :group, :trash_messages
     attr_accessor :group, :old_authors, :old_faces, :sort_chapters
-    serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces, :kept_authors, :kept_faces, :failed_authors, :failed_faces
+    serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces, :kept_authors, :kept_faces, :failed_authors, :failed_faces, :unpacked
     def initialize(options = {})
       @chapters = []
       @faces = []
