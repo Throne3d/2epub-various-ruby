@@ -359,7 +359,8 @@
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :entry, :pages, :check_pages, :replies, :sections, :authors, :entry, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_epub
+    attr_accessor :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :sections, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_epub
+    attr_reader :entry
     
     param_transform :name => :title, :name_extras => :title_extras
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
@@ -467,6 +468,7 @@
       replies.each do |reply|
         reply.keep_old_stuff
       end
+      entry.keep_old_stuff
       newval
     end
     
