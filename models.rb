@@ -437,6 +437,12 @@
       @replies.each do |reply|
         reply.chapter = self
       end
+      @replies
+    end
+    def entry=(newval)
+      @entry=newval
+      @entry.chapter = self
+      @entry
     end
     def sections
       if @sections.is_a?(String)
