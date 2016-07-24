@@ -1176,8 +1176,8 @@
         end
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
-      if default_face
-        hash[:default_face] = (default_face.is_a?(Face) ? default_face.unique_id : default_face)
+      if @default_face
+        hash[:default_face] = (@default_face.is_a?(Face) ? @default_face.unique_id : @default_face)
       end
       hash
     end
