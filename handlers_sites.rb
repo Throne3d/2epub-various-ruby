@@ -544,14 +544,13 @@
             params[:unique_id] = "#{user_id}##{params[:keyword]}"
             face = Face.new(params)
             icon_hash[params[:keyword]] = face
+            @chapter_list.replace_face(face)
             if icon_element == default_icon
               icon_hash[:default] = face
               params[:author].default_face = face if params[:author] && !params[:author].default_face.present?
             end
             @face_param_cache[face.unique_id] = params
             @face_url_cache[icon_src.sub(/https?:\/\//, '')] = face
-            
-            @chapter_list.replace_face(face)
           end
         end
         
@@ -1096,12 +1095,12 @@
             params[:chapter_list] = @chapter_list
             face = Face.new(params)
             icon_hash[icon_numid] = face
+            @chapter_list.replace_face(face)
             if default_icon == icon_element
               icon_hash[:default] = face
               params[:author].default_face = face if params[:author]
             end
             
-            @chapter_list.replace_face(face)
             @face_id_cache[face.unique_id] = face
             @face_param_cache[face.unique_id] = params
           end
