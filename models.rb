@@ -293,6 +293,9 @@
     def empty?
       chapters.empty?
     end
+    def map(&block)
+      chapters.map(&block)
+    end
     def each(&block)
       chapters.each(&block)
     end
