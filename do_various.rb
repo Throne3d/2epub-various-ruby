@@ -61,7 +61,14 @@ def main(args)
   abort "Unknown option. Please try with a valid option (call with no parameters to see some examples)." if process.empty?
   
   LOG.info "Process: #{process}"
-  option = option.sub(process_thing.to_s, '').sub(process_thing.to_s.gsub('_', ' '), '').strip.sub(/^\_/, '')
+  option = if option[process_thing.to_s]
+    option.sub(process_thing.to_s, '')
+  elsif option[process_thing2 = process_thing.to_s.gsub('_', ' ')]
+    option.sub(process_thing2, '')
+  else
+    LOG.error "process '#{process_thing.to_s}' could not be found in option: #{option}"
+    option
+  end.strip.sub(/^\_/, '')
   
   group_thing = nil
   showAuthors = false
