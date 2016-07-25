@@ -74,6 +74,7 @@
     opalescence: [:opal, :opalescence],
     zodiac: [:zodiac],
     silmaril: [:silm, :silmaril],
+    lighthouse: [:light, :lighthouse],
     
     glowfic: [:othersandbox, :sandbox2, :glowfic],
     constellation: [:const, :constellation, :glowfic2, :sandbox3],
@@ -102,6 +103,7 @@
     opalescence: "https://vast-journey-9935.herokuapp.com/boards/12",
     zodiac: "https://vast-journey-9935.herokuapp.com/boards/7",
     silmaril: "https://alicornutopia.dreamwidth.org/31812.html",
+    lighthouse: "https://vast-journey-9935.herokuapp.com/boards/16",
     
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
@@ -131,6 +133,7 @@
     opalescence: "Moriwen & Throne",
     zodiac: "Pedro & Throne",
     silmaril: "Alicorn & Lintamande",
+    lighthouse: "CuriousDiscoverer & Pedro",
     
     glowfic: "Misc",
     constellation: "Misc",
@@ -157,6 +160,7 @@
     opalescence: "Opalescence",
     zodiac: "Zodiac",
     silmaril: "Silmaril",
+    lighthouse: "Lighthouse",
     
     glowfic: "Glowfic Community",
     constellation: "Constellation",
