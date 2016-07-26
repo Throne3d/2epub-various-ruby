@@ -285,23 +285,29 @@ def main(args)
     changed = handler.output
     set_chapters_data(chapter_list, group) if changed
   elsif (process == :output_report)
-    date = option
-    date = date.gsub(/[^\d]/,' ').strip
-    date = nil if date.empty?
-    if date
-      date_bits = date.split(/\s+/)
-      day = date_bits.last.to_i
-      month = date_bits[date_bits.length-2].to_i
-      year = (date_bits.length > 2 ? date_bits[date_bits.length-3].to_i : DateTime.now.year)
-      date = Date.new(year, month, day)
-    end
-    
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Outputting a report for '#{group}'"
     
     params = {}
-    params[:date] = date if date
+    
+    if date_bit = option[/(\d+)((-|\s)?\d+)?{2}/]
+      date_bits = date_bit.split(/(-|\s)/)
+      day = date_bits.last.to_i
+      month = date_bits[date_bits.length-2].to_i
+      year = (date_bits.length > 2 ? date_bits[date_bits.length-3].to_i : DateTime.now.year)
+      
+      params[:date] = Date.new(year, month, day)
+      option = option.sub(date_bit, '').strip
+    end
+    
+    if early_bit = option[/(show)?[_\-\s]?earl(y|ier)/]
+      params[:show_earlier] = true
+      option = option.sub(early_bit, '').strip
+    end
+    
+    # TODO: "number" (number of posts in the past day) or whatever as an option
+    
     handler = GlowficOutputHandlers::ReportHandler
     handler = handler.new(chapter_list: chapter_list, group: group)
     handler.output(params)

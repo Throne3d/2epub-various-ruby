@@ -516,7 +516,7 @@
       return str
     end
     def output(options = {})
-      chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : (@chapters ? @chapters : nil)
+      chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : @chapters
       show_earlier = options.include?(:show_earlier) ? options[:show_earlier] : false
       @cont_replace = options.include?(:cont_replace) ? options[:cont_replace] : {/^ZZ+\d+-/ => ''}
       date = options.include?(:date) ? options[:date] : DateTime.now.to_date
