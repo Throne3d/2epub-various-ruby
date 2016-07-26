@@ -46,8 +46,6 @@ def main(args)
   process = :""
   group = :""
   
-  LOG.info "Option: #{option}"
-  
   process_thing = nil
   processes = {toc: :tocs, tocs: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, detail: :details, details: :details, process: :process, clean: :clean, rem: :remove, remove: :remove, stat: :stats, stats: :stats, :"do" => :"do", epubdo: :epubdo, repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
   # put these in order of "shortest match" to "longest match", so "toc" before "tocs" (larger match later, subsets before)
@@ -60,7 +58,6 @@ def main(args)
   
   abort "Unknown option. Please try with a valid option (call with no parameters to see some examples)." if process.empty?
   
-  LOG.info "Process: #{process}"
   option = if option[process_thing.to_s]
     option.sub(process_thing.to_s, '')
   elsif option[process_thing2 = process_thing.to_s.gsub('_', ' ')]
@@ -91,6 +88,8 @@ def main(args)
   
   OUTFILE.set_output_params(process, (group.empty? ? nil : group))
   
+  LOG.info "Option: #{option}"
+  LOG.info "Process: #{process}"
   LOG.info "Group: #{group}"
   LOG.info "Other params: #{option}" if option.present?
   
