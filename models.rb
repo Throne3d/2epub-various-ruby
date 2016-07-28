@@ -210,14 +210,14 @@
     end
     def keep_old_author(author_id)
       return nil unless old_authors.present?
-      @kept_authors ||= []
+      @kept_authors ||= {}
       @failed_authors ||= []
-      return get_author_by_id(author_id) if @kept_authors.include?(author_id)
+      return @kept_authors[author_id] if @kept_authors.key?(author_id)
       return if @failed_authors.include?(author_id)
       found_author = old_authors.find {|author| author.unique_id == author_id}
       if found_author.present?
         add_author(found_author)
-        @kept_authors << author_id
+        @kept_authors[author_id] = found_author
       else
         LOG.error "Failed to find an old author for ID #{author_id}"
         @failed_authors << author_id
@@ -243,14 +243,14 @@
     end
     def keep_old_face(face_id)
       return nil unless old_faces.present?
-      @kept_faces ||= []
+      @kept_faces ||= {}
       @failed_faces ||= []
-      return get_face_by_id(face_id) if @kept_faces.include?(face_id)
+      return @kept_faces[face_id] if @kept_faces.key?(face_id)
       return if @failed_faces.include?(face_id)
       found_face = old_faces.find {|face| face.unique_id == face_id}
       if found_face.present?
         add_face(found_face)
-        @kept_faces << face_id
+        @kept_faces[face_id] = found_face
       else
         LOG.error "Failed to find an old face for ID #{face_id}"
         @failed_faces << face_id
@@ -453,7 +453,7 @@
     end
     def authors
       @authors ||= []
-      if @authors.present? and @authors.select{|thing| thing.is_a?(String)}.present?
+      if @authors.detect{|thing| thing.is_a?(String)}
         premap = @authors
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
         if @authors.select{|thing| thing.nil?}.present?
