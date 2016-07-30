@@ -292,18 +292,18 @@
         @save_paths_used << save_path
         @rel_paths_used << rel_path
         
-        if chapter.processed_epub?
+        if chapter.processed_output?(@mode)
           message_count = chapter.replies.count+1
           splits = get_page_from_order_and_total(message_count, message_count)
           1.upto(splits) do |page_num|
             temp_path = get_chapter_path(chapter: chapter, group: @group, page: page_num)
-            chapter.processed_epub = false unless File.file?(temp_path)
+            chapter.processed_output.delete(@mode) unless File.file?(temp_path)
           end
           
-          LOG.error "#{chapter}: cached data was not found." unless chapter.processed_epub?
+          LOG.error "#{chapter}: cached data was not found." unless chapter.processed_output?(@mode)
         end
         
-        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used." and next) if chapter.processed_epub?
+        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used." and next) if chapter.processed_output?(@mode)
         
         @messages = get_message_orders(chapter).map{|count| (count >= 0 ? chapter.replies[count] : chapter.entry)}
         
@@ -383,7 +383,7 @@
           @files << {split_save_path => File.dirname(split_rel_path)}
         end
         
-        chapter.processed_epub = true
+        chapter.processed_output << @mode unless chapter.processed_output.include?(@mode)
         @changed = true
         LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter} (#{@split_htmls.length} split#{@split_htmls.length == 1 ? '' : 's'})"
       end
