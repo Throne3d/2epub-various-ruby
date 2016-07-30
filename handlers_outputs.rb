@@ -322,14 +322,19 @@
         temp_html = ''
         prev_page = 0
         done_headers = false
+        page_count = get_message_page(@messages.last)
         @message_htmls.each_with_index do |message_html, i|
           page = get_message_page(@messages[i])
           if prev_page != page
             if temp_html.present? && temp_html != html_start
+              temp_html += "<a class='navlink nextlink splitlink' href='#{get_chapter_path_bit(chapter: chapter, page: prev_page+1)}'>Next page of chapter &raquo;</a>\n" if @mode != :epub && prev_page < page_count
               temp_html << html_end
               @split_htmls << temp_html
             end
+            
+            # New HTML:
             temp_html = html_start
+            temp_html += "<a class='navlink prevlink splitlink' href='#{get_chapter_path_bit(chapter: chapter, page: page-1)}'>&laquo; Previous page of chapter</a>\n" if @mode != :epub && page > 1
             prev_page = page
           end
           unless done_headers
