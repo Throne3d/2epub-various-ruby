@@ -280,7 +280,7 @@
         
         (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used." and next) if chapter.processed_epub?
         
-        @messages = get_message_order(chapter).map{|count| (count >= 0 ? chapter.replies[order] : chapter.entry)}
+        @messages = get_message_order(chapter).map{|count| (count >= 0 ? chapter.replies[count] : chapter.entry)}
         
         @message_htmls = @messages.map do |message|
           @message = message
