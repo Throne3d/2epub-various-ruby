@@ -329,7 +329,7 @@
         end
         prev_bit[:_contents] ||= []
         if contents_allowed.present? && !contents_allowed.include?(get_relative_chapter_path(chapter: chapter))
-          LOG.info "Ignoring chapter: #{chapter}. Not in contents_allowed."
+          LOG.info "Ignoring chapter in NAV: #{chapter}. Not in contents_allowed."
         else
           prev_bit[:_contents] << {label: chapter.title, chapter: chapter}
         end
