@@ -234,6 +234,26 @@
       @message_orders[chapter_pathbit] = chapter_order
       chapter_order
     end
+    def get_message_page(message)
+      orders = get_message_orders(message.chapter)
+      val = (message == message.chapter.entry ? -1 : message.chapter.replies.index(message))
+      orderval = orders.index(val) + 1 # => entry is '1'
+      get_page_from_order_and_total(orderval, orders.length)
+    end
+    def get_page_from_order_and_total(order, total) #1-based order
+      page = if order <= @replies_per_split
+        1
+      elsif order <= (total.to_f / @replies_per_split).floor * @replies_per_split
+        # between 201 and the lowest multiple of 200 less than max, 400, 600, 800
+        (order.to_f / @replies_per_split).ceil
+      else
+        temp = (order.to_f / @replies_per_split).ceil # gives 2 for 399 and 400, give 3 for 599 and 600
+        if total % @replies_per_split < @min_replies_in_split # if we squish the last page
+          temp = temp - 1 # reduce the num
+        end
+        temp
+      end
+    end
     
     def output(chapter_list=nil)
       chapter_list = @chapters if chapter_list.nil? and @chapters
