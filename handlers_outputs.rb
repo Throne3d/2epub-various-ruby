@@ -287,7 +287,7 @@
       chapter_list.each_with_index do |chapter, i|
         @chapter = chapter
         (LOG.error "(#{i+1}/#{chapter_count}) #{chapter}: No entry for chapter." and next) unless chapter.entry
-        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
+        (LOG.info "#{chapter}: Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
         save_path = get_chapter_path(chapter: chapter, group: @group)
         (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: Duplicate chapter not added again" and next) if @save_paths_used.include?(save_path)
         rel_path = get_relative_chapter_path(chapter: chapter)
