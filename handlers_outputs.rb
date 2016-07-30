@@ -22,13 +22,13 @@
     def initialize(options={})
       super options
       require 'eeepub'
-      @group_folder = File.join('output', 'epub', @group.to_s)
+      @mode = (options.key?(:mode) ? options[:mode] : :epub)
+      @group_folder = File.join('output', @mode.to_s, @group.to_s)
       @style_folder = File.join(@group_folder, 'style')
       @html_folder = File.join(@group_folder, 'html')
       @images_folder = File.join(@group_folder, 'images')
       @replies_per_split = (options.key?(:replies_per_split) ? options[:replies_per_split] : 200)
       @min_replies_in_split = (options.key?(:min_replies_in_split) ? options[:min_replies_in_split] : 50)
-      @do_epub = (options.key?(:do_epub) ? options[:do_epub] : true)
       FileUtils::mkdir_p @style_folder
       FileUtils::mkdir_p @html_folder
       FileUtils::mkdir_p @images_folder
@@ -420,7 +420,7 @@
         end
       end
       
-      if @do_epub
+      if @mode == :epub
         group_name = @group
         uri = URI.parse(FIC_TOCS[group_name])
         uri_host = uri.host
