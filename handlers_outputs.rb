@@ -197,7 +197,7 @@
       html
     end
     
-    def get_message_order(chapter)
+    def get_message_orders(chapter) # [0] is the 0th, [1] is the 2nd pos, value is -1 if entry else position in chapter.replies
       @message_orders ||= {}
       chapter_pathbit = get_chapter_path_bit(chapter)
       return @message_orders[chapter_pathbit] if @message_orders.key?(chapter_pathbit)
@@ -282,7 +282,7 @@
         
         (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used." and next) if chapter.processed_epub?
         
-        @messages = get_message_order(chapter).map{|count| (count >= 0 ? chapter.replies[count] : chapter.entry)}
+        @messages = get_message_orders(chapter).map{|count| (count >= 0 ? chapter.replies[count] : chapter.entry)}
         
         @message_htmls = @messages.map do |message|
           @message = message
