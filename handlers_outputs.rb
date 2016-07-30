@@ -125,21 +125,24 @@
       comment_path || comment_url
     end
     def get_chapter_path(options = {})
-      chapter_url = options[:chapter].url if options.key?(:chapter)
-      chapter_url = options[:chapter_url] if options.key?(:chapter_url)
+      chapter = options.is_a?(Chapter) ? options : (options.is_a?(Hash) && options.key?(:chapter) ? options[:chapter] : nil)
+      chapter_url = chapter.url if chapter
+      chapter_url ||= options.is_a?(String) ? options : (options.is_a?(Hash) && options.key?(:chapter_url) ? options[:chapter_url] : nil)
       group = options.key?(:group) ? options[:group] : @group
       
       save_path = File.join(@html_folder, get_chapter_path_bit(options))
     end
     def get_relative_chapter_path(options = {})
-      chapter_url = options[:chapter].url if options.key?(:chapter)
-      chapter_url = options[:chapter_url] if options.key?(:chapter_url)
+      chapter = options.is_a?(Chapter) ? options : (options.is_a?(Hash) && options.key?(:chapter) ? options[:chapter] : nil)
+      chapter_url = chapter.url if chapter
+      chapter_url ||= options.is_a?(String) ? options : (options.is_a?(Hash) && options.key?(:chapter_url) ? options[:chapter_url] : nil)
       
       File.join('EPUB', 'html', get_chapter_path_bit(options))
     end
     def get_chapter_path_bit(options = {})
-      chapter_url = options[:chapter].url if options.key?(:chapter)
-      chapter_url = options[:chapter_url] if options.key?(:chapter_url)
+      chapter = options.is_a?(Chapter) ? options : (options.is_a?(Hash) && options.key?(:chapter) ? options[:chapter] : nil)
+      chapter_url = chapter.url if chapter
+      chapter_url ||= options.is_a?(String) ? options : (options.is_a?(Hash) && options.key?(:chapter_url) ? options[:chapter_url] : nil)
       
       thread = get_url_param(chapter_url, 'thread')
       thread = nil if thread.nil? or thread.empty?
