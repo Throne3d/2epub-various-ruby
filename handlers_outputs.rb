@@ -193,6 +193,44 @@
       html
     end
     
+    def get_message_order(chapter)
+      @message_orders ||= {}
+      chapter_pathbit = get_chapter_path_bit(chapter)
+      return @message_orders[chapter_pathbit] if @message_orders.key?(chapter_pathbit)
+      
+      chapter_order = []
+      message = chapter.entry
+      while message
+        message_num = (message == chapter.entry ? -1 : chapter.replies.index(message))
+        chapter_order << message_num unless chapter_order.include?(message_num)
+        new_msg = nil
+        
+        message.children.each do |child|
+          next if chapter_order.include?(chapter.replies.index(child))
+          new_msg = child
+          break
+        end
+        unless new_msg
+          new_msg = message.parent
+        end
+        
+        message = new_msg
+      end
+      
+      warned = false
+      chapter.replies.each do |message|
+        message_num = (message == chapter.entry ? -1 : chapter.replies.index(message))
+        unless chapter_order.include?(message_num)
+          chapter_order << message_num
+          LOG.error "Chapter #{chapter} didn't get all messages via depth traversal." unless warned
+          warned = true
+        end
+      end
+      
+      @message_orders[chapter_pathbit] = chapter_order
+      chapter_order
+    end
+    
     def output(chapter_list=nil)
       chapter_list = @chapters if chapter_list.nil? and @chapters
       (LOG.fatal "No chapters given!" and return) unless chapter_list
@@ -242,23 +280,7 @@
         
         (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used." and next) if chapter.processed_epub?
         
-        @messages = []
-        message = @chapter.entry
-        while message
-          @messages << message unless @messages.include?(message)
-          new_msg = nil
-          
-          message.children.each do |child|
-            next if @messages.include?(child)
-            new_msg = child
-            break
-          end
-          unless new_msg
-            new_msg = message.parent
-          end
-          
-          message = new_msg
-        end
+        @messages = get_message_order(chapter).map{|count| (count >= 0 ? chapter.replies[order] : chapter.entry)}
         
         @message_htmls = @messages.map do |message|
           @message = message
