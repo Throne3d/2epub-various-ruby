@@ -375,7 +375,7 @@
           page.css('a').each do |a_element|
             a_href = a_element.try(:[], :href)
             next unless a_href
-            a_href = "https://vast-journey-9935.herokuapp.com" + a_href if a_href.start_with?(/\/(replies|posts|galleries|characters|users|templates|icons)\//)
+            a_href = "https://vast-journey-9935.herokuapp.com" + a_href if a_href[/^\/(replies|posts|galleries|characters|users|templates|icons)\//]
             a_element[:href] = get_comment_path(a_href)
           end
           
