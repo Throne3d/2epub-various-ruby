@@ -264,8 +264,6 @@
       chapter_count = chapter_list.count
       chapter_list.each_with_index do |chapter, i|
         @chapter = chapter
-        #messages = [@chapter.entry] + @chapter.replies
-        #messages.reject! {|element| element.nil? }
         (LOG.error "(#{i+1}/#{chapter_count}) #{chapter}: No entry for chapter." and next) unless chapter.entry
         (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
         save_path = get_chapter_path(chapter: chapter, group: @group)
