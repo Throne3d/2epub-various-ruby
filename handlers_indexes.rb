@@ -199,6 +199,10 @@ module GlowficIndexHandlers
       else
         chapter_link = section.at_css('> a')
         if chapter_link
+          if @group == :silmaril
+            links = section.css('> a')
+            chapter_link = links.detect{|link| link[:href]["vast-journey-9935.herokuapp.com/posts/"]} || chapter_link if links.length > 1
+          end
           chapter_links = [chapter_link]
         else
           sublist = section.at_css('> ul')
