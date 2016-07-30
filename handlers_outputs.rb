@@ -109,10 +109,11 @@
         if comment_id
           reply = chapter.replies.detect {|reply| reply.id == comment_id}
           if reply
+            page = get_message_page(reply)
             if reply == chapter.replies.first
-              comment_path = get_chapter_path_bit(chapter: chapter)
+              comment_path = get_chapter_path_bit(chapter: chapter, page: page)
             else
-              comment_path = get_chapter_path_bit(chapter: chapter) + "#comment-#{reply.id}"
+              comment_path = get_chapter_path_bit(chapter: chapter, page: page) + "#comment-#{reply.id}"
             end
           else
             next
@@ -260,10 +261,6 @@
       chapter_list = @chapters if chapter_list.nil? and @chapters
       (LOG.fatal "No chapters given!" and return) unless chapter_list
       
-      template_chapter = ''
-      open('template_chapter.erb') do |file|
-        template_chapter = file.read
-      end
       template_message = ''
       open('template_message.erb') do |file|
         template_message = file.read
@@ -292,12 +289,17 @@
         (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: Duplicate chapter not added again" and next) if @save_paths_used.include?(save_path)
         rel_path = get_relative_chapter_path(chapter: chapter)
         
-        @files << {save_path => File.dirname(rel_path)}
         @save_paths_used << save_path
         @rel_paths_used << rel_path
         
         if chapter.processed_epub?
-          chapter.processed_epub = File.file?(save_path)
+          message_count = chapter.replies.count+1
+          splits = get_page_from_order_and_total(message_count, message_count)
+          1.upto(splits) do |page_num|
+            temp_path = get_chapter_path(chapter: chapter, group: @group, page: page_num)
+            chapter.processed_epub = false unless File.file?(temp_path)
+          end
+          
           LOG.error "#{chapter}: cached data was not found." unless chapter.processed_epub?
         end
         
@@ -312,30 +314,78 @@
           erb.result b
         end
         
-        erb = ERB.new(template_chapter, 0, '-')
-        b = binding
-        page_data = erb.result b
+        @split_htmls = []
         
+        html_start = "<!doctype html>\n<html>\n<head><meta charset=\"UTF-8\" /><link rel=\"stylesheet\" href=\"../style/default.css\" type=\"text/css\" /></head>\n<body>\n"
+        html_end = "</body>\n</html>\n"
         
-        page = Nokogiri::HTML(page_data)
-        page.css('img').each do |img_element|
-          img_src = img_element.try(:[], :src)
-          next unless img_src
-          next unless img_src.start_with?('http://') or img_src.start_with?('https://')
-          img_element[:src] = get_face_path(img_src)
-        end
-        page.css('a').each do |a_element|
-          a_href = a_element.try(:[], :href)
-          next unless a_href
-          a_element[:href] = get_comment_path(a_href)
+        temp_html = ''
+        prev_page = 0
+        done_headers = false
+        @message_htmls.each_with_index do |message_html, i|
+          page = get_message_page(@messages[i])
+          if prev_page != page
+            if temp_html.present? && temp_html != html_start
+              temp_html << html_end
+              @split_htmls << temp_html
+            end
+            temp_html = html_start
+            prev_page = page
+          end
+          unless done_headers
+            temp_html += "<div class=\"chapter-header\">\n"
+            temp_html << "<h2 class=\"section-title\">#{h(chapter.sections * ', ')}</h2>\n" if chapter.sections.present?
+            temp_html << "<h3 class=\"entry-title\">#{h(chapter.title)}</h3>\n"
+            temp_html << "<strong class=\"entry-subtitle\">#{h(chapter.title_extras)}</strong><br />\n" if chapter.title_extras
+            temp_html << "<strong class=\"entry-authors\">Authors: #{h(chapter.moieties * ', ')}</strong><br />\n" if @show_authors and @chapter.moieties.present?
+            temp_html << "</div>\n"
+            done_headers = true
+          end
+          
+          parent = @messages[i].parent
+          if parent && parent.children && parent.children.length > 1
+            child_index = parent.children.index(@messages[i])
+            if child_index == 0
+              temp_html += "<div class=\"branchnote branchnote1\">This is a branching point! Branch 1:</div>"
+            else
+              temp_html += "<div class=\"branchnote branchnote#{child_index+1}\">The previous branch has ended. Branch #{child_index+1}:</div>"
+            end
+          end
+          temp_html += message_html << "\n"
         end
         
-        open(save_path, 'w') do |file|
-          file.write page.to_xhtml(indent_text: '', encoding: 'UTF-8')
+        if temp_html.present? && temp_html != html_start
+          temp_html << html_end
+          @split_htmls << temp_html
         end
+        
+        @split_htmls.each_with_index do |page_data, i|
+          page = Nokogiri::HTML(page_data)
+          page.css('img').each do |img_element|
+            img_src = img_element.try(:[], :src)
+            next unless img_src
+            next unless img_src.start_with?('http://') or img_src.start_with?('https://')
+            img_element[:src] = get_face_path(img_src)
+          end
+          page.css('a').each do |a_element|
+            a_href = a_element.try(:[], :href)
+            next unless a_href
+            a_href = "https://vast-journey-9935.herokuapp.com" + a_href if a_href.start_with?(/\/(replies|posts|galleries|characters|users|templates|icons)\//)
+            a_element[:href] = get_comment_path(a_href)
+          end
+          
+          split_save_path = get_chapter_path(chapter: chapter, group: @group, page: i+1)
+          split_rel_path = get_relative_chapter_path(chapter: chapter, page: i+1)
+          
+          open(split_save_path, 'w') do |file|
+            file.write page.to_xhtml(indent_text: '', encoding: 'UTF-8')
+          end
+          @files << {split_save_path => File.dirname(split_rel_path)}
+        end
+        
         chapter.processed_epub = true
         @changed = true
-        LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter}"
+        LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter} (#{@split_htmls.length} split#{@split_htmls.length == 1 ? '' : 's'})"
       end
       
       nav_bits = {}
