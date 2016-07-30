@@ -98,7 +98,6 @@
         return comment_url
       end
       
-      #TODO: somehow map the dreamwidth comment IDs to the internal IDs? if they're not already? they should be. hm.
       comment_path = nil
       @chapters.each do |chapter|
         next unless chapter.shortURL.start_with?(thread_thing)
