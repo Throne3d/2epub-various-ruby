@@ -266,10 +266,10 @@
         @chapter = chapter
         #messages = [@chapter.entry] + @chapter.replies
         #messages.reject! {|element| element.nil? }
-        (LOG.error "No entry for chapter." and next) unless chapter.entry
-        (LOG.info "Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
+        (LOG.error "(#{i+1}/#{chapter_count}) #{chapter}: No entry for chapter." and next) unless chapter.entry
+        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
         save_path = get_chapter_path(chapter: chapter, group: @group)
-        (LOG.info "Duplicate chapter not added again" and next) if @save_paths_used.include?(save_path)
+        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: Duplicate chapter not added again" and next) if @save_paths_used.include?(save_path)
         rel_path = get_relative_chapter_path(chapter: chapter)
         
         @files << {save_path => File.dirname(rel_path)}
