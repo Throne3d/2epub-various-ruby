@@ -18,6 +18,9 @@
   
   class EpubHandler < OutputHandler
     include ERB::Util
+    
+    REPLIES_PER_SPLIT = 200
+    MIN_REPLIES_IN_SPLIT = 50
     def initialize(options={})
       super options
       require 'eeepub'
