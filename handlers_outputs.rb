@@ -390,7 +390,7 @@
         
         chapter.processed_output << @mode unless chapter.processed_output.include?(@mode)
         @changed = true
-        LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter} (#{@split_htmls.length} split#{@split_htmls.length == 1 ? '' : 's'})"
+        LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter}" + (@split_htmls.length > 1 ? " (#{@split_htmls.length} splits)" : '')
       end
       
       nav_bits = {}
