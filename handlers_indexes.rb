@@ -745,6 +745,12 @@ module GlowficIndexHandlers
     def toc_to_chapterlist(options = {}, &block)
       list = if @group == :test
         [
+          {url: "http://edgeofyourseat.dreamwidth.org/1949.html?style=site",
+          title: "he couldn't have imagined",
+          sections: ["Effulgence", "make a wish"]},
+          {url: "http://autokinetic.dreamwidth.org/783.html?style=site",
+          title: "(admissions procedures)",
+          sections: ["Effulgence", "dance between the stars"]},
           {url: "https://vast-journey-9935.herokuapp.com/posts/43",
           title: "Book of Discovery",
           sections: ["Zodiac", "Book of the Moon"]},
