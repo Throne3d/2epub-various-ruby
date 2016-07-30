@@ -28,6 +28,7 @@
       @images_folder = File.join(@group_folder, 'images')
       @replies_per_split = (options.key?(:replies_per_split) ? options[:replies_per_split] : 200)
       @min_replies_in_split = (options.key?(:min_replies_in_split) ? options[:min_replies_in_split] : 50)
+      @do_epub = (options.key?(:do_epub) ? options[:do_epub] : true)
       FileUtils::mkdir_p @style_folder
       FileUtils::mkdir_p @html_folder
       FileUtils::mkdir_p @images_folder
@@ -348,24 +349,26 @@
         end
       end
       
-      group_name = @group
-      uri = URI.parse(FIC_TOCS[group_name])
-      uri_host = uri.host
-      uri_host = '' unless uri_host
-      files_list = @files
-      epub_path = "output/epub/#{@group}.epub"
-      epub = EeePub.make do
-        title FIC_NAMESTRINGS[group_name]
-        creator FIC_AUTHORSTRINGS[group_name]
-        publisher uri_host
-        date DateTime.now.strftime('%Y-%m-%d')
-        identifier FIC_TOCS[group_name], scheme: 'URL'
-        uid "glowfic-#{group_name}"
-        
-        files files_list
-        nav nav_array
+      if @do_epub
+        group_name = @group
+        uri = URI.parse(FIC_TOCS[group_name])
+        uri_host = uri.host
+        uri_host = '' unless uri_host
+        files_list = @files
+        epub_path = "output/epub/#{@group}.epub"
+        epub = EeePub.make do
+          title FIC_NAMESTRINGS[group_name]
+          creator FIC_AUTHORSTRINGS[group_name]
+          publisher uri_host
+          date DateTime.now.strftime('%Y-%m-%d')
+          identifier FIC_TOCS[group_name], scheme: 'URL'
+          uid "glowfic-#{group_name}"
+          
+          files files_list
+          nav nav_array
+        end
+        epub.save(epub_path)
       end
-      epub.save(epub_path)
       @changed
     end
   end
