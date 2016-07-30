@@ -147,12 +147,13 @@
       
       thread = get_url_param(chapter_url, 'thread')
       thread = nil if thread.nil? or thread.empty?
+      page = options.is_a?(Hash) && (options.key?(:split) || options.key?(:page)) ? (options[:split] || options[:page]) : 1 # 1-based.
       
       uri = URI.parse(chapter_url)
       save_file = uri.host.sub('.dreamwidth.org', '').sub('vast-journey-9935.herokuapp.com', 'constellation')
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?('/')
-      save_file += '-' + uri_path.sub('.html', '') + (thread ? "-#{thread}" : '') + '.html'
+      save_file += '-' + uri_path.sub('.html', '') + (thread ? "-#{thread}" : '') + (page > 1 ? '-split%03d' % page : '') + '.html'
       save_path = save_file.gsub('/', '-')
       File.join(save_path)
     end
