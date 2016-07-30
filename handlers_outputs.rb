@@ -19,8 +19,6 @@
   class EpubHandler < OutputHandler
     include ERB::Util
     
-    REPLIES_PER_SPLIT = 200
-    MIN_REPLIES_IN_SPLIT = 50
     def initialize(options={})
       super options
       require 'eeepub'
@@ -28,6 +26,8 @@
       @style_folder = File.join(@group_folder, 'style')
       @html_folder = File.join(@group_folder, 'html')
       @images_folder = File.join(@group_folder, 'images')
+      @replies_per_split = (options.key?(:replies_per_split) ? options[:replies_per_split] : 200)
+      @min_replies_in_split = (options.key?(:min_replies_in_split) ? options[:min_replies_in_split] : 50)
       FileUtils::mkdir_p @style_folder
       FileUtils::mkdir_p @html_folder
       FileUtils::mkdir_p @images_folder
