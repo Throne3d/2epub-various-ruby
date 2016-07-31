@@ -10,6 +10,7 @@
     
     def file=(filename)
       @file.close if @file
+      FileUtils::mkdir_p(File.dirname(filename))
       @file = File.open(filename, 'a+')
       @file.sync = true
     end
