@@ -18,13 +18,17 @@
   
   class EpubHandler < OutputHandler
     include ERB::Util
+    
     def initialize(options={})
       super options
       require 'eeepub'
-      @group_folder = File.join('output', 'epub', @group.to_s)
+      @mode = (options.key?(:mode) ? options[:mode] : :epub)
+      @group_folder = File.join('output', @mode.to_s, @group.to_s)
       @style_folder = File.join(@group_folder, 'style')
       @html_folder = File.join(@group_folder, 'html')
       @images_folder = File.join(@group_folder, 'images')
+      @replies_per_split = (options.key?(:replies_per_split) ? options[:replies_per_split] : 200)
+      @min_replies_in_split = (options.key?(:min_replies_in_split) ? options[:min_replies_in_split] : 50)
       FileUtils::mkdir_p @style_folder
       FileUtils::mkdir_p @html_folder
       FileUtils::mkdir_p @images_folder
@@ -98,7 +102,6 @@
         return comment_url
       end
       
-      #TODO: somehow map the dreamwidth comment IDs to the internal IDs? if they're not already? they should be. hm.
       comment_path = nil
       @chapters.each do |chapter|
         next unless chapter.shortURL.start_with?(thread_thing)
@@ -106,10 +109,11 @@
         if comment_id
           reply = chapter.replies.detect {|reply| reply.id == comment_id}
           if reply
+            page = get_message_page(reply)
             if reply == chapter.replies.first
-              comment_path = get_chapter_path_bit(chapter: chapter)
+              comment_path = get_chapter_path_bit(chapter: chapter, page: page)
             else
-              comment_path = get_chapter_path_bit(chapter: chapter) + "#comment-#{reply.id}"
+              comment_path = get_chapter_path_bit(chapter: chapter, page: page) + "#comment-#{reply.id}"
             end
           else
             next
@@ -123,30 +127,34 @@
       comment_path || comment_url
     end
     def get_chapter_path(options = {})
-      chapter_url = options[:chapter].url if options.key?(:chapter)
-      chapter_url = options[:chapter_url] if options.key?(:chapter_url)
+      chapter = options.is_a?(Chapter) ? options : (options.is_a?(Hash) && options.key?(:chapter) ? options[:chapter] : nil)
+      chapter_url = chapter.url if chapter
+      chapter_url ||= options.is_a?(String) ? options : (options.is_a?(Hash) && options.key?(:chapter_url) ? options[:chapter_url] : nil)
       group = options.key?(:group) ? options[:group] : @group
       
       save_path = File.join(@html_folder, get_chapter_path_bit(options))
     end
     def get_relative_chapter_path(options = {})
-      chapter_url = options[:chapter].url if options.key?(:chapter)
-      chapter_url = options[:chapter_url] if options.key?(:chapter_url)
+      chapter = options.is_a?(Chapter) ? options : (options.is_a?(Hash) && options.key?(:chapter) ? options[:chapter] : nil)
+      chapter_url = chapter.url if chapter
+      chapter_url ||= options.is_a?(String) ? options : (options.is_a?(Hash) && options.key?(:chapter_url) ? options[:chapter_url] : nil)
       
       File.join('EPUB', 'html', get_chapter_path_bit(options))
     end
     def get_chapter_path_bit(options = {})
-      chapter_url = options[:chapter].url if options.key?(:chapter)
-      chapter_url = options[:chapter_url] if options.key?(:chapter_url)
+      chapter = options.is_a?(Chapter) ? options : (options.is_a?(Hash) && options.key?(:chapter) ? options[:chapter] : nil)
+      chapter_url = chapter.url if chapter
+      chapter_url ||= options.is_a?(String) ? options : (options.is_a?(Hash) && options.key?(:chapter_url) ? options[:chapter_url] : nil)
       
       thread = get_url_param(chapter_url, 'thread')
       thread = nil if thread.nil? or thread.empty?
+      page = options.is_a?(Hash) && (options.key?(:split) || options.key?(:page)) ? (options[:split] || options[:page]) : 1 # 1-based.
       
       uri = URI.parse(chapter_url)
       save_file = uri.host.sub('.dreamwidth.org', '').sub('vast-journey-9935.herokuapp.com', 'constellation')
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?('/')
-      save_file += '-' + uri_path.sub('.html', '') + (thread ? "-#{thread}" : '') + '.html'
+      save_file += '-' + uri_path.sub('.html', '') + (thread ? "-#{thread}" : '') + (page > 1 ? '-split%03d' % page : '') + '.html'
       save_path = save_file.gsub('/', '-')
       File.join(save_path)
     end
@@ -191,14 +199,68 @@
       html
     end
     
+    def get_message_orders(chapter) # [0] is the 0th, [1] is the 2nd pos, value is -1 if entry else position in chapter.replies
+      @message_orders ||= {}
+      chapter_pathbit = get_chapter_path_bit(chapter)
+      return @message_orders[chapter_pathbit] if @message_orders.key?(chapter_pathbit)
+      
+      chapter_order = []
+      message = chapter.entry
+      while message
+        message_num = (message == chapter.entry ? -1 : chapter.replies.index(message))
+        chapter_order << message_num unless chapter_order.include?(message_num)
+        new_msg = nil
+        
+        message.children.each do |child|
+          next if chapter_order.include?(chapter.replies.index(child))
+          new_msg = child
+          break
+        end
+        unless new_msg
+          new_msg = message.parent
+        end
+        
+        message = new_msg
+      end
+      
+      warned = false
+      chapter.replies.each do |message|
+        message_num = (message == chapter.entry ? -1 : chapter.replies.index(message))
+        unless chapter_order.include?(message_num)
+          chapter_order << message_num
+          LOG.error "Chapter #{chapter} didn't get all messages via depth traversal." unless warned
+          warned = true
+        end
+      end
+      
+      @message_orders[chapter_pathbit] = chapter_order
+      chapter_order
+    end
+    def get_message_page(message)
+      orders = get_message_orders(message.chapter)
+      val = (message == message.chapter.entry ? -1 : message.chapter.replies.index(message))
+      orderval = orders.index(val) + 1 # => entry is '1'
+      get_page_from_order_and_total(orderval, orders.length)
+    end
+    def get_page_from_order_and_total(order, total) #1-based order
+      page = if order <= @replies_per_split
+        1
+      elsif order <= (total.to_f / @replies_per_split).floor * @replies_per_split
+        # between 201 and the lowest multiple of 200 less than max, 400, 600, 800
+        (order.to_f / @replies_per_split).ceil
+      else
+        temp = (order.to_f / @replies_per_split).ceil # gives 2 for 399 and 400, give 3 for 599 and 600
+        if total % @replies_per_split < @min_replies_in_split # if we squish the last page
+          temp = temp - 1 # reduce the num
+        end
+        temp
+      end
+    end
+    
     def output(chapter_list=nil)
       chapter_list = @chapters if chapter_list.nil? and @chapters
       (LOG.fatal "No chapters given!" and return) unless chapter_list
       
-      template_chapter = ''
-      open('template_chapter.erb') do |file|
-        template_chapter = file.read
-      end
       template_message = ''
       open('template_message.erb') do |file|
         template_message = file.read
@@ -221,42 +283,29 @@
       chapter_count = chapter_list.count
       chapter_list.each_with_index do |chapter, i|
         @chapter = chapter
-        #messages = [@chapter.entry] + @chapter.replies
-        #messages.reject! {|element| element.nil? }
-        (LOG.error "No entry for chapter." and next) unless chapter.entry
-        (LOG.info "Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
+        (LOG.error "(#{i+1}/#{chapter_count}) #{chapter}: No entry for chapter." and next) unless chapter.entry
+        (LOG.info "#{chapter}: Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
         save_path = get_chapter_path(chapter: chapter, group: @group)
-        (LOG.info "Duplicate chapter not added again" and next) if @save_paths_used.include?(save_path)
+        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: Duplicate chapter not added again" and next) if @save_paths_used.include?(save_path)
         rel_path = get_relative_chapter_path(chapter: chapter)
         
-        @files << {save_path => File.dirname(rel_path)}
         @save_paths_used << save_path
         @rel_paths_used << rel_path
         
-        if chapter.processed_epub?
-          chapter.processed_epub = File.file?(save_path)
-          LOG.error "#{chapter}: cached data was not found." unless chapter.processed_epub?
-        end
-        
-        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used." and next) if chapter.processed_epub?
-        
-        @messages = []
-        message = @chapter.entry
-        while message
-          @messages << message unless @messages.include?(message)
-          new_msg = nil
-          
-          message.children.each do |child|
-            next if @messages.include?(child)
-            new_msg = child
-            break
-          end
-          unless new_msg
-            new_msg = message.parent
+        if chapter.processed_output?(@mode)
+          message_count = chapter.replies.count+1
+          splits = get_page_from_order_and_total(message_count, message_count)
+          1.upto(splits) do |page_num|
+            temp_path = get_chapter_path(chapter: chapter, group: @group, page: page_num)
+            chapter.processed_output.delete(@mode) unless File.file?(temp_path)
           end
           
-          message = new_msg
+          LOG.error "#{chapter}: cached data was not found." unless chapter.processed_output?(@mode)
         end
+        
+        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used." and next) if chapter.processed_output?(@mode)
+        
+        @messages = get_message_orders(chapter).map{|count| (count >= 0 ? chapter.replies[count] : chapter.entry)}
         
         @message_htmls = @messages.map do |message|
           @message = message
@@ -265,30 +314,83 @@
           erb.result b
         end
         
-        erb = ERB.new(template_chapter, 0, '-')
-        b = binding
-        page_data = erb.result b
+        @split_htmls = []
         
+        html_start = "<!doctype html>\n<html>\n<head><meta charset=\"UTF-8\" /><link rel=\"stylesheet\" href=\"../style/default.css\" type=\"text/css\" /></head>\n<body>\n"
+        html_end = "</body>\n</html>\n"
         
-        page = Nokogiri::HTML(page_data)
-        page.css('img').each do |img_element|
-          img_src = img_element.try(:[], :src)
-          next unless img_src
-          next unless img_src.start_with?('http://') or img_src.start_with?('https://')
-          img_element[:src] = get_face_path(img_src)
-        end
-        page.css('a').each do |a_element|
-          a_href = a_element.try(:[], :href)
-          next unless a_href
-          a_element[:href] = get_comment_path(a_href)
+        temp_html = ''
+        prev_page = 0
+        done_headers = false
+        page_count = get_message_page(@messages.last)
+        @message_htmls.each_with_index do |message_html, i|
+          page = get_message_page(@messages[i])
+          if prev_page != page
+            if temp_html.present? && temp_html != html_start
+              temp_html += "<a class='navlink nextlink splitlink' href='#{get_chapter_path_bit(chapter: chapter, page: prev_page+1)}'>Next page of chapter &raquo;</a>\n" if @mode != :epub && prev_page < page_count
+              temp_html << html_end
+              @split_htmls << temp_html
+            end
+            
+            # New HTML:
+            temp_html = html_start
+            temp_html += "<a class='navlink prevlink splitlink' href='#{get_chapter_path_bit(chapter: chapter, page: page-1)}'>&laquo; Previous page of chapter</a>\n" if @mode != :epub && page > 1
+            prev_page = page
+          end
+          unless done_headers
+            temp_html += "<div class=\"chapter-header\">\n"
+            temp_html << "<h2 class=\"section-title\">#{h(chapter.sections * ', ')}</h2>\n" if chapter.sections.present?
+            temp_html << "<h3 class=\"entry-title\">#{h(chapter.title)}</h3>\n"
+            temp_html << "<strong class=\"entry-subtitle\">#{h(chapter.title_extras)}</strong><br />\n" if chapter.title_extras
+            temp_html << "<strong class=\"entry-authors\">Authors: #{h(chapter.moieties * ', ')}</strong><br />\n" if @show_authors and @chapter.moieties.present?
+            temp_html << "</div>\n"
+            done_headers = true
+          end
+          
+          parent = @messages[i].parent
+          if parent && parent.children && parent.children.length > 1
+            child_index = parent.children.index(@messages[i])
+            if child_index == 0
+              temp_html += "<div class=\"branchnote branchnote1\">This is a branching point! Branch 1:</div>"
+            else
+              temp_html += "<div class=\"branchnote branchnote#{child_index+1}\">The previous branch has ended. Branch #{child_index+1}:</div>"
+            end
+          end
+          temp_html += message_html << "\n"
         end
         
-        open(save_path, 'w') do |file|
-          file.write page.to_xhtml(indent_text: '', encoding: 'UTF-8')
+        if temp_html.present? && temp_html != html_start
+          temp_html << html_end
+          @split_htmls << temp_html
         end
-        chapter.processed_epub = true
+        
+        @split_htmls.each_with_index do |page_data, i|
+          page = Nokogiri::HTML(page_data)
+          page.css('img').each do |img_element|
+            img_src = img_element.try(:[], :src)
+            next unless img_src
+            next unless img_src.start_with?('http://') or img_src.start_with?('https://')
+            img_element[:src] = get_face_path(img_src)
+          end
+          page.css('a').each do |a_element|
+            a_href = a_element.try(:[], :href)
+            next unless a_href
+            a_href = "https://vast-journey-9935.herokuapp.com" + a_href if a_href[/^\/(replies|posts|galleries|characters|users|templates|icons)\//]
+            a_element[:href] = get_comment_path(a_href)
+          end
+          
+          split_save_path = get_chapter_path(chapter: chapter, group: @group, page: i+1)
+          split_rel_path = get_relative_chapter_path(chapter: chapter, page: i+1)
+          
+          open(split_save_path, 'w') do |file|
+            file.write page.to_xhtml(indent_text: '', encoding: 'UTF-8')
+          end
+          @files << {split_save_path => File.dirname(split_rel_path)}
+        end
+        
+        chapter.processed_output << @mode unless chapter.processed_output.include?(@mode)
         @changed = true
-        LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter}"
+        LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter}" + (@split_htmls.length > 1 ? " (#{@split_htmls.length} splits)" : '')
       end
       
       nav_bits = {}
@@ -303,7 +405,7 @@
         end
         prev_bit[:_contents] ||= []
         if contents_allowed.present? && !contents_allowed.include?(get_relative_chapter_path(chapter: chapter))
-          LOG.info "Ignoring chapter: #{chapter}. Not in contents_allowed."
+          LOG.info "Ignoring chapter in NAV: #{chapter}. Not in contents_allowed."
         else
           prev_bit[:_contents] << {label: chapter.title, chapter: chapter}
         end
@@ -323,24 +425,26 @@
         end
       end
       
-      group_name = @group
-      uri = URI.parse(FIC_TOCS[group_name])
-      uri_host = uri.host
-      uri_host = '' unless uri_host
-      files_list = @files
-      epub_path = "output/epub/#{@group}.epub"
-      epub = EeePub.make do
-        title FIC_NAMESTRINGS[group_name]
-        creator FIC_AUTHORSTRINGS[group_name]
-        publisher uri_host
-        date DateTime.now.strftime('%Y-%m-%d')
-        identifier FIC_TOCS[group_name], scheme: 'URL'
-        uid "glowfic-#{group_name}"
-        
-        files files_list
-        nav nav_array
+      if @mode == :epub
+        group_name = @group
+        uri = URI.parse(FIC_TOCS[group_name])
+        uri_host = uri.host
+        uri_host = '' unless uri_host
+        files_list = @files
+        epub_path = "output/epub/#{@group}.epub"
+        epub = EeePub.make do
+          title FIC_NAMESTRINGS[group_name]
+          creator FIC_AUTHORSTRINGS[group_name]
+          publisher uri_host
+          date DateTime.now.strftime('%Y-%m-%d')
+          identifier FIC_TOCS[group_name], scheme: 'URL'
+          uid "glowfic-#{group_name}"
+          
+          files files_list
+          nav nav_array
+        end
+        epub.save(epub_path)
       end
-      epub.save(epub_path)
       @changed
     end
   end

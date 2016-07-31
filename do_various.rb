@@ -25,6 +25,13 @@ include GlowficEpub
 FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
 FileUtils.mkdir "logs" unless File.directory?("logs")
 
+set_trace_func proc {
+  |event, file, line, id, binding, classname|
+  if event == "call" && caller_locations.length > 500
+    fail "stack level too deep"
+  end
+}
+
 class Array
   def contains_all? other
     other = other.dup
@@ -47,7 +54,7 @@ def main(args)
   group = :""
   
   process_thing = nil
-  processes = {toc: :tocs, tocs: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, detail: :details, details: :details, process: :process, clean: :clean, rem: :remove, remove: :remove, stat: :stats, stats: :stats, :"do" => :"do", epubdo: :epubdo, repdo: :repdo, output_epub: :output_epub, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
+  processes = {toc: :tocs, tocs: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, detail: :details, details: :details, process: :process, clean: :clean, rem: :remove, remove: :remove, stat: :stats, stats: :stats, :"do" => :"do", epubdo: :epubdo, repdo: :repdo, output_epub: :output_epub, output_html: :output_html, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
   # put these in order of "shortest match" to "longest match", so "toc" before "tocs" (larger match later, subsets before)
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key || option[0, key.length].gsub(' ', '_').to_sym == key)
@@ -275,13 +282,16 @@ def main(args)
       raise e
     end
     set_chapters_data(chapter_list, group) if process == :report or !diff
-  elsif (process == :output_epub)
+  elsif (process == :output_epub || process == :output_html)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
-    LOG.info "Outputting an EPUB for '#{group}'"
+    LOG.info "Outputting an EPUB for '#{group}'" if process == :output_epub
+    LOG.info "Outputting an HTML copy of '#{group}'" if process == :output_html
+    (LOG.fatal "Invalid output mode #{process}" and abort) unless process == :output_epub or process == :output_html
     
     handler = GlowficOutputHandlers::EpubHandler
-    handler = handler.new(chapter_list: chapter_list, group: group)
+    mode = (process == :output_epub ? :epub : process == :output_html ? :html : :unknown)
+    handler = handler.new(chapter_list: chapter_list, group: group, mode: mode)
     changed = handler.output
     set_chapters_data(chapter_list, group) if changed
   elsif (process == :output_report)

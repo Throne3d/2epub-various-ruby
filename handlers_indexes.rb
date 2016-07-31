@@ -187,6 +187,7 @@ module GlowficIndexHandlers
       super(options)
       @strip_li_end = (@group == :incandescence or @group == :silmaril)
       @strip_li_end = options[:strip_li_end] if options.key?(:strip_li_end)
+      @silmaril_handling = :not_constellation # or :constellation, try not DDoS please thanks
     end
     def get_chapters(section, section_list, index=1, &block)
       #puts "Find chapters in (#{section_list}): #{section.text}"
@@ -199,6 +200,10 @@ module GlowficIndexHandlers
       else
         chapter_link = section.at_css('> a')
         if chapter_link
+          if @group == :silmaril && @silmaril_handling == :constellation
+            links = section.css('> a')
+            chapter_link = links.detect{|link| link[:href]["vast-journey-9935.herokuapp.com/posts/"]} || chapter_link if links.length > 1
+          end
           chapter_links = [chapter_link]
         else
           sublist = section.at_css('> ul')
@@ -217,8 +222,10 @@ module GlowficIndexHandlers
         end
         
         chapter_links.each do |chapter_link|
+          next if chapter_link.text.strip["constellation import"] && @group == :silmaril && @silmaril_handling == :not_constellation
           chapter_text = get_text_on_line(chapter_link, after: false).strip
           chapter_text_extras = get_text_on_line(chapter_link, include_node: false, before: false).strip
+          chapter_text_extras = chapter_text_extras.gsub(/\(?constellation import\)?/, '').strip if @group == :silmaril && @silmaril_handling == :not_constellation
           open_count = chapter_text.scan("(").count - chapter_text.scan(")").count
           if open_count > 0 and chapter_text_extras.start_with?(")")
             chapter_text += ")"
@@ -745,6 +752,12 @@ module GlowficIndexHandlers
     def toc_to_chapterlist(options = {}, &block)
       list = if @group == :test
         [
+          {url: "http://edgeofyourseat.dreamwidth.org/1949.html?style=site",
+          title: "he couldn't have imagined",
+          sections: ["Effulgence", "make a wish"]},
+          {url: "http://autokinetic.dreamwidth.org/783.html?style=site",
+          title: "(admissions procedures)",
+          sections: ["Effulgence", "dance between the stars"]},
           {url: "https://vast-journey-9935.herokuapp.com/posts/43",
           title: "Book of Discovery",
           sections: ["Zodiac", "Book of the Moon"]},
