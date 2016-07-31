@@ -105,6 +105,28 @@
       @dirty
     end
     
+    def self.foreign_keyed(*method_names)
+      things = things.first if things.length == 1 and things.first.is_a? Array
+      things = things.map do |thing|
+        (thing.is_a? String) ? thing.to_sym : thing
+      end
+      @foreign_keyed ||= []
+      things.each {|thing| @foreign_keyed << thing}
+    end
+    def self.foreign_keyed?(thing)
+      @foreign_keyed ||= []
+      @foreign_keyed.include?(thing.is_a?(Symbol) ? thing : thing.to_s.to_sym)
+    end
+    def self.foreign_keyeds
+      @foreign_keyed ||= []
+    end
+    def foreign_keyed?(thing)
+      self.class.foreign_keyed?(thing)
+    end
+    def foreign_keyeds
+      self.class.foreign_keyeds
+    end
+    
     def self.serialize_ignore? thing
       return false if @serialize_ignore.nil?
       return false unless thing.is_a?(String) or thing.is_a?(Symbol)
@@ -167,7 +189,13 @@
           var_sym = var_str.to_sym
         end
         next if var_str == 'dirty' || var_str == 'old_hash'
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
+        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym) || foreign_keyed?(var_sym)
+      end
+      foreign_keyeds.each do |key_sym|
+        val = self.instance_variable_get('@' + key_sym.to_s)
+        if val && !val.is_a?(String)
+          hash[key_sym] = val.as_foreign_key
+        end
       end
       @old_hash = hash
       @dirty = false
