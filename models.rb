@@ -80,7 +80,7 @@
     end
     
     def self.dirty_accessors(*method_names)
-      LOG.debug "Defining dirty accessors for #{self}: #{method_names * ', '}"
+      GlowficEpub::LOG.debug "Defining dirty accessors for #{self}: #{method_names * ', '}"
       method_names.each do |method_name|
         method_name = method_name.to_sym
         method_name_str = method_name.to_s
