@@ -48,7 +48,7 @@ def main(args)
   elsif args.is_a?(Array)
     args.join(" ").downcase.strip
   else
-    raise ArgumentError("process", "Invalid 'args' passed.")
+    raise ArgumentError("args", "Invalid 'args' passed.")
   end
   process = :""
   group = :""
