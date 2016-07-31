@@ -411,7 +411,7 @@
       processed?
     end
     def processed=(val)
-      @processed_epub = false
+      @processed_output = []
       @processed=val
     end
     def processed?
