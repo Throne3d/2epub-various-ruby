@@ -25,6 +25,13 @@ include GlowficEpub
 FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
 FileUtils.mkdir "logs" unless File.directory?("logs")
 
+set_trace_func proc {
+  |event, file, line, id, binding, classname|
+  if event == "call" && caller_locations.length > 500
+    fail "stack level too deep"
+  end
+}
+
 class Array
   def contains_all? other
     other = other.dup
