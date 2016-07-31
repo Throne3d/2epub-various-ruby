@@ -60,8 +60,7 @@
   
   class Model
     def initialize
-      @param_transform = {}
-      @serialize_ignore = []
+      @dirty = false
     end
     def standardize_params(params = {})
       params.keys.each do |param|
@@ -78,6 +77,32 @@
         params.delete param if params[param].nil?
       end
       params
+    end
+    
+    def self.dirty_accessors(*method_names)
+      LOG.debug "Defining dirty accessors for #{self}: #{method_names * ', '}"
+      method_names.each do |method_name|
+        method_name = method_name.to_sym
+        method_name_str = method_name.to_s
+        local_instance_var = '@' + method_name_str
+        define_method(method_name_str) do
+          instance_variable_get(local_instance_var)
+        end
+        define_method(method_name_str + '=') do |val|
+          instance_variable_set(local_instance_var, val)
+          dirty!
+          val
+        end
+      end
+    end
+    def dirty!
+      @dirty = true
+    end
+    def dirty?
+      @dirty
+    end
+    def dirty
+      @dirty
     end
     
     def self.serialize_ignore? thing
@@ -129,6 +154,7 @@
       as_json.to_json(options)
     end
     def as_json(options={})
+      return @old_hash if @old_hash && !dirty?
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
@@ -140,8 +166,11 @@
         else
           var_sym = var_str.to_sym
         end
+        next if var_str == 'dirty' || var_str == 'old_hash'
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
+      @old_hash = hash
+      @dirty = false
       hash
     end
     def from_json! string
@@ -642,6 +671,7 @@
         else
           var_sym = var_str.to_sym
         end
+        next if var_str == 'dirty' || var_str == 'old_hash'
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if @authors
@@ -757,6 +787,7 @@
         else
           var_sym = var_str.to_sym
         end
+        next if var_str == 'dirty' || var_str == 'old_hash'
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if @author
@@ -772,8 +803,9 @@
   end
   
   class Message < Model #post or entry
-    attr_accessor :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no
     @@date_format = "%Y-%m-%d %H:%M"
+    
+    dirty_accessors :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no
     
     def self.message_serialize_ignore
       serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_author, :post_type
@@ -793,6 +825,7 @@
       chapter.entry_title
     end
     def entry_title=(newval)
+      dirty!
       if chapter
         chapter.entry_title = newval
       else
@@ -802,6 +835,7 @@
     end
     
     def chapter=(newval)
+      dirty!
       newval.entry_title=@entry_title if @push_title
       @push_title = false
       newval.add_author(author) if @push_author
@@ -879,6 +913,7 @@
     
     def parent=(newparent)
       return newparent if @parent == newparent
+      dirty!
       if @parent
         parent = self.parent
         @parent = nil
@@ -947,6 +982,7 @@
       @face
     end
     def face=(face)
+      dirty!
       if (face.is_a?(String) or face.is_a?(Face))
         @face = face
       else
@@ -977,6 +1013,7 @@
       @author
     end
     def author=(author)
+      dirty!
       @author = author
       chapter.add_author(self.author) if chapter
       @push_author = true unless chapter
@@ -997,6 +1034,7 @@
       return nil
     end
     def author_str=(val)
+      dirty!
       @author_str = val
     end
     
@@ -1032,6 +1070,7 @@
     end
     
     def as_json(options={})
+      return @old_hash if @old_hash && !dirty?
       hash = {}
       
       self.instance_variables.each do |var|
@@ -1044,6 +1083,7 @@
         else
           var_sym = var_str.to_sym
         end
+        next if var_str == 'dirty' || var_str == 'old_hash'
         hash[var_str] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if @parent
@@ -1071,6 +1111,8 @@
           hash['face'] = @face
         end
       end
+      @old_hash = hash
+      @dirty = false
       hash
     end
     
@@ -1108,6 +1150,7 @@
         self.face = face
       end
       keep_old_stuff
+      dirty!
     end
   end
 
@@ -1206,6 +1249,7 @@
         else
           var_sym = var_str.to_sym
         end
+        next if var_str == 'dirty' || var_str == 'old_hash'
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if @default_face
