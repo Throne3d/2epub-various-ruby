@@ -388,7 +388,7 @@
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :sections, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output
+    dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :sections, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output
     attr_reader :entry
     
     param_transform :name => :title, :name_extras => :title_extras, :processed_epub => :processed_output
@@ -411,6 +411,7 @@
       processed?
     end
     def processed=(val)
+      dirty!
       @processed_output = []
       @processed=val
     end
@@ -475,6 +476,7 @@
       @replies ||= []
     end
     def replies=(newval)
+      dirty!
       @replies=newval
       @replies.each do |reply|
         reply.chapter = self
@@ -482,12 +484,14 @@
       @replies
     end
     def entry=(newval)
+      dirty!
       @entry=newval
       @entry.chapter = self
       @entry
     end
     def sections
       if @sections.is_a?(String)
+        dirty!
         @sections = [@sections]
       end
       @sections ||= []
@@ -495,6 +499,7 @@
     def authors
       @authors ||= []
       if @authors.detect{|thing| thing.is_a?(String)}
+        dirty!
         premap = @authors
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
         if @authors.select{|thing| thing.nil?}.present?
@@ -523,6 +528,7 @@
       end
     end
     def time_completed=(val)
+      dirty!
       if val.is_a?(String)
         @time_completed = DateTime.parse(val)
       elsif val.is_a?(Date)
@@ -542,6 +548,7 @@
       end
     end
     def time_hiatus=(val)
+      dirty!
       if val.is_a?(String)
         @time_hiatus = DateTime.parse(val)
       elsif val.is_a?(Date)
@@ -576,6 +583,7 @@
         LOG.debug "Existing authors: #{authors.map{|author| author.to_s} * ', '}"
       end
       unless authors.include?(newauthor)
+        dirty!
         authors << newauthor
         @moieties = nil
         LOG.debug "New author list: #{authors.map{|author| author.to_s} * ', '}" if same_id
@@ -615,6 +623,7 @@
       smallURL
     end
     def url=(val)
+      dirty!
       @smallURL = nil
       @url=val
     end
@@ -659,6 +668,7 @@
     end
     
     def as_json(options={})
+      return @old_hash if @old_hash && !dirty?
       hash = {}
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
       self.instance_variables.each do |var|
@@ -677,6 +687,8 @@
       if @authors
         hash[:authors] = @authors.map{|author| author.is_a?(Author) ? author.unique_id : author}
       end
+      @old_hash = hash
+      @dirty = false
       hash
     end
     def from_json! string
@@ -724,6 +736,7 @@
       end
       
       @trash_messages = false
+      dirty!
     end
   end
 
@@ -820,6 +833,11 @@
       face
     end
     
+    def dirty!
+      @dirty = true
+      chapter.dirty! if chapter
+    end
+    
     @push_title = false
     def entry_title
       chapter.entry_title
@@ -832,16 +850,18 @@
         @push_title = true
         @entry_title = newval
       end
+      newval
     end
     
     def chapter=(newval)
-      dirty!
       newval.entry_title=@entry_title if @push_title
       @push_title = false
+      @chapter.dirty! if @chapter
       newval.add_author(author) if @push_author
       @push_author = false
       @chapter = newval
       keep_old_stuff
+      dirty!
       newval
     end
     
