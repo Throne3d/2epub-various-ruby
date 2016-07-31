@@ -1057,7 +1057,7 @@
     end
     def to_s
       if chapter.nil?
-        "#{author}##{id} @ #{time}: #{content}"
+        "#{author}##{id} @ #{time}"
       elsif post_type
         if post_type == PostType::ENTRY
           "#{chapter.smallURL}##{id}"
