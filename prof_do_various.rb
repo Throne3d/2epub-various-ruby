@@ -16,7 +16,7 @@ end
 
 if __FILE__ == $0
   profile_bit(ARGV) do |result|
-    result.eliminate_methods!([/Object#try!?/, /Integer#upto/, /Kernel#public_send/])
+    result.eliminate_methods!([/Object#try!?/, /Integer#upto/, /Kernel#public_send/, /(ActiveSupport::)?Tryable#try!?/])
     printer = RubyProf::MultiPrinter.new(result)
     directory = "prof-" + (ARGV.is_a?(Array) ? ARGV * '_' : ARGV).gsub(/\W+/, '_')
     FileUtils.mkdir directory unless File.directory?(directory)

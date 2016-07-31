@@ -54,7 +54,7 @@ def main(args)
   group = :""
   
   process_thing = nil
-  processes = {toc: :tocs, tocs: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, detail: :details, details: :details, process: :process, clean: :clean, rem: :remove, remove: :remove, stat: :stats, stats: :stats, :"do" => :"do", epubdo: :epubdo, repdo: :repdo, output_epub: :output_epub, output_html: :output_html, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
+  processes = {toc: :tocs, tocs: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, detail: :details, details: :details, process: :process, qprocess: :qprocess, clean: :clean, rem: :remove, remove: :remove, stat: :stats, stats: :stats, :"do" => :"do", epubdo: :epubdo, repdo: :repdo, output_epub: :output_epub, output_html: :output_html, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
   # put these in order of "shortest match" to "longest match", so "toc" before "tocs" (larger match later, subsets before)
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key || option[0, key.length].gsub(' ', '_').to_sym == key)
@@ -233,7 +233,7 @@ def main(args)
       raise e
     end
     set_chapters_data(chapter_list, group) if process == :qget or !diff
-  elsif (process == :process or process == :report)
+  elsif (process == :process || process == :qprocess || process == :report)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Processing '#{group}'" + (process == :report ? " (daily report)" : "")
@@ -272,16 +272,16 @@ def main(args)
           diff = false if msg[": unchanged, cached"]
         end
         
-        set_chapters_data(chapter_list, group) if diff && process != :report
+        set_chapters_data(chapter_list, group) if diff && process != :report && process != :qprocess
       end
     rescue StandardError, Interrupt => e
-      if process == :report
+      if process == :report || process == :qprocess
         puts "Encountered an error. Saving changed data then re-raising."
         set_chapters_data(chapter_list, group)
       end
       raise e
     end
-    set_chapters_data(chapter_list, group) if process == :report or !diff
+    set_chapters_data(chapter_list, group) if process == :report || process == :qprocess || !diff
   elsif (process == :output_epub || process == :output_html)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?

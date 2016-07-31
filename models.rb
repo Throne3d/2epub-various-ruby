@@ -60,8 +60,7 @@
   
   class Model
     def initialize
-      @param_transform = {}
-      @serialize_ignore = []
+      @dirty = false
     end
     def standardize_params(params = {})
       params.keys.each do |param|
@@ -78,6 +77,32 @@
         params.delete param if params[param].nil?
       end
       params
+    end
+    
+    def self.dirty_accessors(*method_names)
+      GlowficEpub::LOG.debug "Defining dirty accessors for #{self}: #{method_names * ', '}"
+      method_names.each do |method_name|
+        method_name = method_name.to_sym
+        method_name_str = method_name.to_s
+        local_instance_var = '@' + method_name_str
+        define_method(method_name_str) do
+          instance_variable_get(local_instance_var)
+        end
+        define_method(method_name_str + '=') do |val|
+          instance_variable_set(local_instance_var, val)
+          dirty!
+          val
+        end
+      end
+    end
+    def dirty!
+      @dirty = true
+    end
+    def dirty?
+      @dirty
+    end
+    def dirty
+      @dirty
     end
     
     def self.serialize_ignore? thing
@@ -129,6 +154,7 @@
       as_json.to_json(options)
     end
     def as_json(options={})
+      return @old_hash if @old_hash && !dirty?
       hash = {}
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
@@ -140,8 +166,11 @@
         else
           var_sym = var_str.to_sym
         end
+        next if var_str == 'dirty' || var_str == 'old_hash'
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
+      @old_hash = hash
+      @dirty = false
       hash
     end
     def from_json! string
@@ -359,7 +388,7 @@
   end
 
   class Chapter < Model
-    attr_accessor :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :sections, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output
+    dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :sections, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output
     attr_reader :entry
     
     param_transform :name => :title, :name_extras => :title_extras, :processed_epub => :processed_output
@@ -382,7 +411,8 @@
       processed?
     end
     def processed=(val)
-      @processed_epub = false
+      dirty!
+      @processed_output = []
       @processed=val
     end
     def processed?
@@ -446,6 +476,7 @@
       @replies ||= []
     end
     def replies=(newval)
+      dirty!
       @replies=newval
       @replies.each do |reply|
         reply.chapter = self
@@ -453,12 +484,14 @@
       @replies
     end
     def entry=(newval)
+      dirty!
       @entry=newval
       @entry.chapter = self
       @entry
     end
     def sections
       if @sections.is_a?(String)
+        dirty!
         @sections = [@sections]
       end
       @sections ||= []
@@ -466,6 +499,7 @@
     def authors
       @authors ||= []
       if @authors.detect{|thing| thing.is_a?(String)}
+        dirty!
         premap = @authors
         @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
         if @authors.select{|thing| thing.nil?}.present?
@@ -494,6 +528,7 @@
       end
     end
     def time_completed=(val)
+      dirty!
       if val.is_a?(String)
         @time_completed = DateTime.parse(val)
       elsif val.is_a?(Date)
@@ -513,6 +548,7 @@
       end
     end
     def time_hiatus=(val)
+      dirty!
       if val.is_a?(String)
         @time_hiatus = DateTime.parse(val)
       elsif val.is_a?(Date)
@@ -547,6 +583,7 @@
         LOG.debug "Existing authors: #{authors.map{|author| author.to_s} * ', '}"
       end
       unless authors.include?(newauthor)
+        dirty!
         authors << newauthor
         @moieties = nil
         LOG.debug "New author list: #{authors.map{|author| author.to_s} * ', '}" if same_id
@@ -586,6 +623,7 @@
       smallURL
     end
     def url=(val)
+      dirty!
       @smallURL = nil
       @url=val
     end
@@ -630,6 +668,7 @@
     end
     
     def as_json(options={})
+      return @old_hash if @old_hash && !dirty?
       hash = {}
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
       self.instance_variables.each do |var|
@@ -642,11 +681,14 @@
         else
           var_sym = var_str.to_sym
         end
+        next if var_str == 'dirty' || var_str == 'old_hash'
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if @authors
         hash[:authors] = @authors.map{|author| author.is_a?(Author) ? author.unique_id : author}
       end
+      @old_hash = hash
+      @dirty = false
       hash
     end
     def from_json! string
@@ -694,6 +736,7 @@
       end
       
       @trash_messages = false
+      dirty!
     end
   end
 
@@ -757,6 +800,7 @@
         else
           var_sym = var_str.to_sym
         end
+        next if var_str == 'dirty' || var_str == 'old_hash'
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if @author
@@ -772,8 +816,9 @@
   end
   
   class Message < Model #post or entry
-    attr_accessor :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no
     @@date_format = "%Y-%m-%d %H:%M"
+    
+    dirty_accessors :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no
     
     def self.message_serialize_ignore
       serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_author, :post_type
@@ -788,26 +833,35 @@
       face
     end
     
+    def dirty!
+      @dirty = true
+      chapter.dirty! if chapter
+    end
+    
     @push_title = false
     def entry_title
       chapter.entry_title
     end
     def entry_title=(newval)
+      dirty!
       if chapter
         chapter.entry_title = newval
       else
         @push_title = true
         @entry_title = newval
       end
+      newval
     end
     
     def chapter=(newval)
       newval.entry_title=@entry_title if @push_title
       @push_title = false
+      @chapter.dirty! if @chapter
       newval.add_author(author) if @push_author
       @push_author = false
       @chapter = newval
       keep_old_stuff
+      dirty!
       newval
     end
     
@@ -879,6 +933,7 @@
     
     def parent=(newparent)
       return newparent if @parent == newparent
+      dirty!
       if @parent
         parent = self.parent
         @parent = nil
@@ -947,6 +1002,7 @@
       @face
     end
     def face=(face)
+      dirty!
       if (face.is_a?(String) or face.is_a?(Face))
         @face = face
       else
@@ -977,6 +1033,7 @@
       @author
     end
     def author=(author)
+      dirty!
       @author = author
       chapter.add_author(self.author) if chapter
       @push_author = true unless chapter
@@ -997,6 +1054,7 @@
       return nil
     end
     def author_str=(val)
+      dirty!
       @author_str = val
     end
     
@@ -1019,7 +1077,7 @@
     end
     def to_s
       if chapter.nil?
-        "#{author}##{id} @ #{time}: #{content}"
+        "#{author}##{id} @ #{time}"
       elsif post_type
         if post_type == PostType::ENTRY
           "#{chapter.smallURL}##{id}"
@@ -1032,6 +1090,7 @@
     end
     
     def as_json(options={})
+      return @old_hash if @old_hash && !dirty?
       hash = {}
       
       self.instance_variables.each do |var|
@@ -1044,6 +1103,7 @@
         else
           var_sym = var_str.to_sym
         end
+        next if var_str == 'dirty' || var_str == 'old_hash'
         hash[var_str] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if @parent
@@ -1071,6 +1131,8 @@
           hash['face'] = @face
         end
       end
+      @old_hash = hash
+      @dirty = false
       hash
     end
     
@@ -1108,6 +1170,7 @@
         self.face = face
       end
       keep_old_stuff
+      dirty!
     end
   end
 
@@ -1206,6 +1269,7 @@
         else
           var_sym = var_str.to_sym
         end
+        next if var_str == 'dirty' || var_str == 'old_hash'
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
       if @default_face
