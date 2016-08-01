@@ -955,6 +955,9 @@
       #Needs to be updated / hasn't been got
       @download_count = 0
       
+      pages = get_full(chapter, options.merge({new: (not changed)}))
+      chapter.pages = pages
+      
       chapter.check_pages.each do |check_page|
         if has_cache?(check_page, where: 'temp')
           temp_data = down_or_cache(check_page, where: 'temp')
@@ -964,8 +967,6 @@
         end
       end
       
-      pages = get_full(chapter, options.merge({new: (not changed)}))
-      chapter.pages = pages
       msg_str = "#{is_new ? 'New' : 'Updated'}: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})"
       if block_given?
         yield msg_str
