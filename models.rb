@@ -388,7 +388,7 @@
   end
 
   class Chapter < Model
-    dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :sections, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output
+    dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :sections, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output, :check_page_data
     attr_reader :entry
     
     param_transform :name => :title, :name_extras => :title_extras, :processed_epub => :processed_output
@@ -440,6 +440,14 @@
     
     def report_flags_processed?
       report_flags_processed
+    end
+    
+    def check_page_data
+      @check_page_data ||= {}
+    end
+    def check_page_data_set(index, val)
+      dirty!
+      @check_page_data[index] = val
     end
     
     def group

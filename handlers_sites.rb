@@ -310,6 +310,10 @@
           end
           page_new = get_undiscretioned(check_page, where: 'temp')
           page_old = Nokogiri::HTML(page_old_data)
+          page_cache = (i == check_pages.count - 1) ? nil : chapter.check_page_data[check_page]
+          page_cache = Nokogiri::HTML(page_cache) if page_cache
+          
+          chapter.check_page_data_set(check_page, page_old_data) unless page_cache || i == check_pages.count - 1
           
           unless page_new
             @error = "Page failed to load (discretion advised warning?)"
@@ -319,18 +323,29 @@
           
           old_content = page_old.at_css('#content')
           new_content = page_new.at_css('#content')
+          cache_content = page_cache.at_css('#content') if page_cache
           
           old_comment_count = old_content.at_css('.entry-readlink').try(:text).try(:strip).try(:[], /\d+/)
           new_comment_count = new_content.at_css('.entry-readlink').try(:text).try(:strip).try(:[], /\d+/)
-          same_comment_count = true if old_comment_count == new_comment_count && old_comment_count.present? && new_comment_count.present?
+          cache_comment_count = cache_content.at_css('.entry-readlink').try(:text).try(:strip).try(:[], /\d+/) if page_cache
+          same_comment_count = true if old_comment_count == new_comment_count && old_comment_count.present? && new_comment_count.present? && (page_cache.blank? || cache_comment_count == old_comment_count)
           
           old_content.at_css(".entry-interaction-links").try(:remove)
           new_content.at_css(".entry-interaction-links").try(:remove)
+          cache_content.at_css(".entry-interaction-links").try(:remove) if page_cache
           
           changed = (old_content.inner_html != new_content.inner_html)
           if changed
             LOG.debug "check page #{i}, #{check_page}, was different"
             break
+          end
+          if page_cache && !changed
+            changed2 = (old_content.inner_html != cache_content.inner_html)
+            if changed2
+              LOG.info "check page cache in JSON (#{i}, #{check_page}) was different. other cache wasn't. fixing."
+              changed = changed2
+              break
+            end
           end
           LOG.debug "check page #{i} was not different"
         end
@@ -430,12 +445,16 @@
         end
         
         chapter.pages = pages
+        chapter.check_page_data = {}
         chapter.check_pages.each do |check_page|
           if has_cache?(check_page, where: 'temp')
             temp_data = down_or_cache(check_page, where: 'temp')
             save_down(check_page, temp_data, where: @group_folder)
           else
             down_or_cache(check_page, where: @group_folder)
+          end
+          if check_page != chapter.check_pages.first
+            chapter.check_page_data_set(check_page, down_or_cache(check_page, where: @group_folder))
           end
         end
       end
@@ -909,15 +928,27 @@
           page_new = giri_or_cache(check_page, where: 'temp')
           
           page_old = Nokogiri::HTML(page_old_data)
+          page_cache = chapter.check_page_data[check_page]
+          page_cache = Nokogiri::HTML(page_cache) if page_cache
           LOG.debug "nokogiri'd"
+          chapter.check_page_data_set(check_page, page_old_data) unless page_cache
           
           old_content = page_old.at_css('#content')
           new_content = page_new.at_css('#content')
+          cache_content = page_cache.at_css('#content') if page_cache
           
           changed = (old_content.inner_html != new_content.inner_html)
           if changed
             LOG.debug "check page #{i}, #{check_page}, was different"
             break
+          end
+          if page_cache && !changed
+            changed2 = (old_content.inner_html != cache_content.inner_html)
+            if changed2
+              LOG.info "check page cache in JSON (#{i}, #{check_page}) was different. other cache wasn't. fixing."
+              changed = changed2
+              break
+            end
           end
           LOG.debug "check page #{i} was not different"
         end
@@ -956,8 +987,9 @@
       @download_count = 0
       
       pages = get_full(chapter, options.merge({new: (not changed)}))
-      chapter.pages = pages
       
+      chapter.pages = pages
+      chapter.check_page_data = {}
       chapter.check_pages.each do |check_page|
         if has_cache?(check_page, where: 'temp')
           temp_data = down_or_cache(check_page, where: 'temp')
@@ -965,6 +997,7 @@
         else
           down_or_cache(check_page, where: @group_folder)
         end
+        chapter.check_page_data_set(check_page, down_or_cache(check_page, where: @group_folder))
       end
       
       msg_str = "#{is_new ? 'New' : 'Updated'}: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})"
