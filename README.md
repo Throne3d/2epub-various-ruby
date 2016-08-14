@@ -4,28 +4,24 @@ This README should document the steps necessary to setup this project in order t
 
 ### What is this repository for? ###
 
-The "2epub-various" script, converted to use the Ruby language. It hopefully downloads the necessary chapters from dreamwidth.org appropriate to load the stories for [Effulgence](https://belltower.dreamwidth.org/8579.html) and [Incandescence](https://alicornutopia.dreamwidth.org/7441.html), as well as the [miscellaneous related sandboxes](https://alicornutopia.dreamwidth.org/1640.html), [glowfics](https://glowfic.dreamwidth.org/), [pixiethreads](https://pixiethreads.dreamwidth.org/613.html), [Marri's index](https://marrinikari.dreamwidth.org/1634.html), [Radon Absinthe](https://radon-absinthe.dreamwidth.org/295.html), [the Peterverse index](https://peterverse.dreamwidth.org/1643.html) and [Maggie's index](https://maggie-of-the-owls.dreamwidth.org/454.html) and then generates an epub for them.
+The "2epub-various" script, converted to use the Ruby language. It hopefully downloads the necessary chapters from dreamwidth.org appropriate to load the stories for [Effulgence](https://belltower.dreamwidth.org/8579.html) and [Incandescence](https://alicornutopia.dreamwidth.org/7441.html), as well as the [miscellaneous related sandboxes](https://alicornutopia.dreamwidth.org/1640.html), [glowfics](https://glowfic.dreamwidth.org/), [pixiethreads](https://pixiethreads.dreamwidth.org/613.html), [Marri's index](https://marrinikari.dreamwidth.org/1634.html), [Radon Absinthe](https://radon-absinthe.dreamwidth.org/295.html), [the Peterverse index](https://peterverse.dreamwidth.org/1643.html), [Maggie's index](https://maggie-of-the-owls.dreamwidth.org/454.html) and various other things, then generates an epub (or a 'report', or an HTML mirror, or outputs to a local Constellation Rails copy) for them.
 
 ### How do I get set up? ###
-* Install [Ruby](https://www.ruby-lang.org/en/)
-* Install [Nokogiri](http://www.nokogiri.org/tutorials/installing_nokogiri.html)
-* (Use `bundler install` to do the above)
-* Run do_various.rb and follow the instructions
-* Use the generated .epub file on an ebook reader
+* Install [Ruby](https://www.ruby-lang.org/en/), particular version probably doesn't matter but 2.3.0 should definitely work
+* Install [Bundler](http://bundler.io/)
+* Run `bundle install` in the directory – this will use the `Gemfile` to fetch the appropriate dependencies
+* Run `do_various.rb` as necessary – for example, to do an epub for Effulgence, run `do_various.rb epubdo_effulgence`, and to output the daily report, run `do_various.rb repdo_report`; if you're on Linux, to run these commands you want to open a terminal and write `./do_various.rb [thing]`, replacing `[thing]` as necessary.
+* Use the generated .epub file on an ebook reader, or BB-code report in the daily reports thread, or some such.
+
+### What can I do? ###
+The different `process`es are outlined in `do_various.rb` in the code, and include: `do`, which downloads the data for a group, `epubdo`, which basically does `do` and then `output_epub`, and `repdo`, which basically does `do` and then `output_report`.
+
+The different `group`s are outlined in `model_methods.rb`, in `FIC_NAME_MAPPING`. For example, `efful` maps to `effulgence`. The TOC pages are listed below in `FIC_TOCS`, and they are individually handled in `handlers_indexes.rb` depending on how the index is formatted.
+
+Pass as a parameter, to `do_various.rb`, a `process` followed by a `group`, preferably separated by an underscore (`_`) but possibly works somehow else. For example, to do a report for the daily report (`repdo` as a process, `report` as a group), run `do_various.rb repdo_report` – in the Ubuntu Terminal, at least, you do this by navigating to this directory (`2epub-various-ruby`) and then executing the command `./do_various.rb repdo_report`.
 
 ### How do I fix issues with the sandbox? ###
-If it's a "discretion advised" message, it's kinda stupid, but there is currently no proper way to have the script bypass it and load the pages anyway. Currently, it's a matter of performing the following steps:
-
-* Run the TOC scraper for the applicable chapter collection
-* Run the "flats parser" for the applicable chapter collection
-* Open the applicable pages with the GET parameters `?(thread=#&)style=site&view=flat` (in that order, thing in brackets when applicable, make # into numbers, get each successive group of comments, so start at the next partial comment on each successive thing)
-* Save the applicable pages as e.g. `web_cache/panfandom.dreamwidth.org/115923.html~QMARK~style=site&view=flat` (for http://panfandom.dreamwidth.org/115923.html?style=site&view=flat - make sure you replace the `?` to the `~QMARK~`
-* Re-run the flats parser (it might complain about a 'Discretion Advised' message if you've done this before)
-* Save the rest of the pages of the flat site (with `?` made into `~QMARK~` again... stupid Windows)
-* (Optionally) make a backup of the files saved in the previous step (since they're so annoying to download one-by-one) (a backup as of 2015-12-24 (for an old version; this temporarily won't work) can be found [here](https://www.dropbox.com/s/lpe84w73omv8gmh/backup-web_cache.zip?dl=0))
-* Run the epub generation part of the code
-
-This method is currently mostly tested, and should (hopefully) work. The stupid naming system (where `?` is instead `~QMARK~`) is to hopefully allow the thing to work on a Windows machine (since Windows disallows `?` in directories and file names)
+There should no longer be any issues with the sandbox! The old issue, which was an inability to navigate around a "discretion advised" message, should now be fixed by using a thing called `Mechanize`.
 
 ### Who do I talk to? ###
 If you have a problem, try contacting @Throne3d or another contributor to the project. Running this project is probably not for those without any programming or computing experience.
