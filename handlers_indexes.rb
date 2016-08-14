@@ -39,6 +39,7 @@ module GlowficIndexHandlers
       @persists = [
         {thing: :pages},
         {thing: :check_pages},
+        {thing: :check_page_data},
         {thing: :processed},
         {thing: :entry, :if => :processed},
         {thing: :replies, :if => :processed},

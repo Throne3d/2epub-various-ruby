@@ -596,10 +596,11 @@
       if show_sections && chapter.sections.present?
         str = chapter.sections * ' > '
         @cont_replace.each {|key, val| str = str.sub(key, val)}
-        section_string = ' (' + str + ')'
+        section_string = '(' + str + ') '
       end
       str = "[*]"
-      str << '[size=85]' + chapter.report_flags.strip + '[/size] ' if chapter.report_flags and not chapter.report_flags.strip.empty?
+      str << '[size=85]' + chapter.report_flags.strip + '[/size] ' unless chapter.report_flags.blank?
+      str << section_string
       str << "[url=#{url_thing.permalink}]" if url_thing
       str << '[color=#9A534D]' if hiatus
       str << '[color=goldenrod]' if completed
@@ -607,7 +608,6 @@
       str << '[/color]' if completed
       str << '[/color]' if hiatus
       str << '[/url]' if url_thing
-      str << section_string
       str << ',' unless chapter.entry_title and chapter.entry_title[/[?,.!;…\-–—]$/] #ends with punctuation (therefore 'don't add a comma')
       str << ' '
       str << "#{chapter.title_extras || '(no extras)'}"
