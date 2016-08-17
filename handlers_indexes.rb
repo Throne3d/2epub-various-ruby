@@ -685,6 +685,8 @@ module GlowficIndexHandlers
           chapter_url = get_absolute_url(chapter_link["href"], user_url)
           chapter_sections = chapter_row.at_css('.post-board').try(:text).try(:strip)
           
+          next if @group == :lintamande && (chapter_url[/\/posts\/(212|213|214|217|218|219|220|222)\/?$/])
+          
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
           
           if block_given?
