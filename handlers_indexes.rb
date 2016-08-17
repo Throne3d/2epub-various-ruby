@@ -819,7 +819,7 @@ module GlowficIndexHandlers
           title: "don't touch me",
           sections: ["Silmaril", "Promise in Arda"]},
           {url: "http://alicornutopia.dreamwidth.org/31354.html",
-          title: "Kib in Valinor",
+          title: "the stork drops, the snake swallows",
           sections: ["Silmaril", "Shine"]}
         ]
       end
