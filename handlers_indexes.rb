@@ -617,6 +617,7 @@ module GlowficIndexHandlers
         chapters.each do |chapter_row|
           thead = chapter_row.at_css('th')
           next if thead and not thead.try(:[], :colspan)
+          chapter_sections = [board_name] if chapter_row.at_css('td.continuity-spacer')
           next if chapter_row[:colspan]
           next if chapter_row.at_css('td').try(:[], :colspan)
           
