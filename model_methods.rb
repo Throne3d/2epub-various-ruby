@@ -71,7 +71,7 @@
     # put the mappings so subsets of followings come first (efful before effulgence, zod before zodiac, etc.)
     effulgence: [:efful, :effulgence],
     incandescence: [:incan, :incandescence],
-    pixiethreads: [:pix, :pixiethreads],
+    pixiethreads: [:pix, :pixie, :pixiethreads],
     radon: [:radon, :absinthe],
     opalescence: [:opal, :opalescence],
     zodiac: [:zodiac],
