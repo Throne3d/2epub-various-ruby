@@ -185,25 +185,25 @@
       navified
     end
     
-    def html_from_navbits(navbits)
-      html = "<ol>\n"
-      if navbits.key?(:_order)
-        navbits[:_order].each do |key|
-          html << "<li>#{key}"
-          sub_html = html_from_navbits(navbits[key])
-          html << "\n" << sub_html if sub_html.present?
-          html << "</li>\n"
+    def html_from_navarray(navbits)
+      if navbits.is_a?(Array)
+        html = "<ol>\n"
+        navbits.each do |navbit|
+          html << html_from_navarray(navbit)
         end
-      elsif navbits.key?(:_contents)
-        navbits[:_contents].each do |content|
-          html << "<li><a href='" << File.join('html', get_chapter_path_bit(chapter: content[:chapter])) << "'>#{h(content[:label])}</a></li>\n"
-        end
-        puts "navbits contents are empty: #{navbits}" if navbits[:_contents].empty?
+        html << "</ol>\n"
+        html = "" if html == "<ol>\n</ol>\n"
       else
-        puts "navbits has nothing in it: #{navbits}"
+        html = "<li>"
+        if navbits.key?(:nav)
+          html << h(navbits[:label]) + "\n"
+          html << html_from_navarray(navbits[:nav])
+        else
+          html << "<a href='" << File.join('html', navbits[:content].sub(/^EPUB(\/|\\)/, '')) << "'>#{h(navbits[:label])}</a>"
+        end
+        html << "</li>\n"
+        html = "" if html == "<li></li>\n" || html == "<li>\n</li>\n"
       end
-      html << "</ol>\n"
-      html = "" if html == "<ol>\n</ol>\n"
       html
     end
     
@@ -401,29 +401,37 @@
         LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter}" + (@split_htmls.length > 1 ? " (#{@split_htmls.length} splits)" : '')
       end
       
-      nav_bits = {}
+      nav_array = []
       contents_allowed = @rel_paths_used
       chapter_list.each do |chapter|
-        prev_bit = nav_bits
-        chapter.sections.each do |section|
-          prev_bit[:_order] ||= []
-          prev_bit[:_order] << section unless prev_bit[:_order].include?(section)
-          prev_bit[section] ||= {}
-          prev_bit = prev_bit[section]
-        end
-        prev_bit[:_contents] ||= []
         if contents_allowed.present? && !contents_allowed.include?(get_relative_chapter_path(chapter: chapter))
           LOG.info "Ignoring chapter in NAV: #{chapter}. Not in contents_allowed."
-        else
-          prev_bit[:_contents] << {label: chapter.title, chapter: chapter}
+          next
         end
+        
+        section_bit = nav_array
+        chapter.sections.each do |section|
+          section_nav = section_bit
+          if section_nav.is_a?(Hash)
+            section_nav[:nav] = [] unless section_nav.key?(:nav)
+            section_nav = section_nav[:nav]
+          end
+          
+          subsection_bit = section_nav.detect{|sub_bit| sub_bit[:label] == section}
+          unless subsection_bit
+            subsection_bit = {label: section, content: get_relative_chapter_path(chapter)}
+            section_nav << subsection_bit
+          end
+          section_bit = subsection_bit
+        end
+        
+        section_bit[:nav] ||= []
+        section_bit[:nav] << {label: chapter.title, content: get_relative_chapter_path(chapter)}
       end
       
       open(File.join(@group_folder, 'toc.html'), 'w') do |toc|
-        toc.write html_from_navbits(nav_bits)
+        toc.write html_from_navarray(nav_array)
       end
-      
-      nav_array = navify_navbits(nav_bits)
       
       @files.each do |thing|
         thing.keys.each do |key|
