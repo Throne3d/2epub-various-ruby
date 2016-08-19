@@ -23,12 +23,15 @@
       super options
       require 'eeepub'
       
+      @skipnavmodes = [:epub, :epub_nosplit]
+      
       @mode = (options.key?(:mode) ? options[:mode] : :epub)
       @no_split = options.key?(:no_split) && options[:no_split]
+      @mode = (@mode.to_s + '_nosplit').to_sym if @no_split
       @folder_name = @group.to_s
-      @folder_name += '-nosplit' if @no_split
       
-      @group_folder = File.join('output', @mode.to_s, @folder_name)
+      @mode_folder = File.join('output', @mode.to_s)
+      @group_folder = File.join(@mode_folder, @folder_name)
       @style_folder = File.join(@group_folder, 'style')
       @html_folder = File.join(@group_folder, 'html')
       @images_folder = File.join(@group_folder, 'images')
@@ -335,14 +338,14 @@
           page = get_message_page(@messages[i])
           if prev_page != page
             if temp_html.present? && temp_html != html_start
-              temp_html += "<a class='navlink nextlink splitlink' href='#{get_chapter_path_bit(chapter: chapter, page: prev_page+1)}'>Next page of chapter &raquo;</a>\n" if @mode != :epub && prev_page < page_count
+              temp_html += "<a class='navlink nextlink splitlink' href='#{get_chapter_path_bit(chapter: chapter, page: prev_page+1)}'>Next page of chapter &raquo;</a>\n" if !@skipnavmodes.include?(@mode) && prev_page < page_count
               temp_html << html_end
               @split_htmls << temp_html
             end
             
             # New HTML:
             temp_html = html_start
-            temp_html += "<a class='navlink prevlink splitlink' href='#{get_chapter_path_bit(chapter: chapter, page: page-1)}'>&laquo; Previous page of chapter</a>\n" if @mode != :epub && page > 1
+            temp_html += "<a class='navlink prevlink splitlink' href='#{get_chapter_path_bit(chapter: chapter, page: page-1)}'>&laquo; Previous page of chapter</a>\n" if !@skipnavmodes.include?(@mode) && page > 1
             prev_page = page
           end
           unless done_headers
@@ -441,20 +444,20 @@
         end
       end
       
-      if @mode == :epub
+      if @mode == :epub || @mode == :epub_nosplit
         group_name = @group
         uri = URI.parse(FIC_TOCS[group_name])
         uri_host = uri.host
         uri_host = '' unless uri_host
         files_list = @files
-        epub_path = "output/epub/#{@folder_name}.epub"
+        epub_path = File.join(@mode_folder, "#{@folder_name}.epub")
         epub = EeePub.make do
           title FIC_NAMESTRINGS[group_name]
           creator FIC_AUTHORSTRINGS[group_name]
           publisher uri_host
           date DateTime.now.strftime('%Y-%m-%d')
           identifier FIC_TOCS[group_name], scheme: 'URL'
-          uid "glowfic-#{group_name}"
+          uid "glowfic-#{group_name}" + (@no_split ? '-nosplit' : '')
           
           files files_list
           nav nav_array
