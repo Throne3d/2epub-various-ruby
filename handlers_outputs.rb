@@ -22,16 +22,24 @@
     def initialize(options={})
       super options
       require 'eeepub'
+      
       @mode = (options.key?(:mode) ? options[:mode] : :epub)
-      @group_folder = File.join('output', @mode.to_s, @group.to_s)
+      @no_split = options.key?(:no_split) && options[:no_split]
+      @folder_name = @group.to_s
+      @folder_name += '-nosplit' if @no_split
+      
+      @group_folder = File.join('output', @mode.to_s, @folder_name)
       @style_folder = File.join(@group_folder, 'style')
       @html_folder = File.join(@group_folder, 'html')
       @images_folder = File.join(@group_folder, 'images')
-      @replies_per_split = (options.key?(:replies_per_split) ? options[:replies_per_split] : 200)
-      @min_replies_in_split = (options.key?(:min_replies_in_split) ? options[:min_replies_in_split] : 50)
       FileUtils::mkdir_p @style_folder
       FileUtils::mkdir_p @html_folder
       FileUtils::mkdir_p @images_folder
+      
+      @replies_per_split = (options.key?(:replies_per_split) ? options[:replies_per_split] : 200)
+      @replies_per_split = 99999 if @no_split
+      @min_replies_in_split = (options.key?(:min_replies_in_split) ? options[:min_replies_in_split] : 50)
+      
       @face_path_cache = {}
       @paths_used = []
     end
@@ -431,7 +439,7 @@
         uri_host = uri.host
         uri_host = '' unless uri_host
         files_list = @files
-        epub_path = "output/epub/#{@group}.epub"
+        epub_path = "output/epub/#{@folder_name}.epub"
         epub = EeePub.make do
           title FIC_NAMESTRINGS[group_name]
           creator FIC_AUTHORSTRINGS[group_name]

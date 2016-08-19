@@ -289,9 +289,13 @@ def main(args)
     LOG.info "Outputting an HTML copy of '#{group}'" if process == :output_html
     (LOG.fatal "Invalid output mode #{process}" and abort) unless process == :output_epub or process == :output_html
     
+    no_split = option[/no[_\s\-]split/]
+    
     handler = GlowficOutputHandlers::EpubHandler
     mode = (process == :output_epub ? :epub : process == :output_html ? :html : :unknown)
-    handler = handler.new(chapter_list: chapter_list, group: group, mode: mode)
+    params = {chapter_list: chapter_list, group: group, mode: mode}
+    params[:no_split] = true if no_split
+    handler = handler.new(params)
     changed = handler.output
     set_chapters_data(chapter_list, group) if changed
   elsif (process == :output_report)
