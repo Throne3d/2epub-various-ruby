@@ -427,14 +427,14 @@
     end
     
     def processed_output?(thing)
-      processed_output.include?(thing)
+      processed_output.include?(thing.to_s)
     end
     def processed_output(thing)
       processed_output?(thing)
     end
     def processed_output
       @processed_output ||= []
-      @processed_output = [:epub] if @processed_output == true
+      @processed_output = [:epub] if @processed_output == true || @processed_epub
       @processed_output
     end
     
@@ -742,6 +742,8 @@
           end
         end
       end
+      
+      @processed_output.uniq! if @processed_output.present?
       
       @trash_messages = false
       dirty!
