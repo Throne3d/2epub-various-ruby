@@ -317,7 +317,7 @@
           splits = get_page_from_order_and_total(message_count, message_count)
           1.upto(splits) do |page_num|
             temp_path = get_chapter_path(chapter: chapter, group: @group, page: page_num)
-            chapter.processed_output.delete(@mode) unless File.file?(temp_path)
+            chapter.processed_output_delete(@mode) unless File.file?(temp_path)
           end
           
           if chapter.processed_output?(@mode)
@@ -425,7 +425,7 @@
           @files << {split_save_path => File.dirname(split_rel_path)}
         end
         
-        chapter.processed_output << @mode unless chapter.processed_output.include?(@mode)
+        chapter.processed_output_add(@mode) unless chapter.processed_output?(@mode)
         @changed = true
         LOG.info "(#{i+1}/#{chapter_count}) Did chapter #{chapter}" + (@split_htmls.length > 1 ? " (#{@split_htmls.length} splits)" : '')
       end

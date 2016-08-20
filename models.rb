@@ -437,6 +437,14 @@
       @processed_output = [:epub] if @processed_output == true || @processed_epub
       @processed_output
     end
+    def processed_output_add(thing)
+      dirty!
+      processed_output << thing.to_s
+    end
+    def processed_output_delete(thing)
+      dirty!
+      processed_output.delete_if{|val| val == thing.to_s}
+    end
     
     def report_flags_processed?
       report_flags_processed
