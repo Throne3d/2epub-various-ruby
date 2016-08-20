@@ -1464,7 +1464,7 @@
           chapter.entry = entry
         end
         
-        comments = page_content.css('.post-container')
+        comments = page_content.css('> .post-container')
         comments.each do |comment_element|
           next if comment_element == @entry_element
           
