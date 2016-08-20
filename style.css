@@ -211,9 +211,8 @@ div[data-type] {
   padding-top: 5px;
   page-break-before: avoid;
 }
-.content p:first-child {
-  margin-top: 0;
-}
+.content p:first-child { margin-top: 0; }
+.content p:last-child { margin-bottom: 0; }
 .branchnote {
   color: #c50;
   font-weight: bold;
