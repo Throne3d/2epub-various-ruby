@@ -416,7 +416,7 @@
         chapter.sections.each do |section|
           section_nav = section_bit
           if section_nav.is_a?(Hash)
-            section_nav[:nav] = [] unless section_nav.key?(:nav)
+            section_nav[:nav] ||= []
             section_nav = section_nav[:nav]
           end
           
@@ -428,8 +428,12 @@
           section_bit = subsection_bit
         end
         
-        section_bit[:nav] ||= []
-        section_bit[:nav] << {label: chapter.title, content: get_relative_chapter_path(chapter)}
+        section_array = section_bit
+        if section_bit.is_a?(Hash)
+          section_bit[:nav] ||= []
+          section_array = section_bit[:nav]
+        end
+        section_array << {label: chapter.title, content: get_relative_chapter_path(chapter)}
       end
       
       open(File.join(@group_folder, 'toc.html'), 'w') do |toc|
