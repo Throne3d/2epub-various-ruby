@@ -45,8 +45,17 @@
       
       @face_path_cache = {}
       @paths_used = []
+      @cachedimgs_added = []
     end
     
+    def add_cachedimg_path(face_path)
+      return true if @cachedimgs_added.include?(face_path)
+      (LOG.error "face_path doesn't start with '../' – is probably not local" and return) unless face_path.start_with?('../')
+      relative_file = face_path.sub('../', '')
+      @files << {File.join(@group_folder, relative_file) => File.join('EPUB', File.dirname(relative_file))}
+      @cachedimgs_added << face_path
+      true
+    end
     def get_face_path(face)
       face_url = face if face.is_a?(String)
       face_url = face.imageURL if face.is_a?(Face)
@@ -311,10 +320,27 @@
             chapter.processed_output.delete(@mode) unless File.file?(temp_path)
           end
           
-          LOG.error "#{chapter}: cached data was not found." unless chapter.processed_output?(@mode)
+          if chapter.processed_output?(@mode)
+            1.upto(splits) do |page_num|
+              split_save_path = get_chapter_path(chapter: chapter, group: @group, page: page_num)
+              split_rel_path = get_relative_chapter_path(chapter: chapter, page: page_num)
+              @files << {split_save_path => File.dirname(split_rel_path)}
+              open(split_save_path, 'r') do |file|
+                noko = Nokogiri::HTML(file.read)
+                noko.css('img').each do |img|
+                  next unless img.try(:[], :src)
+                  add_cachedimg_path(img[:src])
+                end
+              end
+            end
+            
+            LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used."
+            next
+          else
+            LOG.error "#{chapter}: cached data was not found." unless chapter.processed_output?(@mode)
+          end
         end
         
-        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used." and next) if chapter.processed_output?(@mode)
         
         @messages = get_message_orders(chapter).map{|count| (count >= 0 ? chapter.replies[count] : chapter.entry)}
         
