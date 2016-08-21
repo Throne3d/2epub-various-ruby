@@ -7,7 +7,7 @@ This README should document the steps necessary to setup this project in order t
 The "2epub-various" script, converted to use the Ruby language. It hopefully downloads the necessary chapters from dreamwidth.org appropriate to load the stories for [Effulgence](https://belltower.dreamwidth.org/8579.html) and [Incandescence](https://alicornutopia.dreamwidth.org/7441.html), as well as the [miscellaneous related sandboxes](https://alicornutopia.dreamwidth.org/1640.html), [glowfics](https://glowfic.dreamwidth.org/), [pixiethreads](https://pixiethreads.dreamwidth.org/613.html), [Marri's index](https://marrinikari.dreamwidth.org/1634.html), [Radon Absinthe](https://radon-absinthe.dreamwidth.org/295.html), [the Peterverse index](https://peterverse.dreamwidth.org/1643.html), [Maggie's index](https://maggie-of-the-owls.dreamwidth.org/454.html) and various other things, then generates an epub (or a 'report', or an HTML mirror, or outputs to a local Constellation Rails copy) for them.
 
 ### How do I get set up? ###
-* Install [Ruby](https://www.ruby-lang.org/en/), particular version probably doesn't matter but 2.3.0 should definitely work
+* Install [Ruby](https://www.ruby-lang.org/en/) – 2.3 doesn't appear to work; use 2.1 instead as that does.
 * Install [Bundler](http://bundler.io/)
 * Run `bundle install` in the directory – this will use the `Gemfile` to fetch the appropriate dependencies
 * Run `do_various.rb` as necessary – for example, to do an epub for Effulgence, run `do_various.rb epubdo_effulgence`, and to output the daily report, run `do_various.rb repdo_report`; if you're on Linux, to run these commands you want to open a terminal and write `./do_various.rb [thing]`, replacing `[thing]` as necessary.
