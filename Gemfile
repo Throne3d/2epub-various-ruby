@@ -1,4 +1,3 @@
-# A sample Gemfile
 source "https://rubygems.org"
 
 # gem "rails"
@@ -8,3 +7,4 @@ gem 'open_uri_redirections'
 gem 'activesupport'
 gem 'mechanize'
 gem 'memory_profiler'
+gem' tzinfo-data'
