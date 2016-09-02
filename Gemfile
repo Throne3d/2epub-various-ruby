@@ -7,4 +7,4 @@ gem 'open_uri_redirections'
 gem 'activesupport'
 gem 'mechanize'
 gem 'memory_profiler'
-gem 'tzinfo-data'
+gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw]

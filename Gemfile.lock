@@ -55,6 +55,7 @@ DEPENDENCIES
   memory_profiler
   nokogiri
   open_uri_redirections
+  tzinfo-data
 
 BUNDLED WITH
    1.12.5
