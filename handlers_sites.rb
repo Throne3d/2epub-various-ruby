@@ -894,7 +894,6 @@
       page_urls = [chapter_url]
       
       current_page_data = down_or_cache(chapter_url, where: @group_folder)
-      @download_count+=1
       LOG.debug "Got a page in get_full"
       
       chapter.processed = false if chapter.is_a?(GlowficEpub::Chapter)
