@@ -882,7 +882,7 @@
     end
     def get_full(chapter, options = {})
       if chapter.is_a?(GlowficEpub::Chapter)
-        params = {per_page: :all}
+        params = {per_page: 500}
         chapter_url = set_url_params(clear_url_params(chapter.url), params)
       else
         chapter_url = chapter
@@ -891,10 +891,26 @@
       notify = options.key?(:notify) ? options[:notify] : true
       is_new = options.key?(:new) ? options[:new] : false
       
-      page_urls = [chapter_url]
+      page_urls = []
+      params = {per_page: 500, page: 1}
+      first_page = set_url_params(clear_url_params(chapter.url), params)
+      first_page_stuff = giri_or_cache(first_page, where: @group_folder)
+      first_page_content = first_page_stuff.at_css('#content')
       
-      current_page_data = down_or_cache(chapter_url, where: @group_folder)
-      LOG.debug "Got a page in get_full"
+      reply_count = first_page_content.try(:at_css, '.reply-count').try(:text).try(:strip)
+      if reply_count
+        page_count = (reply_count.to_f / params[:per_page]).ceil
+      else
+        page_count = 1
+        params[:per_page] = :all
+      end
+      
+      1.upto(page_count).each do |num|
+        params[:page] = num
+        this_page = set_url_params(clear_url_params(chapter.url), params)
+        down_or_cache(this_page, where: @group_folder)
+        page_urls << this_page
+      end
       
       chapter.processed = false if chapter.is_a?(GlowficEpub::Chapter)
       
