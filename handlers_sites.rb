@@ -1459,15 +1459,13 @@
         @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip) if not @chapter.title_extras or @chapter.title_extras.strip.empty?
         
         if @replies.empty?
-          @entry_element = page_content.at_css('.post-container')
+          @entry_element = page_content.at_css('.post-container.post-post')
           entry = make_message(@entry_element, message_attributes: message_attributes)
           chapter.entry = entry
         end
         
-        comments = page_content.css('> .post-container')
+        comments = page_content.css('> .post-container.post-reply')
         comments.each do |comment_element|
-          next if comment_element == @entry_element
-          
           reply = make_message(comment_element, message_attributes: message_attributes)
           @replies << reply
         end
