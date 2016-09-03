@@ -1456,7 +1456,7 @@
         (LOG.error("No post title; probably not a post") and break) unless post_title
         @entry_title = post_title.text.strip unless @entry_title
         
-        @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip) if not @chapter.title_extras or @chapter.title_extras.strip.empty?
+        @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip) if !@chapter.title_extras.present?
         
         if @replies.empty?
           @entry_element = page_content.at_css('.post-container.post-post')
