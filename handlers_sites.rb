@@ -1481,13 +1481,13 @@
               old_time = chapter.time_completed
               chapter.time_completed = last_time
               
-              @notify_extras << "completed on '#{date_display(chapter.time_completed)}'" + (old_time ? " (old time: #{date_display(old_time)})" : "")
+              @notify_extras << "completed on '#{date_display(chapter.time_completed)}'" + ((old_time && old_time != chapter.time_completed) ? " (old time: #{date_display(old_time)})" : "")
             elsif post_ender.text.downcase['hiatus']
               old_time = chapter.time_hiatus
               chapter.time_hiatus = last_time
               chapter.time_completed = nil if chapter.time_completed and chapter.time_hiatus >= chapter.time_completed
               
-              @notify_extras << "hiatus on #{date_display(chapter.time_hiatus)}" + (old_time ? " (old time: #{date_display(old_time)})" : "")
+              @notify_extras << "hiatus on #{date_display(chapter.time_hiatus)}" + ((old_time && old_time != chapter.time_hiatus) ? " (old time: #{date_display(old_time)})" : "")
             else
               LOG.error "#{chapter.title}: ended non-hiatus non-complete on #{date_display(last_time)} (???)"
             end
