@@ -1477,6 +1477,23 @@
           @entry_element = page_content.at_css('.post-container.post-post')
           entry = make_message(@entry_element, message_attributes: message_attributes)
           chapter.entry = entry
+          
+          if chapter.sections.blank? && chapter.get_sections?
+            section_links = page.at_css('.flash.subber').css('a')
+            sections = []
+            section_links.each do |section_link|
+              link_href = section_link[:href]
+              next unless link_href.present?
+              next if link_href[/\/boards(\/3)?\/?$/]
+              section_id = ''
+              link_href = link_href[0..-2] if link_href.end_with?('/')
+              section_id = 'AAAA-' + link_href.split('boards/').last if link_href['boards/']
+              section_id = 'AAAB-' + link_href.split('board_sections/').last if link_href['board_sections/']
+              section_id ||= 'AAAC-' + link_href.split('/').last
+              sections << section_id + '-' + section_link.text.strip
+            end
+            chapter.sections = sections
+          end
         end
         
         comments = page_content.css('> .post-container.post-reply')

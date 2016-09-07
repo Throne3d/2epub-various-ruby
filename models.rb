@@ -207,6 +207,13 @@
       @site_handlers ||= {}
     end
     
+    def get_sections?
+      @get_sections ||= false
+    end
+    def get_sections=(val)
+      @get_sections = val
+    end
+    
     def unpack!
       was_unpacked = @unpacked
       @unpacked = true
@@ -298,13 +305,13 @@
     def sort_chapters!
       #TODO: do better
       chapters.sort! do |chapter1, chapter2|
-        sections1 = if chapter1.sections.present?
-          chapter1.sections.map {|thing| thing.downcase}
+        sections1 = if chapter1.section_sorts.present?
+          chapter1.section_sorts.map(&:downcase)
         else
           []
         end
-        sections2 = if chapter2.sections.present?
-          chapter2.sections.map {|thing| thing.downcase}
+        sections2 = if chapter2.section_sorts.present?
+          chapter2.section_sorts.map(&:downcase)
         else
           []
         end
@@ -388,14 +395,14 @@
   end
 
   class Chapter < Model
-    dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :sections, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output, :check_page_data
+    dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output, :check_page_data
     attr_reader :entry
     
     param_transform :name => :title, :name_extras => :title_extras, :processed_epub => :processed_output
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
     
     def allowed_params
-      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :report_flags, :processed, :processed_output, :check_page_data]
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :report_flags, :processed, :processed_output, :check_page_data, :get_sections, :section_sorts]
     end
     
     def unpack!
@@ -434,8 +441,6 @@
     end
     def processed_output
       @processed_output ||= []
-      @processed_output = [:epub] if @processed_output == true || @processed_epub
-      @processed_output
     end
     def processed_output_add(thing)
       dirty!
@@ -444,6 +449,55 @@
     def processed_output_delete(thing)
       dirty!
       processed_output.delete_if{|val| val == thing.to_s}
+    end
+    
+    def get_sections?
+      return @get_sections unless @get_sections.nil?
+      return chapter_list.get_sections? if chapter_list
+      return false
+    end
+    def get_sections=(val)
+      return val if @get_sections == val
+      dirty!
+      @get_sections = val
+    end
+    
+    def sections
+      if @sections.is_a?(String)
+        dirty!
+        @sections = [@sections]
+      end
+      @sections ||= []
+    end
+    def sections
+      if @sections.present?
+        @sections = [@sections] if @sections.is_a?(String)
+        return @sections
+      end
+      
+      @sections = section_sorts
+      @sections = @sections.map do |section|
+        temp = section
+        if temp.start_with?('AAA')
+          temp = temp.sub(/^AAA[A-C]+-\d+-/, '')
+        elsif temp[/^ZZ+/]
+          temp = temp.sub(/^ZZ+-/, '')
+        end
+        temp
+      end
+    end
+    def sections=(val)
+      self.section_sorts=val
+    end
+    
+    def section_sorts
+      @section_sorts ||= @sections
+    end
+    def section_sorts=(val)
+      return val if @section_sorts == val
+      dirty!
+      @sections = nil
+      @section_sorts = val
     end
     
     def report_flags_processed?
@@ -505,13 +559,7 @@
       @entry.chapter = self
       @entry
     end
-    def sections
-      if @sections.is_a?(String)
-        dirty!
-        @sections = [@sections]
-      end
-      @sections ||= []
-    end
+    
     def authors
       @authors ||= []
       if @authors.detect{|thing| thing.is_a?(String)}
@@ -751,6 +799,7 @@
         end
       end
       
+      @processed_output = [:epub] if @processed_output == true || @processed_epub
       @processed_output.uniq! if @processed_output.present?
       
       @trash_messages = false
