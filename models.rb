@@ -441,8 +441,6 @@
     end
     def processed_output
       @processed_output ||= []
-      @processed_output = [:epub] if @processed_output == true || @processed_epub
-      @processed_output
     end
     def processed_output_add(thing)
       dirty!
@@ -801,6 +799,7 @@
         end
       end
       
+      @processed_output = [:epub] if @processed_output == true || @processed_epub
       @processed_output.uniq! if @processed_output.present?
       
       @trash_messages = false
