@@ -737,6 +737,7 @@ module GlowficIndexHandlers
         chapter_list.sort_chapters = true
         chapter_list.get_sections = true
         userlist_to_block(user_url: fic_toc_url) do |chapter_details|
+          chapter_details.sections = nil # Clear sections so it'll get the sections in the handlers_sites thing.
           chapter_list << chapter_details
           if block_given?
             yield chapter_details
