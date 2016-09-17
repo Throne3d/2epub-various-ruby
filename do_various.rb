@@ -9,6 +9,9 @@ require 'active_support/core_ext/numeric/time'
 require 'active_support/core_ext/string'
 require 'active_support/time_with_zone'
 require 'active_support/json'
+require 'oj'
+
+Oj.default_options = {:mode => :compat}
 
 $LOAD_PATH << '.'
 $LOAD_PATH << 'script'
