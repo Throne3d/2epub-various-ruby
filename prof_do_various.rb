@@ -21,5 +21,6 @@ if __FILE__ == $0
     directory = "prof-" + (ARGV.is_a?(Array) ? ARGV * '_' : ARGV).gsub(/\W+/, '_')
     FileUtils.mkdir directory unless File.directory?(directory)
     printer.print(:path => directory, :profile => 'profile', :min_percent => 0.05)
+    puts ":: Outputted a time profile to #{directory}"
   end
 end
