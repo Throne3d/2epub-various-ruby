@@ -45,6 +45,8 @@ GEM
       unf_ext
     unf_ext (0.0.7.2)
     webrobots (0.1.2)
+    zip-zip (0.3)
+      rubyzip (>= 1.0.0)
 
 PLATFORMS
   ruby
@@ -58,6 +60,10 @@ DEPENDENCIES
   oj
   open_uri_redirections
   tzinfo-data
+  zip-zip
+
+RUBY VERSION
+   ruby 2.3.1p112
 
 BUNDLED WITH
-   1.12.5
+   1.13.1
