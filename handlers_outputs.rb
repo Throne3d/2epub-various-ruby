@@ -710,6 +710,12 @@
         chapter_list.each do |chapter|
           next if done.include?(chapter)
           next unless chapter.entry
+          if chapter.entry.time >= today_time
+            # skip if it's later than today
+            @errors << "Updated more recently than specified day: #{chapter}"
+            done << chapter
+            next
+          end
           
           first_update = nil
           last_update = nil
