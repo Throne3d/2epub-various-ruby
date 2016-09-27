@@ -408,7 +408,7 @@
   end
   
   def oldify_chapters_data(group, options={})
-    old_where = options.key?(:where) ? options[:where] : (options.key?(:old) ? options[:old] : (options.key?(:old_where) ? options[:old_where] : "web_cache/chapterdetails_#{group}.txt"))
+    old_where = options.key?(:where) ? options[:where] : (options.key?(:old) ? options[:old] : (options.key?(:old_where) ? options[:old_where] : detail_path_for_group(group)))
     new_where = options.key?(:new) ? options[:new] : (options.key?(:new_where) ? options[:new_where] : "")
     
     old_where = old_where.gsub("\\", "/")
@@ -425,48 +425,70 @@
         new.write old.read
       end
     end
+    
+    old_data_dir = data_path_for_group(group)
+    FileUtils.mv(data_path_for_group(group), "web_cache/_old_data/#{group}") if Dir.exists?(old_data_dir)
+  end
+  
+  def detail_filename_for_group(group)
+    "chapterdetails_#{group}.json"
+  end
+  def detail_path_for_group(group)
+    relativify_filename(detail_filename_for_group(group))
+  end
+  def data_path_for_group(group)
+    "web_cache/_data/#{group}"
+  end
+  def data_path_for_group_and_fauxid(group, fauxid)
+    File.join(data_path_for_group(group), fauxid + '.json')
+  end
+  def data_path_for_chapter(chapter)
+    data_path_for_group_and_fauxid(chapter.chapter_list.group, chapter.fauxID)
   end
   
   def get_chapters_data(group, options={})
-    where = (options.key?(:where)) ? options[:where] : "web_cache/chapterdetails_#{group}.txt"
+    standardize_params(options)
     trash_messages = (options.key?(:trash_messages)) ? options[:trash_messages] : false
+    chapters = GlowficEpub::Chapters.new(group: group, trash_messages: trash_messages)
     
-    chapterRep = GlowficEpub::Chapters.new(group: group, trash_messages: trash_messages)
+    filename = detail_filename_for_group(group)
+    data = get_file_json(filename, options)
     
-    return chapterRep unless File.file?(where)
-    File.open(where, "rb") do |f|
-      chapterRep.from_json! f.read
-    end
-    return chapterRep
-  end
-
-  def set_chapters_data(chapters, group, others={})
-    standardize_params(others)
-    where = others.key?(:where) ? others[:where] : ""
-    old = others.key?(:old) ? others[:old] : false
-    where = unless where == ""
-      where
-    else
-      if old
-        "web_cache/old_chapterdetails_#{group}.txt"
-      else
-        "web_cache/chapterdetails_#{group}.txt"
-      end
-    end
-    if chapters.is_a?(Array)
-      chapterRep = GlowficEpub::Chapters.new
-      chapters.each do |chapter|
-        chapterRep.chapters << chapter
-      end
-      chapters = chapterRep
-    end
-    temp = chapters.to_json
-    File.open(where, "wb") do |f|
-      f.write(temp)
-    end
-    LOG.debug "Saved data for group: #{group}" + (others.empty? ? "" : " (#{others.inspect})")
+    chapters.from_json! data if data.present?
+    return chapters
   end
   
+  def relativify_filename(filename, options={})
+    standardize_params(options)
+    return filename if options[:direct_pathname]
+    
+    folder = options[:where] || 'web_cache'
+    
+    File.join(folder, filename)
+  end
+  def get_file_json(filename, options={})
+    standardize_params(options)
+    filename = relativify_filename(filename, options)
+    
+    return nil unless File.file?(filename)
+    
+    json = ''
+    File.open(filename, 'rb') do |f|
+      json = f.read
+    end
+    json_obj = JSON.parse(json)
+    json_obj
+  end
+  def set_file_json(filename, json, options={})
+    standardize_params(options)
+    filename = relativify_filename(filename, options)
+    
+    json = json.to_json unless json.is_a?(String)
+    FileUtils::mkdir_p File.dirname(filename)
+    File.open(filename, 'wb') do |f|
+      f.write(json)
+    end
+  end
   
   def get_old_data(group)
     @temp_data ||= {}

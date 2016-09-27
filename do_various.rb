@@ -10,6 +10,7 @@ require 'active_support/core_ext/string'
 require 'active_support/time_with_zone'
 require 'active_support/json'
 require 'oj'
+require 'pry'
 
 Oj.default_options = {:mode => :compat}
 
@@ -27,6 +28,11 @@ include GlowficEpub
 
 FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
 FileUtils.mkdir "logs" unless File.directory?("logs")
+
+Dir.glob('web_cache/chapterdetails_*.txt') do |item| # rename .txt files to .json files.
+  next unless File.file?(item)
+  File.rename(item, item.sub(/.txt$/, '.json'))
+end
 
 set_trace_func proc {
   |event, file, line, id, binding, classname|
@@ -125,7 +131,7 @@ def main(args)
     oldify_chapters_data(group)
     data = get_chapters_data(group, trash_messages: true)
     data.each { |chapter| chapter.processed = false }
-    set_chapters_data(data, group)
+    data.save!
     LOG.info "Done."
   elsif (process == :tocs)
     chapter_list = GlowficEpub::Chapters.new(group: group)
@@ -153,7 +159,7 @@ def main(args)
     chapter_list = handler.toc_to_chapterlist(fic_toc_url: fic_toc_url) do |chapter|
       LOG.info chapter.to_s
     end
-    set_chapters_data(chapter_list, group)
+    chapter_list.save!
   elsif (process == :update_toc)
     old_data = get_chapters_data(group)
     
@@ -193,7 +199,7 @@ def main(args)
         chapter.report_flags = new_data.report_flags if new_data.report_flags
       end
     end
-    set_chapters_data(old_data, group)
+    old_data.save!
   elsif (process == :get || process == :qget)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
@@ -226,16 +232,16 @@ def main(args)
         end
         has_changed = true if diff
         
-        set_chapters_data(chapter_list, group) if diff && process != :qget
+        chapter_list.save! if diff && process != :qget
       end
     rescue StandardError, Interrupt => e
       if process == :qget && has_changed
         puts "Encountered an error. Saving changed data then re-raising."
-        set_chapters_data(chapter_list, group)
+        chapter_list.save!
       end
       raise e
     end
-    set_chapters_data(chapter_list, group) if process == :qget or !diff
+    chapter_list.save! if process == :qget or !diff
   elsif (process == :process || process == :qprocess || process == :report)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
@@ -275,16 +281,16 @@ def main(args)
           diff = false if msg[": unchanged, cached"]
         end
         
-        set_chapters_data(chapter_list, group) if diff && process != :report && process != :qprocess
+        chapter_list.save! if diff && process != :report && process != :qprocess
       end
     rescue StandardError, Interrupt => e
       if process == :report || process == :qprocess
         puts "Encountered an error. Saving changed data then re-raising."
-        set_chapters_data(chapter_list, group)
+        chapter_list.save!
       end
       raise e
     end
-    set_chapters_data(chapter_list, group) if process == :report || process == :qprocess || !diff
+    chapter_list.save! if process == :report || process == :qprocess || !diff
   elsif (process == :output_epub || process == :output_html)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
@@ -300,7 +306,7 @@ def main(args)
     params[:no_split] = true if no_split
     handler = handler.new(params)
     changed = handler.output
-    set_chapters_data(chapter_list, group) if changed
+    chapter_list.save! if changed
   elsif (process == :output_report)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
@@ -340,7 +346,7 @@ def main(args)
     chapter_list = get_chapters_data(group)
   elsif (process == :test2)
     chapter_list = get_chapters_data(group)
-    5.times { set_chapters_data(chapter_list, group) }
+    5.times { chapter_list.save! }
   elsif (process == :stats)
     chapter_list = get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?

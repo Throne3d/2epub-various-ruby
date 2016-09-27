@@ -151,7 +151,12 @@
     end
     
     def to_json(options={})
-      Oj.dump(as_json)
+      a = as_json
+      begin
+        Oj.dump(a)
+      rescue Exception => e
+        binding.pry
+      end
     end
     def as_json(options={})
       return @old_hash if @old_hash && !dirty?
@@ -190,7 +195,9 @@
   end
   
   class Chapters < Model
-    attr_reader :chapters, :faces, :authors, :group, :trash_messages
+    @@current_version = 2
+    
+    attr_reader :chapters, :faces, :authors, :group, :trash_messages, :version
     attr_accessor :group, :old_authors, :old_faces, :sort_chapters
     serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces, :kept_authors, :kept_faces, :failed_authors, :failed_faces, :unpacked
     def initialize(options = {})
@@ -201,6 +208,47 @@
       @sort_chapters = (options.key?(:sort_chapters) ? options[:sort_chapters] : (options.key?(:sort) ? options[:sort] : false))
       @trash_messages = (options.key?(:trash_messages)) ? options[:trash_messages] : false
       @unpacked = false
+    end
+    
+    def save!
+      set_file_json(detail_filename_for_group(group), to_json)
+      chapters.each {|chapter| chapter.replies.save! if chapter.is_a?(Chapter) }
+    end
+    
+    def upgrade_step!
+      from_version = version
+      to_version = from_version + 1
+      if to_version == 2
+        @chapters.each do |chapter|
+          replies = chapter['replies']
+          chapter['replies'] = []
+          next if replies.blank?
+          reply_set = RepliesArray.new
+          reply_set.from_json!({'replies': replies})
+          reply_set.save!(data_path_for_group_and_fauxid(group, Chapter.fauxID(chapter)))
+        end
+      else
+        LOG.warn "Attempted to upgrade_step to version #{to_version}; not doable? (Skipping)"
+        return false
+      end
+      @version = to_version
+      save!
+      LOG.debug "upgrade_step! to #{to_version}; success."
+      return true
+    end
+    def upgrade!(to_version=nil)
+      from_version = version
+      to_version ||= @@current_version
+      
+      return true if from_version == to_version
+      return false if from_version > to_version
+      
+      success = true
+      (from_version + 1).upto(to_version) do |step_version|
+        success = upgrade_step!
+        break unless success
+      end
+      success
     end
     
     def site_handlers
@@ -354,7 +402,7 @@
       else
         raise(ArgumentError, "Not a string or a hash.")
       end
-        
+      
       json_hash.each do |var, val|
         var = var.to_s unless var.is_a?(String)
         self.instance_variable_set('@'+var, val)
@@ -362,9 +410,12 @@
       
       LOG.debug "Chapters.from_json! (group: #{group})"
       
-      authors = json_hash['authors']
-      faces = json_hash['faces']
-      chapters = json_hash['chapters']
+      @version ||= 1
+      upgrade! if @version < @@current_version
+      
+      authors = @authors
+      faces = @faces
+      chapters = @chapters
       
       @authors = []
       @faces = []
@@ -543,14 +594,14 @@
       end
     end
     def replies
-      @replies ||= []
+      @replies = RepliesArray.new(@replies) if @replies.is_a?(Array)
+      @replies ||= RepliesArray.new
     end
     def replies=(newval)
       dirty!
       @replies=newval
-      @replies.each do |reply|
-        reply.chapter = self
-      end
+      @replies = RepliesArray.new(@replies) if @replies.is_a?(Array)
+      @replies.chapter = self
       @replies
     end
     def entry=(newval)
@@ -712,18 +763,24 @@
     end
     
     def self.fauxID(chapter)
-      return unless chapter.url.present? && chapter.entry.present?
-      url = chapter.url
-      entry = chapter.entry
-      thread = chapter.thread
+      if chapter.is_a?(Hash)
+        url = chapter['url'] or chapter[:url]
+        entry_id = chapter['entry'].try(:[], 'id') or chapter[:entry].try(:[], :id)
+        thread = chapter['thread'] or chapter[:thread]
+      else
+        url = chapter.url
+        entry_id = chapter.entry.id
+        thread = chapter.thread
+      end
+      return unless url.present? && entry_id.present?
       str = ''
       if url['.dreamwidth.org/']
         str << url.split('.dreamwidth.org/').first.split('/').last
-        str << '#' + entry.id
+        str << '#' + entry_id
         str << '#' + thread if thread
       elsif url['vast-journey-9935.herokuapp.com/']
         str << 'constellation'
-        str << '#' + entry.id
+        str << '#' + entry_id
       end
       str
     end
@@ -735,6 +792,7 @@
       return @old_hash if @old_hash && !dirty?
       hash = {}
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
+      puts "serialize ignore: #{self.class.serialize_ignore.inspect}"
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
         if var_str[0] == '@' and var_str[1] != '@'
@@ -745,9 +803,10 @@
         else
           var_sym = var_str.to_sym
         end
-        next if var_str == 'dirty' || var_str == 'old_hash'
+        next if var_str == 'dirty' || var_str == 'old_hash' || (var_str == 'replies' && !options[:serialize_replies])
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
+      puts "Keys: #{hash.keys}"
       if @authors
         hash[:authors] = @authors.map{|author| author.is_a?(Author) ? author.unique_id : author}
       end
@@ -787,16 +846,13 @@
           entry.from_json! entry_hash
           self.entry = entry
         end
-        if replies
-          self.replies = []
-          replies.each do |reply_hash|
-            reply_hash['post_type'] = PostType::REPLY
-            reply_hash['chapter'] = self
-            reply = Comment.new
-            reply.from_json! reply_hash
-            self.replies << reply
-          end
-        end
+        replies = json_hash['replies']
+        json = {'chapter': self}
+        json['replies'] = replies if replies.present?
+        
+        @replies = RepliesArray.new
+        @replies.from_json!(json)
+        # TODO: fix trash_messages
       end
       
       @processed_output = [:epub] if @processed_output == true || @processed_epub
@@ -807,6 +863,122 @@
     end
   end
 
+  class RepliesArray < Model
+    dirty_accessors :chapter
+    serialize_ignore :chapter
+    
+    def initialize(replies=nil)
+      @replies = replies
+    end
+    
+    def chapter=(newval)
+      return newval if @chapter == newval
+      @chapter.replies = [] if @chapter.present?
+      @chapter = newval
+      @replies.each {|reply| reply.chapter=@chapter}
+      newval
+    end
+    
+    def save!(force_path=nil)
+      return unless @replies
+      unless @chapter or force_path
+        LOG.error "Couldn't save #{@replies.length} replies; no chapter."
+        return false
+      end
+      path = force_path
+      path ||= data_path_for_chapter(chapter)
+      return true unless dirty?
+      set_file_json(path, to_json)
+      true
+    end
+    def load!
+      unless @chapter
+        LOG.error "Couldn't load replies; no chapter."
+        return false
+      end
+      
+      path = data_path_for_chapter(chapter)
+      json = get_file_json(path)
+      from_json! json if json.present?
+    end
+    def as_json(options={})
+      {replies: @replies}
+    end
+    def from_json! string
+      json_hash = if string.is_a? String
+        JSON.parse(string)
+      elsif string.is_a? Hash
+        string
+      else
+        raise(ArgumentError, "Not a string or a hash.")
+      end
+      
+      json_hash.each do |var, val|
+        var = var.to_s unless var.is_a?(String)
+        self.instance_variable_set('@'+var, val) unless var == 'replies'
+      end
+      
+      if json_hash['replies']
+        @replies ||= []
+        json_hash['replies'].each do |reply_hash|
+          reply_hash['post_type'] = PostType::REPLY
+          reply_hash['chapter'] = chapter
+          reply = Comment.new
+          reply.from_json! reply_hash
+          @replies << reply
+        end
+      end
+      dirty!
+    end
+    
+    def replies
+      load! unless @replies
+      @replies
+    end
+    
+    def each(&block)
+      replies.each(&block)
+    end
+    def each_with_index(&block)
+      replies.each_with_index(&block)
+    end
+    
+    def length
+      replies.length
+    end
+    def count
+      replies.count
+    end
+    def first
+      replies.first
+    end
+    def last
+      replies.last
+    end
+    def empty?
+      replies.empty?
+    end
+    def blank?
+      replies.blank?
+    end
+    def index(val)
+      replies.index(val)
+    end
+    def [](val)
+      replies[val]
+    end
+    def []=(val1, val2)
+      dirty!
+      replies[val1]=val2
+    end
+    
+    def dirty?
+      return true if @dirty
+      replies.each {|reply| @dirty = true if reply.is_a?(Model) && reply.dirty?}
+      @dirty
+    end
+  end
+  
   class Face < Model
     attr_accessor :imageURL, :keyword, :unique_id, :chapter_list
     serialize_ignore :allowed_params, :author, :chapter_list
