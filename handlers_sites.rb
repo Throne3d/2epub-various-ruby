@@ -910,10 +910,10 @@
         params[:per_page] = :all
       end
       
-      start_page.upto(page_count).each do |num|
+      1.upto(page_count).each do |num|
         params[:page] = num
         this_page = set_url_params(clear_url_params(chapter.url), params)
-        down_or_cache(this_page, where: @group_folder)
+        down_or_cache(this_page, where: @group_folder) if num >= start_page
         page_urls << this_page
       end
       
