@@ -881,6 +881,9 @@
       end
     end
     def get_full(chapter, options = {})
+      get_some(chapter, options)
+    end
+    def get_some(chapter, options = {})
       if chapter.is_a?(GlowficEpub::Chapter)
         params = {per_page: 500}
         chapter_url = set_url_params(clear_url_params(chapter.url), params)
@@ -892,7 +895,8 @@
       is_new = options.key?(:new) ? options[:new] : false
       
       page_urls = []
-      params = {per_page: 500, page: 1}
+      start_page = options[:start_page] || 1
+      params = {per_page: 500, page: start_page}
       first_page = set_url_params(clear_url_params(chapter.url), params)
       first_page_stuff = giri_or_cache(first_page, where: @group_folder)
       first_page_content = first_page_stuff.at_css('#content')
@@ -900,12 +904,13 @@
       reply_count = first_page_content.try(:at_css, '.reply-count').try(:text).try(:strip)
       if reply_count
         page_count = (reply_count.to_f / params[:per_page]).ceil
+        page_count = 1 if page_count < 1
       else
         page_count = 1
         params[:per_page] = :all
       end
       
-      1.upto(page_count).each do |num|
+      start_page.upto(page_count).each do |num|
         params[:page] = num
         this_page = set_url_params(clear_url_params(chapter.url), params)
         down_or_cache(this_page, where: @group_folder)
@@ -1001,7 +1006,9 @@
       #Needs to be updated / hasn't been got
       @download_count = 0
       
-      pages = get_full(chapter, options.merge({new: (not changed)}))
+      start_page = (chapter.replies.count * 1.0 / 500).ceil - 1
+      start_page = 1 if start_page < 1
+      pages = get_some(chapter, options.merge({new: (not changed), start_page: start_page}))
       
       chapter.pages = pages
       chapter.check_page_data = {}
