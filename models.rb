@@ -484,7 +484,7 @@
           temp = temp.sub(/^ZZ+-/, '')
         end
         temp
-      end
+      end if @sections.present?
     end
     def sections=(val)
       self.section_sorts=val
