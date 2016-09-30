@@ -60,6 +60,11 @@ def main(*args)
   process = :""
   group = :""
   
+  if chapter_list
+    chapter_list.old_authors = nil
+    chapter_list.old_faces = nil
+  end
+  
   process_thing = nil
   processes = {toc: :tocs, tocs: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, detail: :details, details: :details, process: :process, qprocess: :qprocess, clean: :clean, rem: :remove, remove: :remove, stat: :stats, stats: :stats, :"do" => :"do", epubdo: :epubdo, repdo: :repdo, output_epub: :output_epub, output_html: :output_html, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
   # put these in order of "shortest match" to "longest match", so "toc" before "tocs" (larger match later, subsets before)
