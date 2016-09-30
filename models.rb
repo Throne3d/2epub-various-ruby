@@ -463,13 +463,6 @@
     end
     
     def sections
-      if @sections.is_a?(String)
-        dirty!
-        @sections = [@sections]
-      end
-      @sections ||= []
-    end
-    def sections
       if @sections.present?
         @sections = [@sections] if @sections.is_a?(String)
         return @sections
@@ -485,6 +478,7 @@
         end
         temp
       end if @sections.present?
+      @sections
     end
     def sections=(val)
       self.section_sorts=val
@@ -492,6 +486,7 @@
     
     def section_sorts
       @section_sorts ||= @sections
+      @section_sorts ||= []
     end
     def section_sorts=(val)
       return val if @section_sorts == val
