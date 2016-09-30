@@ -495,6 +495,7 @@
     end
     def section_sorts=(val)
       return val if @section_sorts == val
+      val = [val] if val.is_a?(String)
       dirty!
       @sections = nil
       @section_sorts = val
