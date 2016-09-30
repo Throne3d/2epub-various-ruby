@@ -470,7 +470,7 @@
       
       @sections = section_sorts
       @sections = @sections.map do |section|
-        temp = section
+        temp = section.to_s
         if temp.start_with?('AAA')
           temp = temp.sub(/^AAA[A-C]+-\d+-/, '')
         elsif temp[/^ZZ+/]
