@@ -686,10 +686,8 @@ module GlowficIndexHandlers
           chapter_url = get_absolute_url(chapter_link["href"], user_url)
           chapter_sections = chapter_row.at_css('.post-board').try(:text).try(:strip)
           
-          next if @group == :lintamande && (chapter_url[/\/posts\/(212|213|214|217|218|219|220|222)\/?$/])
-          
+          next if @group == :lintamande && chapter_sections == 'Silmaril'
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
-          
           if block_given?
             yield chapter_details
           end
@@ -704,6 +702,7 @@ module GlowficIndexHandlers
     def toc_to_chapterlist(options = {}, &block)
       fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
       fic_toc_url = fix_url_folder(fic_toc_url)
+      ignore_sections = options[:ignore_sections] || []
       
       if fic_toc_url.end_with?("/boards/")
         LOG.info "TOC Page: #{fic_toc_url}"
@@ -717,6 +716,7 @@ module GlowficIndexHandlers
           board_link = board.at_css('a')
           board_name = board_link.text.strip
           next if board_name == "Site testing" or board_name == "Effulgence" or board_name == "Witchlight" or board_name == "Lighthouse" or board_name == "Opalescence" or board_name == "Silmaril" or board_name == "Zodiac"
+          next if ignore_sections.include?(board_name)
           board_url = get_absolute_url(board_link["href"], fic_toc_url)
           
           board_to_block(board_url: board_url) do |chapter_details|
@@ -737,6 +737,15 @@ module GlowficIndexHandlers
         chapter_list.sort_chapters = true
         chapter_list.get_sections = true
         userlist_to_block(user_url: fic_toc_url) do |chapter_details|
+          if chapter_details.sections.present?
+            board_name = if chapter_details.sections.is_a?(Array)
+              chapter_details.sections.first
+            else
+              chapter_details.sections
+            end
+            next if ignore_sections.include?(board_name)
+          end
+          
           chapter_details.sections = nil # Clear sections so it'll get the sections in the handlers_sites thing.
           chapter_list << chapter_details
           if block_given?
@@ -798,35 +807,7 @@ module GlowficIndexHandlers
           sections: ["Starlight"]}
         ]
       elsif @group == :lintamande
-        [
-          {url: "http://alicornutopia.dreamwidth.org/29664.html",
-          title: "leave of absence",
-          sections: ["Silmaril", "Elentári"]},
-          {url: "http://lintamande.dreamwidth.org/381.html",
-          title: "halls of stone",
-          sections: ["Silmaril", "Elentári"]},
-          {url: "http://alicornutopia.dreamwidth.org/30911.html",
-          title: "spear of ice",
-          sections: ["Silmaril", "Elentári"]},
-          {url: "http://alicornutopia.dreamwidth.org/31535.html",
-          title: "galaxy of stars",
-          sections: ["Silmaril", "Elentári"]},
-          {url: "http://alicornutopia.dreamwidth.org/29954.html",
-          title: "interplanar studies",
-          sections: ["Silmaril", "Telperion"]},
-          {url: "http://alicornutopia.dreamwidth.org/30387.html",
-          title: "applied theology",
-          sections: ["Silmaril", "Telperion"]},
-          {url: "http://alicornutopia.dreamwidth.org/31134.html",
-          title: "high-energy physics",
-          sections: ["Silmaril", "Telperion"]},
-          {url: "http://lintamande.dreamwidth.org/513.html",
-          title: "don't touch me",
-          sections: ["Silmaril", "Promise in Arda"]},
-          {url: "http://alicornutopia.dreamwidth.org/31354.html",
-          title: "the stork drops, the snake swallows",
-          sections: ["Silmaril", "Shine"]}
-        ]
+        []
       end
       
       if @group == :test
@@ -911,7 +892,7 @@ module GlowficIndexHandlers
         const_handler = ConstellationIndexHandler.new(group: @group)
         chapter_list.sort_chapters = true
         chapter_list.get_sections = true
-        const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group]) do |chapter|
+        const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group], ignore_sections: ['Silmaril']) do |chapter|
           if block_given?
             yield chapter
           end
