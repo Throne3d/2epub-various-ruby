@@ -799,7 +799,7 @@
         end
       end
       
-      @processed_output = [:epub] if @processed_output == true || @processed_epub
+      @processed_output = [] unless @processed_output.is_a?(Array)
       @processed_output.uniq! if @processed_output.present?
       
       @trash_messages = false
