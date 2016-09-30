@@ -43,13 +43,17 @@ class Array
   end
 end
 
-def main(args)
+def main(*args)
   abort "Please input an argument (e.g. 'tocs_sandbox', 'get_sandbox', 'process_sandbox', 'output_sandbox')" unless args and args.size > 0
+  args = args.first if args.length <= 1
   
-  option = if args.is_a?(String)
-    args.downcase.strip 
+  chapter_list = nil
+  if args.is_a?(String)
+    option = args.downcase.strip 
   elsif args.is_a?(Array)
-    args.join(" ").downcase.strip
+    chapter_list = args.find {|thing| thing.is_a?(Chapters)}
+    args.delete(chapter_list) if chapter_list
+    option = args.join(' ').downcase.strip
   else
     raise ArgumentError("args", "Invalid 'args' passed.")
   end
@@ -106,19 +110,19 @@ def main(args)
   LOG.info "-" * 60
   
   if (process == :"do")
-    main("tocs_#{group}")
-    main("get_#{group}")
-    main("process_#{group}")
+    chapter_list = main("tocs_#{group}")
+    chapter_list = main("get_#{group}", chapter_list)
+    chapter_list = main("process_#{group}", chapter_list)
   elsif (process == :epubdo)
-    main("tocs_#{group}")
-    main("qget_#{group}")
-    main("qprocess_#{group}")
-    main("output_epub_#{group}")
+    chapter_list = main("tocs_#{group}", chapter_list)
+    chapter_list = main("qget_#{group}", chapter_list)
+    chapter_list = main("qprocess_#{group}", chapter_list)
+    chapter_list = main("output_epub_#{group}", chapter_list)
   elsif (process == :repdo)
-    main("tocs_#{group}")
-    main("qget_#{group}")
-    main("report_#{group}")
-    main("output_report_#{group}")
+    chapter_list = main("tocs_#{group}", chapter_list)
+    chapter_list = main("qget_#{group}", chapter_list)
+    chapter_list = main("report_#{group}", chapter_list)
+    chapter_list = main("output_report_#{group}", chapter_list)
   elsif (process == :trash)
     LOG.info "Trashing (oldifying) #{group}"
     
@@ -127,8 +131,9 @@ def main(args)
     data.each { |chapter| chapter.processed = false }
     set_chapters_data(data, group)
     LOG.info "Done."
+    return data
   elsif (process == :tocs)
-    chapter_list = GlowficEpub::Chapters.new(group: group)
+    chapter_list ||= GlowficEpub::Chapters.new(group: group)
     
     (LOG.fatal "Group #{group} has no TOC" and abort) unless FIC_TOCS.has_key? group and not FIC_TOCS[group].empty?
     fic_toc_url = FIC_TOCS[group]
@@ -154,10 +159,11 @@ def main(args)
       LOG.info chapter.to_s
     end
     set_chapters_data(chapter_list, group)
+    return chapter_list
   elsif (process == :update_toc)
     old_data = get_chapters_data(group)
     
-    chapter_list = GlowficEpub::Chapters.new(group: group)
+    chapter_list ||= GlowficEpub::Chapters.new(group: group)
     (LOG.fatal "Group #{group} has no TOC" and abort) unless FIC_TOCS.has_key? group and not FIC_TOCS[group].empty?
     fic_toc_url = FIC_TOCS[group]
     
@@ -194,8 +200,9 @@ def main(args)
       end
     end
     set_chapters_data(old_data, group)
+    return chapter_list
   elsif (process == :get || process == :qget)
-    chapter_list = get_chapters_data(group)
+    chapter_list ||= get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Getting '#{group}'"
     LOG.info "Chapter count: #{chapter_list.length}"
@@ -236,8 +243,9 @@ def main(args)
       raise e
     end
     set_chapters_data(chapter_list, group) if process == :qget or !diff
+    return chapter_list
   elsif (process == :process || process == :qprocess || process == :report)
-    chapter_list = get_chapters_data(group)
+    chapter_list ||= get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Processing '#{group}'" + (process == :report ? " (daily report)" : "")
     LOG.info "Chapter count: #{chapter_list.length}"
@@ -285,8 +293,9 @@ def main(args)
       raise e
     end
     set_chapters_data(chapter_list, group) if process == :report || process == :qprocess || !diff
+    return chapter_list
   elsif (process == :output_epub || process == :output_html)
-    chapter_list = get_chapters_data(group)
+    chapter_list ||= get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Outputting an EPUB for '#{group}'" if process == :output_epub
     LOG.info "Outputting an HTML copy of '#{group}'" if process == :output_html
@@ -302,7 +311,7 @@ def main(args)
     changed = handler.output
     set_chapters_data(chapter_list, group) if changed
   elsif (process == :output_report)
-    chapter_list = get_chapters_data(group)
+    chapter_list ||= get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Outputting a report for '#{group}'"
     
@@ -329,7 +338,7 @@ def main(args)
     handler = handler.new(chapter_list: chapter_list, group: group)
     handler.output(params)
   elsif (process == :output_rails)
-    chapter_list = get_chapters_data(group)
+    chapter_list ||= get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Outputting Rails stuff for '#{group}'"
     
@@ -342,7 +351,7 @@ def main(args)
     chapter_list = get_chapters_data(group)
     5.times { set_chapters_data(chapter_list, group) }
   elsif (process == :stats)
-    chapter_list = get_chapters_data(group)
+    chapter_list ||= get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
     LOG.info "Doing stats for '#{group}'"
     
