@@ -212,7 +212,7 @@
           html << h(navbits[:label]) + "\n"
           html << html_from_navarray(navbits[:nav])
         else
-          html << "<a href='" << File.join('html', navbits[:content].sub(/^EPUB(\/|\\)/, '')) << "'>#{h(navbits[:label])}</a>"
+          html << "<a href='" << navbits[:content].sub(/^EPUB(\/|\\)/, '') << "'>#{h(navbits[:label])}</a>"
         end
         html << "</li>\n"
         html = "" if html == "<li></li>\n" || html == "<li>\n</li>\n"
