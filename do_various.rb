@@ -127,7 +127,7 @@ def main(*args)
     chapter_list = main("tocs_#{group}")
     chapter_list = main("qget_#{group}", chapter_list)
     chapter_list = main("report_#{group}", chapter_list)
-    chapter_list = main("output_report_#{group}", chapter_list)
+    main("output_report_#{group}", chapter_list)
   elsif (process == :trash)
     LOG.info "Trashing (oldifying) #{group}"
     
