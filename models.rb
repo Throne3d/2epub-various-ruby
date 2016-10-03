@@ -463,13 +463,6 @@
     end
     
     def sections
-      if @sections.is_a?(String)
-        dirty!
-        @sections = [@sections]
-      end
-      @sections ||= []
-    end
-    def sections
       if @sections.present?
         @sections = [@sections] if @sections.is_a?(String)
         return @sections
@@ -477,14 +470,15 @@
       
       @sections = section_sorts
       @sections = @sections.map do |section|
-        temp = section
+        temp = section.to_s
         if temp.start_with?('AAA')
           temp = temp.sub(/^AAA[A-C]+-\d+-/, '')
         elsif temp[/^ZZ+/]
           temp = temp.sub(/^ZZ+-/, '')
         end
         temp
-      end
+      end if @sections.present?
+      @sections
     end
     def sections=(val)
       self.section_sorts=val
@@ -492,9 +486,11 @@
     
     def section_sorts
       @section_sorts ||= @sections
+      @section_sorts ||= []
     end
     def section_sorts=(val)
       return val if @section_sorts == val
+      val = [val] if val.is_a?(String)
       dirty!
       @sections = nil
       @section_sorts = val
@@ -732,7 +728,7 @@
     end
     
     def as_json(options={})
-      return @old_hash if @old_hash && !dirty?
+      return @old_hash if @old_hash && !dirty? && !is_huge_cannot_dirty(chapter_list)
       hash = {}
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
       self.instance_variables.each do |var|
@@ -751,8 +747,10 @@
       if @authors
         hash[:authors] = @authors.map{|author| author.is_a?(Author) ? author.unique_id : author}
       end
-      @old_hash = hash
-      @dirty = false
+      unless is_huge_cannot_dirty(chapter_list)
+        @old_hash = hash
+        @dirty = false
+      end
       hash
     end
     def from_json! string
@@ -1157,7 +1155,7 @@
     end
     
     def as_json(options={})
-      return @old_hash if @old_hash && !dirty?
+      return @old_hash if @old_hash && !dirty? && !is_huge_cannot_dirty(chapter_list)
       hash = {}
       
       self.instance_variables.each do |var|
@@ -1198,8 +1196,10 @@
           hash['face'] = @face
         end
       end
-      @old_hash = hash
-      @dirty = false
+      unless is_huge_cannot_dirty(chapter_list)
+        @old_hash = hash
+        @dirty = false
+      end
       hash
     end
     

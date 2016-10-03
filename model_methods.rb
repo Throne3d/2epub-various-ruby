@@ -182,6 +182,12 @@
   }
   FIC_NAMESTRINGS.default_proc = proc {|hash, key| hash[key] = key.titleize }
   
+  def is_huge_cannot_dirty(group)
+    group = group.group if group.is_a?(Chapters)
+    return true if group == :sandbox
+    return false
+  end
+  
   def date_display(date, strf="%Y-%m-%d %H:%M")
     date.try(:strftime, strf)
   end
@@ -261,7 +267,7 @@
       end
       sleep 0.05
       success = true
-    rescue OpenURI::HTTPError, SocketError, Net::OpenTimeout => error
+    rescue OpenURI::HTTPError, SocketError, Net::OpenTimeout, Net::ReadTimeout => error
       LOG.error "Error loading file (#{file_url}); #{retries == 0 ? 'No' : retries} retr#{retries==1 ? 'y' : 'ies'} left"
       LOG.debug error
       
