@@ -728,7 +728,7 @@
     end
     
     def as_json(options={})
-      return @old_hash if @old_hash && !dirty?
+      return @old_hash if @old_hash && !dirty? && !is_huge_cannot_dirty(chapter_list)
       hash = {}
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
       self.instance_variables.each do |var|
@@ -747,8 +747,10 @@
       if @authors
         hash[:authors] = @authors.map{|author| author.is_a?(Author) ? author.unique_id : author}
       end
-      @old_hash = hash
-      @dirty = false
+      unless is_huge_cannot_dirty(chapter_list)
+        @old_hash = hash
+        @dirty = false
+      end
       hash
     end
     def from_json! string
@@ -1153,7 +1155,7 @@
     end
     
     def as_json(options={})
-      return @old_hash if @old_hash && !dirty?
+      return @old_hash if @old_hash && !dirty? && !is_huge_cannot_dirty(chapter_list)
       hash = {}
       
       self.instance_variables.each do |var|
@@ -1194,8 +1196,10 @@
           hash['face'] = @face
         end
       end
-      @old_hash = hash
-      @dirty = false
+      unless is_huge_cannot_dirty(chapter_list)
+        @old_hash = hash
+        @dirty = false
+      end
       hash
     end
     
