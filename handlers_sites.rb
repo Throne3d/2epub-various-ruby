@@ -985,6 +985,8 @@
           end
         end #Check if all the pages exist, in case someone deleted them
         
+        start_page = 1 unless pages_exist
+        
         if changed
           LOG.debug "Content is different for #{chapter}" 
         elsif pages_exist # and not changed
@@ -1006,7 +1008,7 @@
       #Needs to be updated / hasn't been got
       @download_count = 0
       
-      start_page = (chapter.replies.count * 1.0 / 500).ceil - 1
+      start_page ||= (chapter.replies.count * 1.0 / 500).ceil - 1
       start_page = 1 if start_page < 1
       pages = get_some(chapter, options.merge({new: (not changed), start_page: start_page}))
       
