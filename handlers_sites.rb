@@ -1486,7 +1486,9 @@
           @entry_element = page_content.at_css('.post-container.post-post')
           entry = make_message(@entry_element, message_attributes: message_attributes)
           chapter.entry = entry
-          
+        end
+        
+        if page_url == pages.last
           if chapter.sections.blank? && chapter.get_sections?
             section_links = page.at_css('.flash.subber').css('a')
             sections = []
