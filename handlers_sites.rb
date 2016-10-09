@@ -987,6 +987,21 @@
         
         start_page = 1 unless pages_exist
         
+        if pages_exist && changed && chapter.replies.length > 1000
+          first_page = chapter.pages.first
+          page_old_data = get_page_data(first_page, replace: false, where: @group_folder)
+          page_new = giri_or_cache(first_page, where: 'temp')
+          page_old = Nokogiri::HTML(page_old_data)
+          
+          old_content = page_old.at_css('#content')
+          new_content = page_new.at_css('#content')
+          changed = (old_content.inner_html != new_content.inner_html)
+          if changed
+            LOG.debug "getting whole thing again; first page was different & check pages were different & many replies"
+            start_page = 1
+          end
+        end
+        
         if changed
           LOG.debug "Content is different for #{chapter}" 
         elsif pages_exist # and not changed
