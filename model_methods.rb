@@ -77,6 +77,7 @@
     zodiac: [:zodiac],
     silmaril: [:silm, :silmaril],
     lighthouse: [:light, :lighthouse],
+    rapid_nova: [:rapid, :nova, :rapidnova, :rapid_nova],
 
     glowfic: [:othersandbox, :sandbox2, :glowfic],
     constellation: [:const, :constellation, :glowfic2, :sandbox3],
@@ -106,6 +107,7 @@
     zodiac: "https://vast-journey-9935.herokuapp.com/boards/7",
     silmaril: "https://alicornutopia.dreamwidth.org/31812.html",
     lighthouse: "https://vast-journey-9935.herokuapp.com/boards/16",
+    rapid_nova: "https://vast-journey-9935.herokuapp.com/boards/30",
 
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
@@ -136,6 +138,7 @@
     zodiac: "Pedro & Throne",
     silmaril: "Alicorn & Lintamande",
     lighthouse: "CuriousDiscoverer & Pedro",
+    rapid_nova: "Jarnvidr & Pedro",
 
     glowfic: "Misc",
     constellation: "Misc",
@@ -163,6 +166,7 @@
     zodiac: "Zodiac",
     silmaril: "Silmaril",
     lighthouse: "Lighthouse",
+    rapid_nova: "Rapid Nova",
 
     glowfic: "Glowfic Community",
     constellation: "Constellation",
