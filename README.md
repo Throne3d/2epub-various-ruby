@@ -14,11 +14,11 @@ The "2epub-various" script, converted to use the Ruby language. It hopefully dow
 * Use the generated .epub file on an ebook reader, or BB-code report in the daily reports thread, or some such.
 
 ### What can I do? ###
-The different `process`es are outlined in `do_various.rb` in the code, and include: `do`, which downloads the data for a group, `epubdo`, which basically does `do` and then `output_epub`, and `repdo`, which basically does `do` and then `output_report`.
+The different 'processes' are outlined in `do_various.rb` in the code, and include: `do`, which downloads the data for a group, `epubdo`, which basically does `do` and then `output_epub`, and `repdo`, which basically does `do` and then `output_report`.
 
-The different `group`s are outlined in `model_methods.rb`, in `FIC_NAME_MAPPING`. For example, `efful` maps to `effulgence`. The TOC pages are listed below in `FIC_TOCS`, and they are individually handled in `handlers_indexes.rb` depending on how the index is formatted.
+The different 'groups' are outlined in `model_methods.rb`, in `FIC_NAME_MAPPING`. For example, `efful` maps to `effulgence`. The TOC pages are listed below in `FIC_TOCS`, and they are individually handled in `handlers_indexes.rb` depending on how the index is formatted.
 
-Pass as a parameter, to `do_various.rb`, a `process` followed by a `group`, preferably separated by an underscore (`_`) but possibly works somehow else. For example, to do a report for the daily report (`repdo` as a process, `report` as a group), run `do_various.rb repdo_report` – in the Ubuntu Terminal, at least, you do this by navigating to this directory (`2epub-various-ruby`) and then executing the command `./do_various.rb repdo_report`.
+Pass as a parameter, to `do_various.rb`, a 'process' followed by a 'group', preferably separated by an underscore (`_`) but it might work with other separators such as spaces. For example, to do a report for the daily report (`repdo` as a process, `report` as a group), run `do_various.rb repdo_report` – in the Ubuntu Terminal, at least, you do this by navigating to this directory (`2epub-various-ruby`) and then executing the command `./do_various.rb repdo_report`.
 
 ### How do I fix issues with the sandbox? ###
 There should no longer be any issues with the sandbox! The old issue, which was an inability to navigate around a "discretion advised" message, should now be fixed by using a thing called `Mechanize`.
