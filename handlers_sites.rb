@@ -81,10 +81,12 @@
       where = options.key?(:where) ? options[:where] : nil
       replace = options.key?(:replace) ? options[:replace] : true
       @giricache[where] = {} unless @giricache.key?(where)
-
       return @giricache[where][page] if @giricache[where].key?(page)
 
       predone = has_cache?(page, options)
+      unless options.key?(:headers)
+        options[:headers] = {"Accept" => "text/html"}
+      end
       data = (replace ? down_or_cache(page, options) : get_page_data(page, options))
       giri = Nokogiri::HTML(data)
       @giricache[where][page] = giri if predone
