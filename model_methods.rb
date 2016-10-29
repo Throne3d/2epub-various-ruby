@@ -44,7 +44,8 @@
 
   LOG = Object.new
   def LOG.debug(str)
-    CONSOLE.debug(str) if DEBUGGING
+    CONSOLE.debug(str) if DEBUGGING && DEBUGGING != :file
+    FILELOG.debug(str) if DEBUGGING && DEBUGGING == :file
   end
   def LOG.info(str)
     CONSOLE.info(str)
