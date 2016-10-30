@@ -104,15 +104,15 @@
     incandescence: "http://alicornutopia.dreamwidth.org/7441.html?style=site",
     pixiethreads: "http://pixiethreads.dreamwidth.org/613.html?style=site",
     radon: "http://radon-absinthe.dreamwidth.org/295.html?style=site",
-    opalescence: "https://vast-journey-9935.herokuapp.com/boards/12",
-    zodiac: "https://vast-journey-9935.herokuapp.com/boards/7",
+    opalescence: "https://www.glowfic.com/boards/12",
+    zodiac: "https://www.glowfic.com/boards/7",
     silmaril: "https://alicornutopia.dreamwidth.org/31812.html",
-    lighthouse: "https://vast-journey-9935.herokuapp.com/boards/16",
-    rapid_nova: "https://vast-journey-9935.herokuapp.com/boards/30",
+    lighthouse: "https://www.glowfic.com/boards/16",
+    rapid_nova: "https://www.glowfic.com/boards/30",
 
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
-    constellation: "https://vast-journey-9935.herokuapp.com/boards/",
+    constellation: "https://www.glowfic.com/boards/",
 
     mwf_leaf: "http://manyworlds.boards.net/thread/80/backstage-leafy-glowfic-index",
     mwf_lioncourt: "http://manyworlds.boards.net/thread/104/party-thread-index",
@@ -123,12 +123,12 @@
     peterverse: "http://peterverse.dreamwidth.org/1643.html?style=site",
     maggie: "http://maggie-of-the-owls.dreamwidth.org/454.html?style=site",
     throne: "https://theotrics.dreamwidth.org/268.html?style=site",
-    lintamande: "https://vast-journey-9935.herokuapp.com/users/34/",
+    lintamande: "https://www.glowfic.com/users/34/",
 
     #Test
-    test: "https://vast-journey-9935.herokuapp.com/boards/7",
+    test: "https://www.glowfic.com/boards/7",
     temp_starlight: "https://alicornutopia.dreamwidth.org/29069.html",
-    report: "https://vast-journey-9935.herokuapp.com/boards/"
+    report: "https://www.glowfic.com/boards/"
   }
   FIC_AUTHORSTRINGS = {
     effulgence: "Alicorn & Kappa",
@@ -349,7 +349,7 @@
       params = {style: :site}
       params[:thread] = thread unless thread.nil? or thread.empty?
       set_url_params(clear_url_params(uri.to_s), params)
-    elsif uri.host.end_with?("vast-journey-9935.herokuapp.com")
+    elsif uri.host.end_with?("vast-journey-9935.herokuapp.com") || uri.host.end_with?("glowfic.com")
       uri.fragment = nil
       params = {per_page: :all}
       set_url_params(clear_url_params(uri.to_s), params)
