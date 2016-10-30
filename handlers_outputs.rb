@@ -105,7 +105,7 @@
     end
     def get_comment_path(comment_url)
       return comment_url unless comment_url.start_with?('http://') or comment_url.start_with?('https://')
-      return comment_url unless comment_url['.dreamwidth.org/'] or comment_url['vast-journey-9935.herokuapp.com/']
+      return comment_url unless comment_url['.dreamwidth.org/'] or comment_url['vast-journey-9935.herokuapp.com/'] or comment_url['glowfic.com/']
       comment_url = comment_url.gsub('&amp;', '&')
       short_url = Chapter.shortenURL(comment_url)
       fragment = (comment_url['#'] ? comment_url.split('#').last : '')
@@ -114,7 +114,7 @@
         comment_id = fragment[/(comment|cmt)-?(\d+)/].try(:split, /t-?/).try(:last)
         comment_id ||= short_url.split('thread=').last.split('&').first.split('#').first if short_url[/(\?|&)thread=(\d+)/]
         comment_id = "cmt" + comment_id if comment_id
-      elsif comment_url['vast-journey-9935.herokuapp.com/']
+      elsif comment_url['vast-journey-9935.herokuapp.com/'] or comment_url['glowfic.com/']
         thread_thing = short_url.split('/').first
         comment_id = fragment[/reply-(\d+)/].try(:split, '-').try(:last)
         comment_id ||= short_url.split('/replies/').last.split('?').first.split('#').first if short_url[/\/replies\/\d+/]
@@ -172,7 +172,7 @@
       page = options.is_a?(Hash) && (options.key?(:split) || options.key?(:page)) ? (options[:split] || options[:page]) : 1 # 1-based.
 
       uri = URI.parse(chapter_url)
-      save_file = uri.host.sub('.dreamwidth.org', '').sub('vast-journey-9935.herokuapp.com', 'constellation')
+      save_file = uri.host.sub('.dreamwidth.org', '').sub('vast-journey-9935.herokuapp.com', 'constellation').sub('www.glowfic.com', 'constellation').sub('glowfic.com', 'constellation')
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?('/')
       save_file += '-' + uri_path.sub('.html', '') + (thread ? "-#{thread}" : '') + (page > 1 ? '-split%03d' % page : '') + '.html'
@@ -413,7 +413,7 @@
           page.css('a').each do |a_element|
             a_href = a_element.try(:[], :href)
             next unless a_href
-            a_href = "https://vast-journey-9935.herokuapp.com" + a_href if a_href[/^\/(replies|posts|galleries|characters|users|templates|icons)\//]
+            a_href = "https://www.glowfic.com" + a_href if a_href[/^\/(replies|posts|galleries|characters|users|templates|icons)\//]
             a_element[:href] = get_comment_path(a_href)
           end
 

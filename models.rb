@@ -529,7 +529,7 @@
           else
             self.pages
           end
-        elsif self.url['vast-journey-9935.herokuapp.com']
+        elsif self.url['vast-journey-9935.herokuapp.com'] || self.url['glowfic.com']
           [set_url_params(clear_url_params(self.url), {page: :last, per_page: 25})]
         else
           self.pages
@@ -698,7 +698,7 @@
         query = URI.encode_www_form(query)
         uri.query = (query.empty?) ? nil : query
       end
-      uri.host = uri.host.sub(/\.dreamwidth\.org$/, ".dreamwidth").sub('vast-journey-9935.herokuapp.com', 'constellation')
+      uri.host = uri.host.sub(/\.dreamwidth\.org$/, ".dreamwidth").sub('vast-journey-9935.herokuapp.com', 'constellation').sub('www.glowfic.com', 'constellation').sub('glowfic.com', 'constellation')
       uri.to_s.sub(/^https?\:\/\//, "").sub(/\.html($|(?=\?))/, "")
     end
     def to_s
@@ -717,7 +717,7 @@
         str << url.split('.dreamwidth.org/').first.split('/').last
         str << '#' + entry.id
         str << '#' + thread if thread
-      elsif url['vast-journey-9935.herokuapp.com/']
+      elsif url['vast-journey-9935.herokuapp.com/'] || url['glowfic.com']
         str << 'constellation'
         str << '#' + entry.id
       end
