@@ -218,7 +218,6 @@
     save_path = File.join(where, uri_host, uri_folder, uri_file)
     save_path
   end
-
   def sanitize_local_path(local_path)
     local_path.gsub("\\", "~BACKSLASH~").gsub(":", "~COLON~").gsub("*", "~ASTERISK~").gsub("?", "~QMARK~").gsub("\"", "~QUOT~").gsub("<", "~LT~").gsub(">", "~GT~").gsub("|", "~BAR~")
   end
@@ -287,7 +286,6 @@
     return save_path if success
     return nil unless success
   end
-
   def get_page_data(page_url, options={})
     standardize_params(options)
     LOG.debug "get_page_data('#{page_url}', #{options})"
@@ -395,13 +393,11 @@
     uri.query = uri_query
     uri.to_s
   end
-
   def clear_url_params(chapter_url)
     uri = URI(chapter_url)
     uri.query = ""
     uri.to_s
   end
-
   def get_url_params_for(chapter_url, param_name)
     return nil if chapter_url.nil? or chapter_url.empty?
     uri = URI(chapter_url)
@@ -410,7 +406,6 @@
     return [] unless query_hash.key?(param_name)
     return query_hash[param_name]
   end
-
   def get_url_param(chapter_url, param_name, default=nil)
     return default if chapter_url.nil? or chapter_url.empty?
     params = get_url_params_for(chapter_url, param_name)
@@ -450,7 +445,6 @@
     end
     return chapterRep
   end
-
   def set_chapters_data(chapters, group, others={})
     standardize_params(others)
     where = others.key?(:where) ? others[:where] : ""
@@ -477,7 +471,6 @@
     end
     LOG.debug "Saved data for group: #{group}" + (others.empty? ? "" : " (#{others.inspect})")
   end
-
 
   def get_old_data(group)
     @temp_data ||= {}
@@ -514,11 +507,9 @@
   def get_prev_chapter_details(group, others={})
     get_prev_chapter_detail(group, others)
   end
-
   def get_prev_chapter_pages(group)
     get_prev_chapter_detail(group, :pages)
   end
-
   def get_prev_chapter_check_pages(group)
     get_prev_chapter_detail(group, detail: :check_pages, only_present: true)
   end
