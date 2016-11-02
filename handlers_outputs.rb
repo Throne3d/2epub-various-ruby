@@ -669,6 +669,18 @@
       str << ')' if show_last_author or show_last_update_time
       return str
     end
+    def sort_by_time(upd_chapters, value)
+      upd_chapters.sort! do |x,y|
+        order = y[value].time <=> x[value].time
+        next order unless order == 0
+        if y[:chapter].fauxID['constellation'] && x[:chapter].fauxID['constellation']
+          y[value].id <=> x[value].id # have higher IDs first, will be more recently updated
+        else
+          y[:chapter].fauxID <=> x[:chapter].fauxID # if not constellation, sort by chapter ID
+        end
+      end
+    end
+
     def output(options = {})
       chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : @chapters
       show_earlier = options.include?(:show_earlier) ? options[:show_earlier] : false
@@ -750,12 +762,12 @@
           LOG.info "#{days_ago == 1 ? 'New updates' : 'Last updated'} #{early_time.strftime('%m-%d')}:"
           LOG.info "[list#{days_ago==1 ? '=1' : ''}]"
           if days_ago == 1
-            upd_chapters.sort! { |x,y| y[:first_update].time <=> x[:first_update].time }
+            sort_by_time(upd_chapters, :first_update)
             first_last = :first
             new_after = early_time
             show_last_author = false
           else
-            upd_chapters.sort! { |x,y| y[:last_update].time <=> x[:last_update].time }
+            sort_by_time(upd_chapters, :last_update)
             first_last = :last
             new_after = today_time + 3
             show_last_author = :unless_completed
@@ -767,7 +779,7 @@
 
           if days_ago == 1
             dw_upd_chapters = upd_chapters.select {|chapter_thing| GlowficSiteHandlers::DreamwidthHandler.handles?(chapter_thing[:chapter]) }
-            if dw_upd_chapters and not dw_upd_chapters.empty?
+            if dw_upd_chapters.present?
               LOG.info "[spoiler-box=DW Only]New updates #{early_time.strftime('%m-%d')}:"
               LOG.info "[list]"
               dw_upd_chapters.each do |chapter_thing|
@@ -777,7 +789,7 @@
             end
 
             not_yesterdays = upd_chapters.select {|chapter_thing| chapter_thing[:yesterday] == false}
-            if not_yesterdays and not not_yesterdays.empty?
+            if not_yesterdays.present?
               LOG.info "[spoiler-box=Today, not yesterday]New updates #{early_time.strftime('%m-%d')}:"
               LOG.info "[list]"
               not_yesterdays.each do |chapter_thing|
@@ -807,7 +819,7 @@
         elsif show_earlier && !upd_chapters.empty?
           LOG.info "Earlier:"
           LOG.info "[list]"
-          upd_chapters.sort! { |x,y| y[:latest_update].time <=> x[:latest_update].time }
+          sort_by_time(upd_chapters, :latest_update)
           upd_chapters.each do |chapter_thing|
             LOG.info chapterthing_displaytext(chapter_thing, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true, show_last_author: :unless_completed)
           end
