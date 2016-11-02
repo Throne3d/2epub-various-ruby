@@ -1307,7 +1307,7 @@
         LOG.debug "nokogiri'd"
         user_page_c = user_page.at_css('#content')
 
-        char_name = user_page_c.at_css('.username').try(:text).try(:strip)
+        char_name = user_page_c.at_css('th.centered').try(:text).try(:strip)
 
         params = {}
         params[:moiety] = char_name
