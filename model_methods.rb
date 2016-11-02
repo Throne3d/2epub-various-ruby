@@ -485,16 +485,23 @@
     @temp_data[group]
   end
   def get_prev_chapter_detail(group, others={})
+    if group.is_a?(Hash) && others.nil?
+      others = group
+      group = nil
+      group = others[:group] if others.key?(:group)
+    end
     if others.is_a?(Hash)
       detail = others[:detail]
       remove_empty = others[:remove_empty] or others[:reject_empty]
       only_present = others[:only_present]
+      chapters = others[:chapters] || others[:chapter_list]
+      group = chapters.group if chapters.present? && group.blank?
     else
       detail = others
     end
     remove_empty ||= false
 
-    chapters = get_old_data(group)
+    chapters ||= get_old_data(group)
 
     prev_detail = {}
     chapters.each do |chapter|

@@ -8,6 +8,7 @@ module GlowficIndexHandlers
     def initialize(options = {})
       @group = options[:group] if options.key?(:group)
       @chapter_list = options[:chapter_list] if options.key?(:chapter_list)
+      @old_chapter_list = options[:old_chapter_list] if options.key?(:old_chapter_list)
     end
     def self.handles(*args)
       @handles = args
@@ -29,7 +30,7 @@ module GlowficIndexHandlers
       persists.each do |persist|
         next if persist[:if] && !params[persist[:if]]
         next if persist[:unless] && params[persist[:unless]]
-        persist_data = get_prev_chapter_detail(group, detail: persist[:thing], only_present: true)
+        persist_data = get_prev_chapter_detail(group, detail: persist[:thing], only_present: true, chapter_list: @old_chapter_list)
         next unless persist_data.key?(url)
         params[persist[:thing]] = persist_data[url]
       end
