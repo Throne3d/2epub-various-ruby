@@ -224,40 +224,15 @@
 
   def download_file(file_url, options={})
     standardize_params(options)
-    replace = options.key?(:replace) ? options[:replace] : false
-    if options.key?(:retry)
-      options[:do_retry] = options[:retry]
-      options.delete(:retry)
-    end
-
-    save_path = options[:save_path] if options.key?(:save_path)
     headers = options[:headers] if options.key?(:headers)
-
+    save_path = options[:save_path] if options.key?(:save_path)
     retries = 3
-    if options.key?(:do_retry)
-      if options[:do_retry].is_a?(Integer)
-        retries = options[:do_retry]
-      elsif options[:do_retry].nil? or options[:do_retry].is_a?(TrueClass) or options[:do_retry].is_a?(FalseClass)
-        retries = 0 unless options[:do_retry]
-      end
-    elsif options.key?(:retries)
-      retries = options[:retries]
-    end
-
-    options.delete(:do_retry) if options.key?(:do_retry)
-    options[:retries] = retries
-
-    raise(ArgumentError, "Retries must be an integer. #{options}") unless retries.is_a?(Integer)
 
     LOG.debug "download_file('#{file_url}', #{options})"
-    save_path = get_page_location(file_url, options) unless save_path
+
+    save_path ||= get_page_location(file_url, options)
     save_folder = File.dirname(save_path)
     FileUtils::mkdir_p save_folder
-
-    if File.file?(save_path) and not replace
-      LOG.debug "File exists already, not replacing"
-      return save_path
-    end
 
     success = false
     has_retried = false
@@ -272,7 +247,7 @@
       sleep 0.05
       success = true
     rescue OpenURI::HTTPError, SocketError, Net::OpenTimeout, Net::ReadTimeout => error
-      LOG.error "Error loading file (#{file_url}); #{retries == 0 ? 'No' : retries} retr#{retries==1 ? 'y' : 'ies'} left"
+      LOG.error "Error loading file (#{file_url}); #{retries} retr#{retries==1 ? 'y' : 'ies'} left"
       LOG.debug error
 
       retries -= 1
@@ -280,16 +255,27 @@
       retry if retries >= 0
     end
     LOG.debug "Downloaded page" if success
-    LOG.info "Successfully loaded file (#{file_url})." if has_retried and success
+    LOG.info "Successfully loaded file (#{file_url})." if has_retried && success
     LOG.error "Failed to load page (#{file_url})" unless success
 
     return save_path if success
-    return nil unless success
+  end
+  def get_page(file_url, options={})
+    standardize_params(options)
+    replace = options.key?(:replace) ? options[:replace] : false
+    save_path = options[:save_path] if options.key?(:save_path)
+
+    LOG.debug "get_page('#{file_url}', #{options})"
+
+    save_path ||= get_page_location(file_url, options)
+
+    return save_path if File.file?(save_path) && !replace
+    return download_file(file_url, options)
   end
   def get_page_data(page_url, options={})
     standardize_params(options)
     LOG.debug "get_page_data('#{page_url}', #{options})"
-    file_path = download_file(page_url, options)
+    file_path = get_page(page_url, options)
 
     if !File.file?(file_path)
       return nil

@@ -93,7 +93,7 @@
         relative_file = sanitize_local_path(File.join('images', uri.host, temp_filename + test_ext))
         LOG.debug "There was an issue with the previous file. Trying alternate path: #{temp_filename + test_ext}"
       end
-      try_down = download_file(face_url, save_path: File.join(save_path, relative_file), replace: false)
+      try_down = get_page(face_url, save_path: File.join(save_path, relative_file), replace: false)
       unless try_down
         @face_path_cache[face_url] = "" #So it doesn't error multiple times for a single icon
         return ""
