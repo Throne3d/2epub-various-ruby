@@ -682,7 +682,7 @@
     end
     def report_output(thing)
       @report_output ||= ""
-      @report_output += thing + '\n'
+      @report_output += thing + "\n"
     end
     def report_output!
       LOG.info @report_output
