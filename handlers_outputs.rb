@@ -602,6 +602,7 @@
       show_last_update_time = options.key?(:show_last_update_time) ? options[:show_last_update_time] : false
       show_sections = options.key?(:show_sections) ? options[:show_sections] : false
       show_last_author = options.key?(:show_last_author) ? options[:show_last_author] : false
+      show_unread_link = options.key?(:show_unread_link) ? options[:show_unread_link] : false
 
       chapter = chapterthing[:chapter]
       first_update = chapterthing[:first_update]
@@ -650,6 +651,11 @@
       end
       str = "[*]"
       str << '[size=85]' + chapter.report_flags.strip + '[/size] ' unless chapter.report_flags.blank?
+      if chapter.entry.time >= show_new_after
+        str << '([b]New[/b]) '
+      elsif chapter.fauxID['constellation'] && show_unread_link
+        str << "([url=#{set_url_params(clear_url_params(chapter.url), {page: 'unread'})}#unread]→[/url]) "
+      end
       str << section_string
       str << "[url=#{url_thing.permalink}]" if url_thing
       str << '[color=#9A534D]' if hiatus
@@ -661,7 +667,6 @@
       str << ',' unless chapter.entry_title and chapter.entry_title[/[?,.!;…\-–—]$/] #ends with punctuation (therefore 'don't add a comma')
       str << ' '
       str << "#{chapter.title_extras || '(no extras)'}"
-      str << ', new' if chapter.entry.time >= show_new_after
       str << ' (' if show_last_author or show_last_update_time
       str << "last post by #{latest_update.author_str}" if show_last_author
       str << ', ' if show_last_author and show_last_update_time
@@ -787,6 +792,7 @@
             show_last_author = false
             colon_message = "New updates #{early_time.strftime('%m-%d')}:"
             list_style = '1'
+            show_unread_link = true
           else
             sort_by_time(upd_chapters, :last_update)
             first_last = :last
@@ -794,9 +800,10 @@
             show_last_author = :unless_completed
             colon_message = "Last updated #{early_time.strftime('%m-%d')}:"
             list_style = false
+            show_unread_link = false
           end
 
-          report_list(upd_chapters, first_last: first_last, completed_before: late_time, new_after: new_after, show_last_author: show_last_author, spoiler_box: false, list_style: list_style, message: colon_message)
+          report_list(upd_chapters, first_last: first_last, completed_before: late_time, new_after: new_after, show_last_author: show_last_author, show_unread_link: show_unread_link, spoiler_box: false, list_style: list_style, message: colon_message)
 
           if days_ago == 1
             new_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].entry.time >= early_time}
