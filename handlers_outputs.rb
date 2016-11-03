@@ -685,7 +685,21 @@
       @report_output += thing + "\n"
     end
     def report_output!
-      LOG.info @report_output
+      LOG.info @report_output.strip
+    end
+    def report_list(chapters, options={})
+      spoiler_box = options.key?(:spoiler_box) ? options.delete(:spoiler_box) : false
+      list_style = options.key?(:list_style) ? options.delete(:list_style) : false
+      message = options.delete(:message)
+
+      report_output "[spoiler-box=#{spoiler_box}]" if spoiler_box
+      report_output message
+      report_output "[list#{list_style ? '=' + list_style : ''}]"
+      chapters.each do |chapter_thing|
+        report_output chapterthing_displaytext(chapter_thing, options)
+      end
+      report_output "[/list]"
+      report_output "[/spoiler-box]" if spoiler_box
     end
 
     def output(options = {})
@@ -766,55 +780,33 @@
 
         upd_chapters = upd_chapter_col[days_ago]
         if days_ago >= 1 and not upd_chapters.empty?
-          report_output "#{days_ago == 1 ? 'New updates' : 'Last updated'} #{early_time.strftime('%m-%d')}:"
           if days_ago == 1
             sort_by_time(upd_chapters, :first_update)
             first_last = :first
             new_after = early_time
             show_last_author = false
+            colon_message = "New updates #{early_time.strftime('%m-%d')}:"
+            list_style = '1'
           else
             sort_by_time(upd_chapters, :last_update)
             first_last = :last
             new_after = today_time + 3
             show_last_author = :unless_completed
+            colon_message = "Last updated #{early_time.strftime('%m-%d')}:"
+            list_style = false
           end
 
-          report_output "[list#{days_ago==1 ? '=1' : ''}]"
-          upd_chapters.each do |chapter_thing|
-            report_output chapterthing_displaytext(chapter_thing, first_last: first_last, completed_before: late_time, new_after: new_after, show_last_author: show_last_author)
-          end
-          report_output "[/list]"
+          report_list(upd_chapters, first_last: first_last, completed_before: late_time, new_after: new_after, show_last_author: show_last_author, spoiler_box: false, list_style: list_style, message: colon_message)
 
           if days_ago == 1
             new_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].entry.time >= early_time}
-            if new_chapters.present?
-              report_output "[spoiler-box=New threads]New updates #{early_time.strftime('%m-%d')}:"
-              report_output "[list]"
-              new_chapters.each do |chapter_thing|
-                report_output chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
-              end
-              report_output "[/list][/spoiler-box]"
-            end
+            report_list(new_chapters, first_last: :first, completed_before: late_time, new_after: early_time, spoiler_box: 'New threads', message: colon_message) if new_chapters.present?
 
             dw_upd_chapters = upd_chapters.select {|chapter_thing| GlowficSiteHandlers::DreamwidthHandler.handles?(chapter_thing[:chapter]) }
-            if dw_upd_chapters.present?
-              report_output "[spoiler-box=Dreamwidth threads]New updates #{early_time.strftime('%m-%d')}:"
-              report_output "[list]"
-              dw_upd_chapters.each do |chapter_thing|
-                report_output chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
-              end
-              report_output "[/list][/spoiler-box]"
-            end
+            report_list(dw_upd_chapters, first_last: :first, completed_before: late_time, new_after: early_time, spoiler_box: 'Dreamwidth threads', message: colon_message) if dw_upd_chapters.present?
 
             not_yesterdays = upd_chapters.select {|chapter_thing| chapter_thing[:yesterday] == false}
-            if not_yesterdays.present?
-              report_output "[spoiler-box=Today, not yesterday]New updates #{early_time.strftime('%m-%d')}:"
-              report_output "[list]"
-              not_yesterdays.each do |chapter_thing|
-                report_output chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
-              end
-              report_output "[/list][/spoiler-box]"
-            end
+            report_list(not_yesterdays, first_last: :first, completed_before: late_time, new_after: early_time, spoiler_box: 'Today, not yesterday', message: colon_message) if not_yesterdays.present?
 
             sec_upd_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].sections.present? }
             sec_upd_chapters.sort! do |chapter_thing1, chapter_thing2|
@@ -822,23 +814,10 @@
               next sect_diff unless sect_diff == 0
               next chapter_thing2[:first_update].time <=> chapter_thing1[:first_update].time
             end
-            if sec_upd_chapters.present?
-              report_output "[spoiler-box=Continuities]New updates #{early_time.strftime('%m-%d')}:"
-              report_output "[list]"
-              sec_upd_chapters.each do |chapter_thing|
-                report_output chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time, show_sections: true)
-              end
-              report_output "[/list][/spoiler-box]"
-            end
+            report_list(sec_upd_chapters, first_last: :first, completed_before: late_time, new_after: early_time, show_sections: true, spoiler_box: 'Continuities', message: colon_message) if sec_upd_chapters.present?
           end
         elsif show_earlier && !upd_chapters.empty?
-          report_output "Earlier:"
-          report_output "[list]"
-          sort_by_time(upd_chapters, :latest_update)
-          upd_chapters.each do |chapter_thing|
-            report_output chapterthing_displaytext(chapter_thing, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true, show_last_author: :unless_completed)
-          end
-          report_output "[/list]"
+          report_list(upd_chapters, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true, show_last_author: :unless_completed, message: 'Earlier:') if upd_chapters.present?
         end
       end
       report_output "[url=http://alicorn.elcenia.com/board/viewtopic.php?f=10&t=498#p25059]Official moiety list[/url] ([url=http://alicorn.elcenia.com/board/viewtopic.php?f=10&t=498#p25060]rainbow[/url])"
