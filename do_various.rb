@@ -10,6 +10,7 @@ require 'active_support/core_ext/string'
 require 'active_support/time_with_zone'
 require 'active_support/json'
 require 'oj'
+require 'pry'
 
 Oj.default_options = {:mode => :compat}
 

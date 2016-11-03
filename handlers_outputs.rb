@@ -682,7 +682,7 @@
     end
     def report_output(thing)
       @report_output ||= ""
-      @report_output << thing << '\n'
+      @report_output += thing + '\n'
     end
     def report_output!
       LOG.info @report_output
@@ -819,8 +819,8 @@
             sec_upd_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].sections.present? }
             sec_upd_chapters.sort! do |chapter_thing1, chapter_thing2|
               sect_diff = chapter_thing1[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)} <=> chapter_thing2[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)}
-              return sect_diff unless sect_diff == 0
-              return chapter_thing2[:first_update].time <=> chapter_thing1[:first_update].time
+              next sect_diff unless sect_diff == 0
+              next chapter_thing2[:first_update].time <=> chapter_thing1[:first_update].time
             end
             if sec_upd_chapters.present?
               report_output "[spoiler-box=Continuities]New updates #{early_time.strftime('%m-%d')}:"
