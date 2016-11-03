@@ -778,6 +778,16 @@
           LOG.info "[/list]"
 
           if days_ago == 1
+            new_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].entry.time >= early_time}
+            if new_chapters.present?
+              LOG.info "[spoiler-box=New threads]New updates #{early_time.strftime('%m-%d')}:"
+              LOG.info "[list]"
+              new_chapters.each do |chapter_thing|
+                LOG.info chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
+              end
+              LOG.info "[/list][/spoiler-box]"
+            end
+
             dw_upd_chapters = upd_chapters.select {|chapter_thing| GlowficSiteHandlers::DreamwidthHandler.handles?(chapter_thing[:chapter]) }
             if dw_upd_chapters.present?
               LOG.info "[spoiler-box=DW Only]New updates #{early_time.strftime('%m-%d')}:"
@@ -799,17 +809,17 @@
             end
 
             sec_upd_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].sections.present? }
+            sec_upd_chapters.sort! do |chapter_thing1, chapter_thing2|
+              sect_diff = chapter_thing1[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)} <=> chapter_thing2[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)}
+              if sect_diff == 0
+                chapter_thing2[:first_update].time <=> chapter_thing1[:first_update].time
+              else
+                sect_diff
+              end
+            end
             if sec_upd_chapters.present?
               LOG.info "[spoiler-box=Continuities]New updates #{early_time.strftime('%m-%d')}:"
               LOG.info "[list]"
-              sec_upd_chapters.sort! do |chapter_thing1, chapter_thing2|
-                sect_diff = chapter_thing1[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)} <=> chapter_thing2[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)}
-                if sect_diff == 0
-                  chapter_thing2[:first_update].time <=> chapter_thing1[:first_update].time
-                else
-                  sect_diff
-                end
-              end
               sec_upd_chapters.each do |chapter_thing|
                 LOG.info chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time, show_sections: true)
               end
