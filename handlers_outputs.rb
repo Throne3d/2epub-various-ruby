@@ -790,7 +790,7 @@
 
             dw_upd_chapters = upd_chapters.select {|chapter_thing| GlowficSiteHandlers::DreamwidthHandler.handles?(chapter_thing[:chapter]) }
             if dw_upd_chapters.present?
-              LOG.info "[spoiler-box=DW Only]New updates #{early_time.strftime('%m-%d')}:"
+              LOG.info "[spoiler-box=Dreamwidth threads]New updates #{early_time.strftime('%m-%d')}:"
               LOG.info "[list]"
               dw_upd_chapters.each do |chapter_thing|
                 LOG.info chapterthing_displaytext(chapter_thing, first_last: :first, completed_before: late_time, new_after: early_time)
