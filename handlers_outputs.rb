@@ -824,6 +824,7 @@
             report_list(sec_upd_chapters, first_last: :first, completed_before: late_time, new_after: early_time, show_sections: true, spoiler_box: 'Continuities', message: colon_message) if sec_upd_chapters.present?
           end
         elsif show_earlier && !upd_chapters.empty?
+          sort_by_time(upd_chapters, :latest_update)
           report_list(upd_chapters, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true, show_last_author: :unless_completed, message: 'Earlier:') if upd_chapters.present?
         end
       end
