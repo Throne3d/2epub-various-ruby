@@ -66,7 +66,7 @@
 
   COLLECTION_LIST_URL = 'https://gist.githubusercontent.com/Nineza/776e8136c058cf9957df65ccaf27f552/raw/collection_pages.txt'
   MOIETY_LIST_URL = 'https://gist.githubusercontent.com/Nineza/8b8b47312b6b8b92f16fd4c91aa67cd4/raw/moiety_list.json'
-  REPORT_LIST_URL = 'https://gist.githubusercontent.com/Nineza/5149441eebc2d83dbef27547e74a0f1e/raw/toc_report.json'
+  REPORT_LIST_URL = 'https://bitbucket.org/Throne3d/databox/raw/master/toc_report.json'
 
   FIC_NAME_MAPPING = {
     # put the mappings so subsets of followings come first (efful before effulgence, zod before zodiac, etc.)
