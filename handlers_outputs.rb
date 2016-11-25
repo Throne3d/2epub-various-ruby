@@ -632,7 +632,7 @@
         chapter.report_flags_processed = true
       end
 
-      if chapter.title_extras.present? and not chapter.report_flags.present?
+      if (!chapter.title_extras.nil? && !chapter.title_extras.empty?) and not chapter.report_flags.present?
         chapter.report_flags = chapter.title_extras.scan(@flag_scan).map{|thing| thing[0] }.uniq.sort{|thing1, thing2| rainbow_comp(thing1, thing2) }.join(' ').strip.gsub(/[\(\)]/, '')
         chapter.title_extras = chapter.title_extras.gsub(@flag_scan, '')
       end

@@ -412,8 +412,8 @@
     end
 
     return if not File.file?(old_where)
-    File.open(old_where, "rb") do |old|
-      File.open(new_where, "wb") do |new|
+    File.open(old_where, "r") do |old|
+      File.open(new_where, "w") do |new|
         new.write old.read
       end
     end
@@ -426,8 +426,8 @@
     chapterRep = GlowficEpub::Chapters.new(group: group, trash_messages: trash_messages)
 
     return chapterRep unless File.file?(where)
-    File.open(where, "rb") do |f|
-      chapterRep.from_json! f.read
+    File.open(where, "r") do |f|
+      chapterRep.from_json! f.read.scrub
     end
     return chapterRep
   end
@@ -452,7 +452,7 @@
       chapters = chapterRep
     end
     temp = chapters.to_json
-    File.open(where, "wb") do |f|
+    File.open(where, "w") do |f|
       f.write(temp)
     end
     LOG.debug "Saved data for group: #{group}" + (others.empty? ? "" : " (#{others.inspect})")
