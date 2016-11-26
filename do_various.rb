@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require 'rubygems'
+require 'bundler/setup'
 require 'logger'
 require 'date'
 require 'active_support'
