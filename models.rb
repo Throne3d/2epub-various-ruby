@@ -791,7 +791,7 @@
       return @old_hash if @old_hash && !dirty? && !is_huge_cannot_dirty(chapter_list)
       hash = {}
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
-      puts "serialize ignore: #{self.class.serialize_ignore.inspect}"
+      LOG.debug "serialize ignore: #{self.class.serialize_ignore.inspect}"
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
         if var_str[0] == '@' and var_str[1] != '@'
@@ -805,7 +805,7 @@
         next if var_str == 'dirty' || var_str == 'old_hash' || (var_str == 'replies' && !options[:serialize_replies])
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
-      puts "Keys: #{hash.keys}"
+      LOG.debug "Keys: #{hash.keys}"
       if @authors
         hash[:authors] = @authors.map{|author| author.is_a?(Author) ? author.unique_id : author}
       end
@@ -877,13 +877,15 @@
       @chapter.replies = [] if @chapter.present?
       @chapter = newval
       @replies.each {|reply| reply.chapter=@chapter}
-      newval
+      puts "#{@replies.length} replies set to have chapter #{@chapter}"
+      @chapter
     end
 
     def save!(force_path=nil)
       return unless @replies
       unless @chapter or force_path
         LOG.error "Couldn't save #{@replies.length} replies; no chapter."
+        LOG.debug caller
         return false
       end
       path = force_path
@@ -934,40 +936,23 @@
 
     def replies
       load! unless @replies
-      @replies
+      @replies || []
     end
 
-    def each(&block)
-      replies.each(&block)
-    end
-    def each_with_index(&block)
-      replies.each_with_index(&block)
-    end
+    def each(&block); replies.each(&block); end
+    def each_with_index(&block); replies.each_with_index(&block); end
+    def reverse_each(&block); replies.reverse_each(&block); end
+    def detect(&block); replies.detect(&block); end
 
-    def length
-      replies.length
-    end
-    def count
-      replies.count
-    end
-    def first
-      replies.first
-    end
-    def last
-      replies.last
-    end
-    def empty?
-      replies.empty?
-    end
-    def blank?
-      replies.blank?
-    end
-    def index(val)
-      replies.index(val)
-    end
-    def [](val)
-      replies[val]
-    end
+    def length; replies.length; end
+    def count; replies.count; end
+    def first; replies.first; end
+    def last; replies.last; end
+    def empty?; replies.empty?; end
+    def blank?; replies.blank?; end
+    def index(val); replies.index(val); end
+
+    def [](val); replies[val]; end
     def []=(val1, val2)
       dirty!
       replies[val1]=val2
