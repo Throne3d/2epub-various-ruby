@@ -419,7 +419,10 @@
     end
 
     old_data_dir = data_path_for_group(group)
-    FileUtils.mv(data_path_for_group(group), "web_cache/_old_data/#{group}") if Dir.exists?(old_data_dir)
+    if Dir.exists?(old_data_dir)
+      FileUtils.mkdir 'web_cache/_old_data' unless Dir.exists?('web_cache/_old_data')
+      FileUtils.cp_r(old_data_dir, "web_cache/_old_data/#{group}")
+    end
   end
 
   def detail_filename_for_group(group)

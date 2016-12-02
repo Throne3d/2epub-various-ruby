@@ -218,14 +218,16 @@
     def upgrade_step!
       from_version = version
       to_version = from_version + 1
+      LOG.info "Upgrading backend version to v#{to_version}."
       if to_version == 2
         @chapters.each do |chapter|
           replies = chapter['replies']
           chapter['replies'] = []
           next if replies.blank?
           reply_set = RepliesArray.new
-          reply_set.from_json!({'replies': replies})
+          reply_set.from_json!({'replies' => replies})
           reply_set.save!(data_path_for_group_and_fauxid(group, Chapter.fauxID(chapter)))
+          LOG.info "Done chapter replies for #{Chapter.fauxID(chapter)}"
         end
       else
         LOG.warn "Attempted to upgrade_step to version #{to_version}; not doable? (Skipping)"
@@ -233,7 +235,7 @@
       end
       @version = to_version
       save!
-      LOG.debug "upgrade_step! to #{to_version}; success."
+      LOG.info "Upgraded to v#{to_version}; success."
       return true
     end
     def upgrade!(to_version=nil)
@@ -594,7 +596,11 @@
         @replies = RepliesArray.new(@replies)
         @replies.chapter = self
       end
-      @replies ||= RepliesArray.new
+      if @replies.nil?
+        @replies = RepliesArray.new
+        @replies.chapter = self
+      end
+      @replies
     end
     def replies=(newval)
       dirty!
@@ -847,12 +853,13 @@
           entry.from_json! entry_hash
           self.entry = entry
         end
-        replies = json_hash['replies']
-        json = {'chapter': self}
-        json['replies'] = replies if replies.present?
+        if replies.present?
+          json = {'chapter' => self}
+          json['replies'] = replies
 
-        @replies = RepliesArray.new
-        @replies.from_json!(json)
+          @replies = RepliesArray.new
+          @replies.from_json!(json)
+        end
         # TODO: fix trash_messages
       end
 
@@ -881,8 +888,7 @@
       return newval if @chapter == newval
       @chapter.replies = [] if @chapter.present?
       @chapter = newval
-      @replies.each {|reply| reply.chapter=@chapter}
-      puts "#{@replies.length} replies set to have chapter #{@chapter}"
+      replies.each {|reply| reply.chapter=@chapter}
       @chapter
     end
 
@@ -895,8 +901,9 @@
       end
       path = force_path
       path ||= data_path_for_chapter(chapter)
-      return true unless dirty?
+      return true unless dirty? || force_path
       set_file_json(path, to_json)
+      # @dirty = false unless force_path
       true
     end
     def load!
@@ -930,7 +937,7 @@
         @replies ||= []
         json_hash['replies'].each do |reply_hash|
           reply_hash['post_type'] = PostType::REPLY
-          reply_hash['chapter'] = chapter
+          reply_hash['chapter'] = chapter if chapter
           reply = Comment.new
           reply.from_json! reply_hash
           @replies << reply
@@ -1091,13 +1098,14 @@
       @push_author = false
       @chapter = newval
       keep_old_stuff
+      parent
       dirty!
       newval
     end
 
     def keep_old_stuff
       unless chapter && chapter.chapter_list
-        LOG.error "(No chapter!)" unless chapter
+        #LOG.error "(No chapter!)" unless chapter
         return
       end
       chapter.chapter_list.keep_old_author(author_id) if author_id
@@ -1393,7 +1401,9 @@
 
       if parent
         self.parent = parent
-        self.parent
+        if @chapter
+          self.parent
+        end
       end
       if author
         self.author = author
