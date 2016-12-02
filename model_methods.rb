@@ -454,8 +454,13 @@
     return filename if options[:direct_pathname]
 
     folder = options[:where] || 'web_cache'
+    folder = folder[0..-2] if folder.end_with?('/')
 
-    File.join(folder, filename)
+    if filename.start_with?(folder + '/')
+      filename
+    else
+      File.join(folder, filename)
+    end
   end
   def get_file_json(filename, options={})
     standardize_params(options)
