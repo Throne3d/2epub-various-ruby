@@ -212,7 +212,7 @@
 
     def save!
       set_file_json(detail_filename_for_group(group), to_json)
-      chapters.each {|chapter| chapter.replies.save! if chapter.is_a?(Chapter) }
+      chapters.each {|chapter| chapter.save! if chapter.is_a?(Chapter) }
     end
 
     def upgrade_step!
@@ -861,6 +861,11 @@
 
       @trash_messages = false
       dirty!
+    end
+
+    def save!
+      return true unless entry
+      replies.save!
     end
   end
 
