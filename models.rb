@@ -590,7 +590,10 @@
       end
     end
     def replies
-      @replies = RepliesArray.new(@replies) if @replies.is_a?(Array)
+      if @replies.is_a?(Array)
+        @replies = RepliesArray.new(@replies)
+        @replies.chapter = self
+      end
       @replies ||= RepliesArray.new
     end
     def replies=(newval)
