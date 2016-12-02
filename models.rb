@@ -903,7 +903,7 @@
       path ||= data_path_for_chapter(chapter)
       return true unless dirty? || force_path
       set_file_json(path, to_json)
-      # @dirty = false unless force_path
+      @dirty = false unless force_path
       true
     end
     def load!
