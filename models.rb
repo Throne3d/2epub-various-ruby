@@ -3,7 +3,7 @@
   require 'json'
   require 'date'
   include GlowficEpubMethods
-  
+
   def self.built_moieties?
     @built_moieties ||= false
   end
@@ -12,12 +12,12 @@
   end
   def self.build_moieties()
     return @moieties if self.built_moieties?
-    
+
     url = MOIETY_LIST_URL
     file_data = get_page_data(url, where: 'temp', replace: true).strip
     @moieties = JSON.parse(file_data)
     @moieties ||= {}
-    
+
     url = COLLECTION_LIST_URL
     file_data = get_page_data(url, where: 'temp', replace: true).strip
     file_data.split(/\r?\n/).each do |line|
@@ -25,13 +25,13 @@
       next if line.empty?
       collection_name = line.split(" ~#~ ").first.strip
       collection_url = line.sub("#{collection_name} ~#~ ", "").strip
-      
+
       uri = URI.parse(collection_url)
       collection_id = uri.host.sub(".dreamwidth.org", "")
-      
+
       collection_data = get_page_data(collection_url, replace: true)
       collection = Nokogiri::HTML(collection_data)
-      
+
       moiety_key = nil
       @moieties.keys.each do |key|
         moiety_key = key if key.downcase.strip == collection_name.downcase.strip
@@ -40,24 +40,24 @@
         moiety_key = collection_name
         @moieties[moiety_key] = []
       end
-      
+
       @moieties[moiety_key] << collection_id
       count = 0
       collection.css('#members_people_body a').each do |user_element|
         @moieties[moiety_key] << user_element.text.strip.gsub('_', '-')
         count += 1
       end
-      
+
       LOG.info "Processed collection #{collection_name}: #{count} member#{count==1 ? '' : 's'}."
     end
     self.built_moieties=true
   end
-  
+
   def self.moieties
     build_moieties unless self.built_moieties?
     @moieties
   end
-  
+
   class Model
     def initialize
       @dirty = false
@@ -78,7 +78,7 @@
       end
       params
     end
-    
+
     def self.dirty_accessors(*method_names)
       GlowficEpub::LOG.debug "Defining dirty accessors for #{self}: #{method_names * ', '}"
       method_names.each do |method_name|
@@ -104,7 +104,7 @@
     def dirty
       @dirty
     end
-    
+
     def self.serialize_ignore? thing
       return false if @serialize_ignore.nil?
       return false unless thing.is_a?(String) or thing.is_a?(Symbol)
@@ -129,7 +129,7 @@
     def serialize_ignore?(thing)
       self.class.serialize_ignore?(thing)
     end
-    
+
     def self.param_transform(**things)
       if things.length == 0
         return @param_transform || {}
@@ -149,12 +149,12 @@
     def param_transform
       self.class.param_transform
     end
-    
+
     def to_json(options={})
       a = as_json
       begin
         Oj.dump(a)
-      rescue Exception => e
+      rescue Exception
         binding.pry
       end
     end
@@ -186,17 +186,17 @@
       else
         raise(ArgumentError, "Not a string or a hash.")
       end
-      
+
       json_hash.each do |var, val|
         var = var.to_s unless var.is_a?(String)
         self.instance_variable_set('@'+var, val)
       end
     end
   end
-  
+
   class Chapters < Model
     @@current_version = 2
-    
+
     attr_reader :chapters, :faces, :authors, :group, :trash_messages, :version
     attr_accessor :group, :old_authors, :old_faces, :sort_chapters
     serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces, :kept_authors, :kept_faces, :failed_authors, :failed_faces, :unpacked
@@ -209,12 +209,12 @@
       @trash_messages = (options.key?(:trash_messages)) ? options[:trash_messages] : false
       @unpacked = false
     end
-    
+
     def save!
       set_file_json(detail_filename_for_group(group), to_json)
       chapters.each {|chapter| chapter.replies.save! if chapter.is_a?(Chapter) }
     end
-    
+
     def upgrade_step!
       from_version = version
       to_version = from_version + 1
@@ -239,10 +239,10 @@
     def upgrade!(to_version=nil)
       from_version = version
       to_version ||= @@current_version
-      
+
       return true if from_version == to_version
       return false if from_version > to_version
-      
+
       success = true
       (from_version + 1).upto(to_version) do |step_version|
         success = upgrade_step!
@@ -250,18 +250,18 @@
       end
       success
     end
-    
+
     def site_handlers
       @site_handlers ||= {}
     end
-    
+
     def get_sections?
       @get_sections ||= false
     end
     def get_sections=(val)
       @get_sections = val
     end
-    
+
     def unpack!
       was_unpacked = @unpacked
       @unpacked = true
@@ -270,7 +270,7 @@
     def unpacked?
       @unpacked ||= false
     end
-    
+
     def add_author(arg)
       authors << arg unless authors.include?(arg)
     end
@@ -341,7 +341,7 @@
       end
       found_face
     end
-    
+
     def add_chapter(arg)
       chapters << arg unless chapters.include?(arg)
       arg.chapter_list = self unless arg.chapter_list == self
@@ -349,7 +349,7 @@
         sort_chapters!
       end
     end
-    
+
     def sort_chapters!
       #TODO: do better
       chapters.sort! do |chapter1, chapter2|
@@ -366,7 +366,7 @@
         sections1 <=> sections2
       end
     end
-    
+
     def <<(arg)
       if (arg.is_a?(Face))
         self.add_face(arg)
@@ -402,21 +402,21 @@
       else
         raise(ArgumentError, "Not a string or a hash.")
       end
-      
+
       json_hash.each do |var, val|
         var = var.to_s unless var.is_a?(String)
         self.instance_variable_set('@'+var, val)
       end
-      
+
       LOG.debug "Chapters.from_json! (group: #{group})"
-      
+
       @version ||= 1
       upgrade! if @version < @@current_version
-      
+
       authors = @authors
       faces = @faces
       chapters = @chapters
-      
+
       @authors = []
       @faces = []
       unless trash_messages
@@ -426,7 +426,7 @@
           author.from_json! author_hash
           add_author(author)
         end
-        
+
         faces.each do |face_hash|
           face_hash['chapter_list'] = self
           face = Face.new
@@ -434,7 +434,7 @@
           add_face(face)
         end
       end
-      
+
       @chapters = []
       chapters.each do |chapter_hash|
         chapter_hash['chapter_list'] = self
@@ -448,23 +448,23 @@
   class Chapter < Model
     dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output, :check_page_data
     attr_reader :entry
-    
+
     param_transform :name => :title, :name_extras => :title_extras, :processed_epub => :processed_output
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
-    
+
     def allowed_params
       @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :report_flags, :processed, :processed_output, :check_page_data, :get_sections, :section_sorts]
     end
-    
+
     def unpack!
       entry.unpack! if entry
       replies.each {|reply| reply.unpack! } if replies
     end
-    
+
     def entry_title
       @entry_title || @title
     end
-    
+
     def processed
       processed?
     end
@@ -476,14 +476,14 @@
     def processed?
      @processed ||= false
     end
-    
+
     def processed_epub
       processed_epub?
     end
     def processed_epub?
       processed_output?(:epub)
     end
-    
+
     def processed_output?(thing)
       processed_output.include?(thing.to_s)
     end
@@ -501,7 +501,7 @@
       dirty!
       processed_output.delete_if{|val| val == thing.to_s}
     end
-    
+
     def get_sections?
       return @get_sections unless @get_sections.nil?
       return chapter_list.get_sections? if chapter_list
@@ -512,49 +512,45 @@
       dirty!
       @get_sections = val
     end
-    
-    def sections
-      if @sections.is_a?(String)
-        dirty!
-        @sections = [@sections]
-      end
-      @sections ||= []
-    end
+
     def sections
       if @sections.present?
         @sections = [@sections] if @sections.is_a?(String)
         return @sections
       end
-      
+
       @sections = section_sorts
       @sections = @sections.map do |section|
-        temp = section
+        temp = section.to_s
         if temp.start_with?('AAA')
           temp = temp.sub(/^AAA[A-C]+-\d+-/, '')
         elsif temp[/^ZZ+/]
           temp = temp.sub(/^ZZ+-/, '')
         end
         temp
-      end
+      end if @sections.present?
+      @sections
     end
     def sections=(val)
       self.section_sorts=val
     end
-    
+
     def section_sorts
       @section_sorts ||= @sections
+      @section_sorts ||= []
     end
     def section_sorts=(val)
       return val if @section_sorts == val
+      val = [val] if val.is_a?(String)
       dirty!
       @sections = nil
       @section_sorts = val
     end
-    
+
     def report_flags_processed?
       report_flags_processed
     end
-    
+
     def check_page_data
       @check_page_data ||= {}
     end
@@ -562,7 +558,7 @@
       dirty!
       @check_page_data[index] = val
     end
-    
+
     def group
       @chapter_list.group
     end
@@ -584,7 +580,7 @@
           else
             self.pages
           end
-        elsif self.url['vast-journey-9935.herokuapp.com']
+        elsif self.url['vast-journey-9935.herokuapp.com'] || self.url['glowfic.com']
           [set_url_params(clear_url_params(self.url), {page: :last, per_page: 25})]
         else
           self.pages
@@ -610,7 +606,7 @@
       @entry.chapter = self
       @entry
     end
-    
+
     def authors
       @authors ||= []
       if @authors.detect{|thing| thing.is_a?(String)}
@@ -623,7 +619,7 @@
       end
       @authors
     end
-    
+
     def chapter_list=(newval)
       @chapter_list=newval
       replies.each do |reply|
@@ -632,7 +628,7 @@
       entry.keep_old_stuff if entry.present?
       newval
     end
-    
+
     def time_completed
       if @time_completed.is_a?(String)
         @time_completed = DateTime.parse(@time_completed)
@@ -652,7 +648,7 @@
         @time_completed = val
       end
     end
-    
+
     def time_hiatus
       if @time_hiatus.is_a?(String)
         @time_hiatus = DateTime.parse(@time_hiatus)
@@ -672,7 +668,7 @@
         @time_hiatus = val
       end
     end
-    
+
     def moieties
       @moieties if @moieties and not @moieties.empty?
       @moieties = []
@@ -685,7 +681,7 @@
       @moieties.sort!
       @moieties
     end
-    
+
     def add_author(newauthor)
       unless newauthor
         LOG.error "add_author(nil) for #{self}"
@@ -705,7 +701,7 @@
       end
       chapter_list.add_author(newauthor)
     end
-    
+
     def initialize(params={})
       if params.key?(:trash_messages)
         @trash_messages = params[:trash_messages]
@@ -713,20 +709,20 @@
       end
       return if params.empty?
       params = standardize_params(params)
-      
+
       params.reject! do |param|
         unless allowed_params.include?(param)
           raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
           true
         end
       end
-      
+
       @pages = []
       @check_pages = []
       @replies = []
       @sections = []
       @authors = []
-      
+
       allowed_params.each do |symbol|
         public_send("#{symbol}=", params[symbol]) if params[symbol]
       end
@@ -753,7 +749,7 @@
         query = URI.encode_www_form(query)
         uri.query = (query.empty?) ? nil : query
       end
-      uri.host = uri.host.sub(/\.dreamwidth\.org$/, ".dreamwidth").sub('vast-journey-9935.herokuapp.com', 'constellation')
+      uri.host = uri.host.sub(/\.dreamwidth\.org$/, ".dreamwidth").sub('vast-journey-9935.herokuapp.com', 'constellation').sub('www.glowfic.com', 'constellation').sub('glowfic.com', 'constellation')
       uri.to_s.sub(/^https?\:\/\//, "").sub(/\.html($|(?=\?))/, "")
     end
     def to_s
@@ -761,7 +757,7 @@
       str += " #{title_extras}" unless title_extras.nil? or title_extras.empty?
       str += ": #{smallURL}"
     end
-    
+
     def self.fauxID(chapter)
       if chapter.is_a?(Hash)
         url = chapter['url'] or chapter[:url]
@@ -778,7 +774,7 @@
         str << url.split('.dreamwidth.org/').first.split('/').last
         str << '#' + entry_id
         str << '#' + thread if thread
-      elsif url['vast-journey-9935.herokuapp.com/']
+      elsif url['vast-journey-9935.herokuapp.com/'] || url['glowfic.com']
         str << 'constellation'
         str << '#' + entry_id
       end
@@ -787,9 +783,9 @@
     def fauxID
       Chapter.fauxID(self)
     end
-    
+
     def as_json(options={})
-      return @old_hash if @old_hash && !dirty?
+      return @old_hash if @old_hash && !dirty? && !is_huge_cannot_dirty(chapter_list)
       hash = {}
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
       puts "serialize ignore: #{self.class.serialize_ignore.inspect}"
@@ -810,8 +806,10 @@
       if @authors
         hash[:authors] = @authors.map{|author| author.is_a?(Author) ? author.unique_id : author}
       end
-      @old_hash = hash
-      @dirty = false
+      unless is_huge_cannot_dirty(chapter_list)
+        @old_hash = hash
+        @dirty = false
+      end
       hash
     end
     def from_json! string
@@ -822,19 +820,19 @@
       else
         raise(ArgumentError, "Not a string or a hash.")
       end
-      
+
       json_hash.each do |var, val|
         var = var.to_s unless var.is_a?(String)
         self.instance_variable_set('@'+var, val) unless var == "replies" or var == "entry"
       end
-      
+
       LOG.debug "Chapter.from_json! (title: '#{title}', url: '#{url}')"
-      
+
       @processed.map! {|thing| thing.to_s.to_sym } if @processed and @processed.is_a?(Array)
-      
+
       self.authors = [] if @trash_messages
       self.authors
-      
+
       if not @trash_messages
         entry = json_hash['entry']
         replies = json_hash['replies']
@@ -849,15 +847,15 @@
         replies = json_hash['replies']
         json = {'chapter': self}
         json['replies'] = replies if replies.present?
-        
+
         @replies = RepliesArray.new
         @replies.from_json!(json)
         # TODO: fix trash_messages
       end
-      
-      @processed_output = [:epub] if @processed_output == true || @processed_epub
+
+      @processed_output = [] unless @processed_output.is_a?(Array)
       @processed_output.uniq! if @processed_output.present?
-      
+
       @trash_messages = false
       dirty!
     end
@@ -866,11 +864,11 @@
   class RepliesArray < Model
     dirty_accessors :chapter
     serialize_ignore :chapter
-    
+
     def initialize(replies=nil)
       @replies = replies
     end
-    
+
     def chapter=(newval)
       return newval if @chapter == newval
       @chapter.replies = [] if @chapter.present?
@@ -878,7 +876,7 @@
       @replies.each {|reply| reply.chapter=@chapter}
       newval
     end
-    
+
     def save!(force_path=nil)
       return unless @replies
       unless @chapter or force_path
@@ -896,7 +894,7 @@
         LOG.error "Couldn't load replies; no chapter."
         return false
       end
-      
+
       path = data_path_for_chapter(chapter)
       json = get_file_json(path)
       from_json! json if json.present?
@@ -912,12 +910,12 @@
       else
         raise(ArgumentError, "Not a string or a hash.")
       end
-      
+
       json_hash.each do |var, val|
         var = var.to_s unless var.is_a?(String)
         self.instance_variable_set('@'+var, val) unless var == 'replies'
       end
-      
+
       if json_hash['replies']
         @replies ||= []
         json_hash['replies'].each do |reply_hash|
@@ -930,19 +928,19 @@
       end
       dirty!
     end
-    
+
     def replies
       load! unless @replies
       @replies
     end
-    
+
     def each(&block)
       replies.each(&block)
     end
     def each_with_index(&block)
       replies.each_with_index(&block)
     end
-    
+
     def length
       replies.length
     end
@@ -971,29 +969,29 @@
       dirty!
       replies[val1]=val2
     end
-    
+
     def dirty?
       return true if @dirty
       replies.each {|reply| @dirty = true if reply.is_a?(Model) && reply.dirty?}
       @dirty
     end
   end
-  
+
   class Face < Model
     attr_accessor :imageURL, :keyword, :unique_id, :chapter_list
     serialize_ignore :allowed_params, :author, :chapter_list
-    
+
     def allowed_params
       @allowed_params ||= [:chapter_list, :imageURL, :keyword, :unique_id, :author]
     end
-    
+
     def user_display
       author.display
     end
     def moiety
       author.moiety
     end
-    
+
     def imageURL=(newval)
       @imageURL = newval.gsub(" ", "%20")
     end
@@ -1006,18 +1004,18 @@
     def author=(author)
       @author = author
     end
-    
+
     def initialize(params={})
       return if params.empty?
       params = standardize_params(params)
-      
+
       params.reject! do |param|
         unless allowed_params.include?(param)
           raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
           true
         end
       end
-      
+
       raise(ArgumentError, "Unique ID must be given") unless (params.key?(:unique_id) and not params[:unique_id].nil?)
       allowed_params.each do |symbol|
         public_send("#{symbol}=", params[symbol]) if params[symbol]
@@ -1026,7 +1024,7 @@
     def to_s
       "#{user_display}: #{keyword}"
     end
-    
+
     def as_json(options={})
       hash = {}
       self.instance_variables.each do |var|
@@ -1048,35 +1046,35 @@
       hash
     end
   end
-  
+
   module PostType
     ENTRY = 0
     REPLY = 1
   end
-  
+
   class Message < Model #post or entry
     @@date_format = "%Y-%m-%d %H:%M"
-    
+
     dirty_accessors :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no
-    
+
     def self.message_serialize_ignore
       serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_author, :post_type
     end
-    
+
     def allowed_params
       @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face, :entry_title, :page_no, :author_str]
     end
-    
+
     def unpack!
       author
       face
     end
-    
+
     def dirty!
       @dirty = true
       chapter.dirty! if chapter
     end
-    
+
     @push_title = false
     def entry_title
       chapter.entry_title
@@ -1091,7 +1089,7 @@
       end
       newval
     end
-    
+
     def chapter=(newval)
       newval.entry_title=@entry_title if @push_title
       @push_title = false
@@ -1103,7 +1101,7 @@
       dirty!
       newval
     end
-    
+
     def keep_old_stuff
       unless chapter && chapter.chapter_list
         LOG.error "(No chapter!)" unless chapter
@@ -1112,7 +1110,7 @@
       chapter.chapter_list.keep_old_author(author_id) if author_id
       chapter.chapter_list.keep_old_face(face_id) if face_id
     end
-    
+
     def time
       return unless @time
       return @time unless @time.is_a?(String)
@@ -1133,7 +1131,7 @@
       return unless edittime
       return edittime.strftime(@@date_format)
     end
-    
+
     def depth
       if parent and not @depth
         @depth = parent.depth + 1
@@ -1155,7 +1153,7 @@
       return "" unless face
       face.moiety
     end
-    
+
     def post_type_str
       if post_type == PostType::ENTRY
         "entry"
@@ -1165,11 +1163,11 @@
         "unknown"
       end
     end
-    
+
     def permalink
       site_handler.get_permalink_for(self)
     end
-    
+
     def parent=(newparent)
       return newparent if @parent == newparent
       dirty!
@@ -1207,18 +1205,18 @@
       end
       @parent
     end
-    
+
     def site_handler
       chapter.site_handler if chapter
     end
     def chapter_list
       chapter.chapter_list if chapter
     end
-    
+
     def face
       return unless @face.present?
       return @face if @face.is_a?(Face)
-      
+
       if chapter_list
         new_face = chapter_list.get_face_by_id(@face)
         new_face = site_handler.get_updated_face(new_face) if site_handler
@@ -1227,7 +1225,7 @@
           chapter_list.replace_face(new_face)
         end
       end
-      
+
       if site_handler and (not @face or @face.is_a?(String))
         temp_face = site_handler.get_face_by_id(@face)
         if temp_face
@@ -1235,7 +1233,7 @@
           chapter_list.replace_face(temp_face)
         end
       end
-      
+
       @face.author = author if author and @face and not @face.is_a?(String)
       LOG.error "Failed to generate a face object, is still string (#{@face})" if @face.is_a?(String)
       @face
@@ -1248,7 +1246,7 @@
         raise(ArgumentError, "Invalid face type. Face: #{face}")
       end
     end
-    
+
     def face_id
       if @face.is_a?(Face)
         @face.unique_id
@@ -1256,7 +1254,7 @@
         @face
       end
     end
-    
+
     @push_author = false
     def author
       return @author if @author and @author.is_a?(Author)
@@ -1277,7 +1275,7 @@
       chapter.add_author(self.author) if chapter
       @push_author = true unless chapter
     end
-    
+
     def author_id
       if @author.is_a?(Author)
         @author.unique_id
@@ -1285,7 +1283,7 @@
         @author
       end
     end
-    
+
     def author_str
       return @author_str if @author_str.present?
       return @author.moiety if @author and @author.is_a?(Author)
@@ -1296,18 +1294,18 @@
       dirty!
       @author_str = val
     end
-    
+
     def initialize(params={})
       return if params.empty?
       params = standardize_params(params)
-      
+
       params.reject! do |param|
         unless allowed_params.include?(param)
           raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
           true
         end
       end
-      
+
       raise(ArgumentError, "Content must be given") unless params.key?(:content)
       raise(ArgumentError, "Chapter must be given") unless params.key?(:chapter)
       allowed_params.each do |symbol|
@@ -1327,11 +1325,11 @@
         "#{chapter.smallURL}##{id}"
       end
     end
-    
+
     def as_json(options={})
-      return @old_hash if @old_hash && !dirty?
+      return @old_hash if @old_hash && !dirty? && !is_huge_cannot_dirty(chapter_list)
       hash = {}
-      
+
       self.instance_variables.each do |var|
         var_str = (var.is_a? String) ? var : var.to_s
         if var_str[0] == '@' and var_str[1] != '@'
@@ -1370,11 +1368,13 @@
           hash['face'] = @face
         end
       end
-      @old_hash = hash
-      @dirty = false
+      unless is_huge_cannot_dirty(chapter_list)
+        @old_hash = hash
+        @dirty = false
+      end
       hash
     end
-    
+
     def from_json! string
       json_hash = if string.is_a? String
         JSON.parse(string)
@@ -1383,21 +1383,21 @@
       else
         raise(ArgumentError, "Not a string or a hash.")
       end
-      
+
       json_hash.each do |var, val|
         var = var.to_s unless var.is_a?(String)
         self.instance_variable_set('@'+var, val) unless var == 'parent' or var == 'face' or var == 'author'
       end
-      
+
       if post_type == PostType::ENTRY
         chapter.entry = self
         chapter.entry_title = self.entry_title if self.entry_title
       end
-      
+
       parent = json_hash['parent']
       author = json_hash['author']
       face = json_hash['face']
-      
+
       if parent
         self.parent = parent
         self.parent
@@ -1420,7 +1420,7 @@
       self.post_type = PostType::REPLY
     end
   end
-  
+
   class Entry < Message
     message_serialize_ignore
     def initialize(params={})
@@ -1428,11 +1428,11 @@
       self.post_type = PostType::ENTRY
     end
   end
-  
+
   class Author < Model
     attr_accessor :moiety, :name, :screenname, :chapter_list, :display, :unique_id, :default_face
     serialize_ignore :faces, :chapters, :chapter_list, :allowed_params, :default_face, :site_handler
-    
+
     def allowed_params
       @allowed_params ||= [:chapter_list, :moiety, :name, :screenname, :display, :unique_id, :default_face]
     end
@@ -1442,18 +1442,18 @@
       chapter_list.site_handlers[handler_type] ||= handler_type.new(group: group, chapters: chapter_list)
       @site_handler ||= chapter_list.site_handlers[handler_type]
     end
-    
+
     def initialize(params={})
       return if params.empty?
       params = standardize_params(params)
-      
+
       params.reject! do |param|
         unless allowed_params.include?(param)
           raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
           true
         end
       end
-      
+
       raise(ArgumentError, "Display must be given") unless (params.key?(:display) and not params[:display].nil?)
       raise(ArgumentError, "Unique ID must be given") unless (params.key?(:unique_id) and not params[:unique_id].nil?)
       allowed_params.each do |symbol|
@@ -1463,7 +1463,7 @@
     def to_s
       "#{display}"
     end
-    
+
     def default_face_id
       return unless @default_face.present?
       return @default_face if @default_face.is_a?(String)
@@ -1472,7 +1472,7 @@
     def default_face
       return unless @default_face.present?
       return @default_face if @default_face.is_a?(Face)
-      
+
       if chapter_list
         new_face = chapter_list.get_face_by_id(@default_face)
         new_face = site_handler.get_updated_face(new_face) if site_handler
@@ -1481,7 +1481,7 @@
           chapter_list.replace_face(new_face)
         end
       end
-      
+
       if site_handler and (not @default_face or @default_face.is_a?(String))
         temp_face = site_handler.get_face_by_id(@default_face)
         if temp_face
@@ -1489,13 +1489,13 @@
           chapter_list.replace_face(temp_face)
         end
       end
-      
+
       @default_face.author = self if @default_face and not @default_face.is_a?(String)
       LOG.error "Failed to generate a face object for default_face, is still string (#{@default_face})" if @default_face.is_a?(String)
-      LOG.error "Default_face was non-nil, now nil? oops." unless @default_face.present?  
+      LOG.error "Default_face was non-nil, now nil? oops." unless @default_face.present?
       @default_face
     end
-    
+
     def as_json(options={})
       hash = {}
       self.instance_variables.each do |var|

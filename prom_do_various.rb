@@ -6,7 +6,7 @@ require 'do_various'
 if __FILE__ == $0
   dir = "prof-" + (ARGV.is_a?(Array) ? ARGV * '_' : ARGV).gsub(/\W+/, '_')
   FileUtils.mkdir dir unless File.directory?(dir)
-  
+
   MemoryProfiler.report(allow_files: ['2epub-various-ruby', 'nokogiri'], top: 200) do
     begin
       main(ARGV)
