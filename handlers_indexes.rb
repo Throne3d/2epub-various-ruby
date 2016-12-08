@@ -671,7 +671,13 @@ module GlowficIndexHandlers
         puts "URL: #{previous_url}"
         user_toc_data = get_page_data(previous_url, replace: (previous_url != user_url), headers: {"Accept" => "text/html"})
         user_toc = Nokogiri::HTML(user_toc_data)
-        user_body = user_toc.at_css('tbody')
+        user_posts_header = user_toc.css('th[colspan]').select{|bit| bit.text['Recent Posts']}
+        LOG.warn "Many 'recent post' headers!" if user_posts_header.length > 1
+        if user_posts_header.length < 1
+          LOG.error "No 'recent post' headers for user!"
+          return
+        end
+        user_body = user_posts_header.first.ancestors('table').first.at_css('tbody')
 
         chapters = user_body.css('tr')
         chapters = chapters.reverse
