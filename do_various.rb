@@ -166,6 +166,7 @@ def main(*args)
       LOG.info chapter.to_s
     end
     set_chapters_data(chapter_list, group)
+    clear_old_data
     return chapter_list
   elsif (process == :update_toc)
     old_data = get_chapters_data(group)

@@ -458,6 +458,10 @@
     LOG.debug "Saved data for group: #{group}" + (others.empty? ? "" : " (#{others.inspect})")
   end
 
+  def clear_old_data(group=nil)
+    return @temp_data.delete(group) if group
+    @temp_data = {}
+  end
   def get_old_data(group)
     @temp_data ||= {}
     @temp_data[group] = get_chapters_data(group) unless @temp_data.key?(group)
