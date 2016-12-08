@@ -716,7 +716,7 @@ module GlowficIndexHandlers
 
           board_link = board.at_css('a')
           board_name = board_link.text.strip
-          next if board_name == "Site testing" or board_name == "Effulgence" or board_name == "Witchlight" or board_name == "Lighthouse" or board_name == "Opalescence" or board_name == "Silmaril" or board_name == "Zodiac"
+          next if board_name == "Site testing" or board_name == "Effulgence" or board_name == "Witchlight" or board_name == "Lighthouse" or board_name == "Opalescence" or board_name == "Silmaril" or board_name == "Zodiac" or board_name == "Rapid Nova"
           next if ignore_sections.include?(board_name)
           board_url = get_absolute_url(board_link["href"], fic_toc_url)
 
