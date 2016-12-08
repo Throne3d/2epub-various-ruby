@@ -189,8 +189,8 @@
 
   def is_huge_cannot_dirty(group)
     group = group.group if group.is_a?(Chapters)
-    return true if group == :sandbox
-    return false
+    return true if group == :sandbox || group == :constellation
+    false
   end
 
   def date_display(date, strf="%Y-%m-%d %H:%M")
