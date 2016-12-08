@@ -236,6 +236,7 @@ module GlowficIndexHandlers
           chapter_text_extras = nil if chapter_text_extras.empty?
           chapter_url = chapter_link.try(:[], :href)
           next unless chapter_url
+          chapter_url = chapter_url.sub('glowfic.herokuapp.com', 'glowfic.com') if chapter_url['glowfic.herokuapp.com']
 
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list)
           if block_given?
