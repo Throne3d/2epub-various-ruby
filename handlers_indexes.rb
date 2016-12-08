@@ -189,7 +189,7 @@ module GlowficIndexHandlers
       super(options)
       @strip_li_end = (@group == :incandescence or @group == :silmaril)
       @strip_li_end = options[:strip_li_end] if options.key?(:strip_li_end)
-      @silmaril_handling = :not_constellation # or :constellation, try not DDoS please thanks
+      @silmaril_handling = :constellation # or :constellation, try not DDoS please thanks
     end
     def get_chapters(section, section_list, index=1, &block)
       #puts "Find chapters in (#{section_list}): #{section.text}"
