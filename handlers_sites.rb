@@ -1548,8 +1548,14 @@
               chapter.time_completed = nil if chapter.time_completed and chapter.time_hiatus >= chapter.time_completed
 
               @notify_extras << "hiatus on #{date_display(chapter.time_hiatus)}" + ((old_time && old_time != chapter.time_hiatus) ? " (old time: #{date_display(old_time)})" : "")
+            elsif post_ender.text.downcase['abandon']
+              old_tiem = chapter.time_abandoned
+              chapter.time_abandoned = last_time
+              chapter.time_completed = nil if chapter.time_completed
+
+              @notify_extras << "abandoned on #{date_display(chapter.time_abandoned)}" + ((old_time && old_time != chapter.time_abandoned) ? " (old time: #{date_display(old_time)})" : "")
             else
-              LOG.error "#{chapter.title}: ended non-hiatus non-complete on #{date_display(last_time)} (???)"
+              LOG.error "#{chapter.title}: ended non-hiatus non-complete non-abandoned on #{date_display(last_time)} (???)"
             end
           elsif chapter.time_completed or chapter.time_hiatus
             @notify_extras << "no ender; wiping" + (chapter.time_completed ? " completed #{date_display(chapter.time_completed)}" : '') + (chapter.time_hiatus ? " hiatus #{date_display(chapter.time_hiatus)}" : '')

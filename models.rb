@@ -598,6 +598,26 @@
       end
     end
 
+    def time_abandoned
+      if @time_abandoned.is_a?(String)
+        @time_abandoned = DateTime.parse(@time_abandoned)
+      elsif @time_abandoned.is_a?(Date)
+        @time_abandoned = @time_abandoned.to_datetime
+      else
+        @time_abandoned
+      end
+    end
+    def time_abandoned=(val)
+      dirty!
+      if val.is_a?(String)
+        @time_abandoned = DateTime.parse(val)
+      elsif val.is_a?(Date)
+        @time_abandoned = val.to_datetime
+      else
+        @time_abandoned = val
+      end
+    end
+
     def time_hiatus
       if @time_hiatus.is_a?(String)
         @time_hiatus = DateTime.parse(@time_hiatus)
