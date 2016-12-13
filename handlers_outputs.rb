@@ -128,7 +128,7 @@
         next unless chapter.shortURL.start_with?(thread_thing)
         next if chapter.thread.present? && !comment_id.present?
         if comment_id
-          reply = chapter.replies.detect {|reply| reply.id == comment_id}
+          reply = chapter.replies.detect {|i| i.id == comment_id}
           if reply
             page = get_message_page(reply)
             if reply == chapter.replies.first
@@ -151,9 +151,8 @@
       chapter = options.is_a?(Chapter) ? options : (options.is_a?(Hash) && options.key?(:chapter) ? options[:chapter] : nil)
       chapter_url = chapter.url if chapter
       chapter_url ||= options.is_a?(String) ? options : (options.is_a?(Hash) && options.key?(:chapter_url) ? options[:chapter_url] : nil)
-      group = options.key?(:group) ? options[:group] : @group
 
-      save_path = File.join(@html_folder, get_chapter_path_bit(options))
+      File.join(@html_folder, get_chapter_path_bit(options))
     end
     def get_relative_chapter_path(options = {})
       chapter = options.is_a?(Chapter) ? options : (options.is_a?(Hash) && options.key?(:chapter) ? options[:chapter] : nil)
@@ -245,8 +244,8 @@
       end
 
       warned = false
-      chapter.replies.each do |message|
-        message_num = (message == chapter.entry ? -1 : chapter.replies.index(message))
+      chapter.replies.each do |reply|
+        message_num = chapter.replies.index(reply)
         unless chapter_order.include?(message_num)
           chapter_order << message_num
           LOG.error "Chapter #{chapter} didn't get all messages via depth traversal." unless warned
@@ -264,7 +263,7 @@
       get_page_from_order_and_total(orderval, orders.length)
     end
     def get_page_from_order_and_total(order, total) #1-based order
-      page = if order <= @replies_per_split
+      if order <= @replies_per_split
         1
       elsif order <= (total.to_f / @replies_per_split).floor * @replies_per_split
         # between 201 and the lowest multiple of 200 less than max, 400, 600, 800
@@ -361,8 +360,9 @@
         prev_page = 0
         done_headers = false
         page_count = get_message_page(@messages.last)
-        @message_htmls.each_with_index do |message_html, i|
-          page = get_message_page(@messages[i])
+        @message_htmls.each_with_index do |message_html, y|
+          message = @messages[y]
+          page = get_message_page(message)
           if prev_page != page
             if temp_html.present? && temp_html != html_start
               temp_html += "<a class='navlink nextlink splitlink' href='#{get_chapter_path_bit(chapter: chapter, page: prev_page+1)}'>Next page of chapter &raquo;</a>\n" if !@skipnavmodes.include?(@mode) && prev_page < page_count
@@ -385,9 +385,9 @@
             done_headers = true
           end
 
-          parent = @messages[i].parent
+          parent = message.parent
           if parent && parent.children && parent.children.length > 1
-            child_index = parent.children.index(@messages[i])
+            child_index = parent.children.index(message)
             if child_index == 0
               temp_html += "<div class=\"branchnote branchnote1\">This is a branching point! Branch 1:</div>"
             else
@@ -402,7 +402,7 @@
           @split_htmls << temp_html
         end
 
-        @split_htmls.each_with_index do |page_data, i|
+        @split_htmls.each_with_index do |page_data, y|
           page = Nokogiri::HTML(page_data)
           page.css('img').each do |img_element|
             img_src = img_element.try(:[], :src)
@@ -417,8 +417,8 @@
             a_element[:href] = get_comment_path(a_href)
           end
 
-          split_save_path = get_chapter_path(chapter: chapter, group: @group, page: i+1)
-          split_rel_path = get_relative_chapter_path(chapter: chapter, page: i+1)
+          split_save_path = get_chapter_path(chapter: chapter, group: @group, page: y+1)
+          split_rel_path = get_relative_chapter_path(chapter: chapter, page: y+1)
 
           open(split_save_path, 'w') do |file|
             file.write page.to_xhtml(indent_text: '', encoding: 'UTF-8')
@@ -729,9 +729,6 @@
           if upd_chapter_col[1]
             upd_chapter_col[1].each do |chapter_thing|
               chapter = chapter_thing[:chapter]
-              first_update = chapter_thing[:first_update]
-              last_update = chapter_thing[:last_update]
-              latest_update = chapter_thing[:latest_update]
 
               was_yesterday = false
               messages = [chapter.entry] + chapter.replies
@@ -934,7 +931,7 @@
 
       users = User.where('lower(username) = ?', moieties.map(&:downcase))
       unless users.present?
-        rewrites = moieties.map{|moiety| @user_moiety_rewrite.keys.detect{|key| key.downcase == moiety.downcase} }.compact.map{|key| @user_moiety_rewrite[key].downcase}
+        rewrites = moieties.map{|moiety_i| @user_moiety_rewrite.keys.detect{|key| key.downcase == moiety_i.downcase} }.compact.map{|key| @user_moiety_rewrite[key].downcase}
         if rewrites.present?
           users = User.where('lower(username) = ?', rewrites)
         end
@@ -960,7 +957,7 @@
           end
           input = 'n' if input.empty?
           if input == 'y'
-            user = User.create!(username: moiety, password: moiety.downcase, email: moiety.downcase.gsub(/[^\w\-_\.+]/, '') + '@example.com')
+            user = User.create!(username: moiety, password: moiety.downcase, email: moiety.downcase.gsub(/[^\w\-\.+]/, '') + '@example.com')
             LOG.info "- User created for #{moiety}."
           else
             LOG.warn "- Skipping user for #{moiety}. Will likely cause errors."
@@ -983,7 +980,7 @@
       return @icon_cache[face.unique_id] if @icon_cache.key?(face.unique_id)
       user = user_for_author(face.author)
       gallery = gallery_for_author(face.author)
-      icon = Icon.where(url: face.imageURL, user_id: user.id).includes(:galleries).select{|icon| icon.galleries.include?(gallery)}.first
+      icon = Icon.where(url: face.imageURL, user_id: user.id).includes(:galleries).select{|icon_i| icon_i.galleries.include?(gallery)}.first
       unless icon.present?
         icon = Icon.where(url: face.imageURL, user_id: user.id).first
         gallery.icons << icon if gallery && icon.present?
@@ -1195,10 +1192,10 @@
         (@msgs.each {|msg| LOG.info msg} and next) if post_for_entry?(chapter.entry, board)
         post = post_for_entry(chapter.entry, board)
         thread_id = nil
-        chapter.replies.each_with_index do |reply, i|
+        chapter.replies.each_with_index do |reply, y|
           repl = reply_for_comment(reply, threaded, thread_id, reply == chapter.replies.last)
           thread_id = repl.thread_id if threaded
-          if (i+1) % 100 == 0
+          if (y+1) % 100 == 0
             old_status = post.status
             repl.skip_notify = true
             repl.skip_post_update = false
