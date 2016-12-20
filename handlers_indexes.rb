@@ -49,6 +49,7 @@ module GlowficIndexHandlers
         {thing: :time_completed, :if => :processed},
         {thing: :time_hiatus, :if => :processed},
         {thing: :time_abandoned, :if => :processed},
+        {thing: :time_new, :if => :processed},
         {thing: :processed_epub, :if => :processed}
       ]
     end

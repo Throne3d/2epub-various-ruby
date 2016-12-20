@@ -638,6 +638,27 @@
       end
     end
 
+    def time_new
+      return entry.time if @time_new.nil? && entry.present?
+      if @time_new.is_a?(String)
+        @time_new = DateTime.parse(@time_new)
+      elsif @time_new.is_a?(Date)
+        @time_new = @time_new.to_datetime
+      else
+        @time_new
+      end
+    end
+    def time_new=(val)
+      dirty!
+      if val.is_a?(String)
+        @time_new = DateTime.parse(val)
+      elsif val.is_a?(Date)
+        @time_new = val.to_datetime
+      else
+        @time_new = val
+      end
+    end
+
     def moieties
       @moieties if @moieties and not @moieties.empty?
       @moieties = []
