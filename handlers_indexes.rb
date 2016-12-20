@@ -48,6 +48,7 @@ module GlowficIndexHandlers
         {thing: :entry_title, :if => :processed},
         {thing: :time_completed, :if => :processed},
         {thing: :time_hiatus, :if => :processed},
+        {thing: :time_abandoned, :if => :processed},
         {thing: :processed_epub, :if => :processed}
       ]
     end
@@ -78,7 +79,7 @@ module GlowficIndexHandlers
       params[:thread] = get_url_param(params[:url], "thread")
       params[:url] = standardize_chapter_url(params[:url])
       params.delete(:thread) unless params[:thread]
-      params.delete(:title_extras) if params.key?(:title_extras) and (not params[:title_extras] or params[:title_extras].empty?)
+      params.delete(:title_extras) if params.key?(:title_extras) and (params[:title_extras].nil? or params[:title_extras].empty?)
 
       persist_chapter_data(params)
       return GlowficEpub::Chapter.new(params)
