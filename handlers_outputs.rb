@@ -739,7 +739,7 @@
               messages.each do |message|
                 was_yesterday = true if message.time.between?(early_time, late_time)
               end
-              was_yesterday = false if chapter.time_new_set && chapter.time_new > late_time
+              was_yesterday = false if chapter.time_new_set? && chapter.time_new > late_time
 
               chapter_thing[:yesterday] = was_yesterday
             end
