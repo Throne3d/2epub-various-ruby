@@ -638,6 +638,9 @@
       end
     end
 
+    def time_new_set?
+      !!@time_new
+    end
     def time_new
       return entry.time if @time_new.nil? && entry.present?
       if @time_new.is_a?(String)
