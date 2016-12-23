@@ -30,14 +30,21 @@ module GlowficIndexHandlers
       persists.each do |persist|
         next if persist[:if] && !params[persist[:if]]
         next if persist[:unless] && params[persist[:unless]]
+        next if params[persist[:thing]].present? && !persist[:override]
         persist_data = get_prev_chapter_detail(group, detail: persist[:thing], only_present: true, chapter_list: @old_chapter_list)
         next unless persist_data.key?(url)
         params[persist[:thing]] = persist_data[url]
+      end
+      time_new_set = get_prev_chapter_detail(group, detail: :"time_new_set?", only_present: true, chapter_list: @old_chapter_list)
+      if time_new_set.key(url) && time_new_set[url] && !params[:time_new].present?
+        time_news = get_prev_chapter_detail(group, detail: :time_new, only_present: true, chapter_list: @old_chapter_list)
+        params[:time_new] = time_news[url] if time_news.key?(url)
       end
       params
     end
     def persists
       @persists = [
+        #{thing: :param, :if => :param_to_require, :unless => :param_to_avoid, :override => true if delete current params}
         {thing: :pages},
         {thing: :check_pages},
         {thing: :check_page_data},
@@ -48,6 +55,7 @@ module GlowficIndexHandlers
         {thing: :entry_title, :if => :processed},
         {thing: :time_completed, :if => :processed},
         {thing: :time_hiatus, :if => :processed},
+        {thing: :time_abandoned, :if => :processed},
         {thing: :processed_epub, :if => :processed}
       ]
     end
@@ -78,7 +86,7 @@ module GlowficIndexHandlers
       params[:thread] = get_url_param(params[:url], "thread")
       params[:url] = standardize_chapter_url(params[:url])
       params.delete(:thread) unless params[:thread]
-      params.delete(:title_extras) if params.key?(:title_extras) and (not params[:title_extras] or params[:title_extras].empty?)
+      params.delete(:title_extras) if params.key?(:title_extras) and (params[:title_extras].nil? or params[:title_extras].empty?)
 
       persist_chapter_data(params)
       return GlowficEpub::Chapter.new(params)

@@ -402,7 +402,7 @@
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
 
     def allowed_params
-      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :report_flags, :processed, :processed_output, :check_page_data, :get_sections, :section_sorts]
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :time_abandoned, :time_new, :report_flags, :processed, :processed_output, :check_page_data, :get_sections, :section_sorts]
     end
 
     def unpack!
@@ -635,6 +635,30 @@
         @time_hiatus = val.to_datetime
       else
         @time_hiatus = val
+      end
+    end
+
+    def time_new_set?
+      !!@time_new
+    end
+    def time_new
+      return entry.time if @time_new.nil? && entry.present?
+      if @time_new.is_a?(String)
+        @time_new = DateTime.parse(@time_new)
+      elsif @time_new.is_a?(Date)
+        @time_new = @time_new.to_datetime
+      else
+        @time_new
+      end
+    end
+    def time_new=(val)
+      dirty!
+      if val.is_a?(String)
+        @time_new = DateTime.parse(val)
+      elsif val.is_a?(Date)
+        @time_new = val.to_datetime
+      else
+        @time_new = val
       end
     end
 

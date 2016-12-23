@@ -651,7 +651,7 @@
       end
       str = "[*]"
       str << '[size=85]' + chapter.report_flags.strip + '[/size] ' unless chapter.report_flags.blank?
-      if chapter.entry.time >= show_new_after
+      if chapter.time_new >= show_new_after
         str << '([b]New[/b]) '
       elsif chapter.fauxID['constellation'] && show_unread_link
         str << "([url=#{set_url_params(clear_url_params(chapter.url), {page: 'unread'})}#unread]→[/url]) "
@@ -676,7 +676,11 @@
     end
     def sort_by_time(upd_chapters, value)
       upd_chapters.sort! do |x,y|
-        order = y[value].time <=> x[value].time
+        time_y = y[:chapter].time_new if y[value] == y[:chapter].entry
+        time_x = x[:chapter].time_new if x[value] == x[:chapter].entry
+        time_y = y[value].time
+        time_x = x[value].time
+        order = time_y <=> time_x
         next order unless order == 0
         if y[:chapter].fauxID['constellation'] && x[:chapter].fauxID['constellation']
           y[value].id <=> x[value].id # have higher IDs first, will be more recently updated
@@ -730,11 +734,12 @@
             upd_chapter_col[1].each do |chapter_thing|
               chapter = chapter_thing[:chapter]
 
-              was_yesterday = false
-              messages = [chapter.entry] + chapter.replies
+              was_yesterday = chapter.time_new.between?(early_time, late_time)
+              messages = chapter.replies
               messages.each do |message|
                 was_yesterday = true if message.time.between?(early_time, late_time)
               end
+              was_yesterday = false if chapter.time_new_set? && chapter.time_new > late_time
 
               chapter_thing[:yesterday] = was_yesterday
             end
@@ -745,7 +750,7 @@
         chapter_list.each do |chapter|
           next if done.include?(chapter)
           next unless chapter.entry
-          if chapter.entry.time >= today_time
+          if chapter.time_new >= today_time
             # skip if it's later than today
             @errors << "Updated more recently than specified day: #{chapter}"
             done << chapter
@@ -755,7 +760,12 @@
           first_update = nil
           last_update = nil
           latest_update = nil
-          messages = [chapter.entry] + chapter.replies
+          if days_ago > 0 && chapter.time_new.between?(early_time, late_time)
+            first_update = chapter.entry
+            last_update = chapter.entry
+            latest_update = chapter.entry if chapter.time_new.between?(early_time, late_time)
+          end
+          messages = chapter.replies
           messages.each do |message|
             in_period = (days_ago > 0) ? message.time.between?(early_time, late_time) : false
             first_update = message if in_period and not first_update
@@ -803,7 +813,7 @@
           report_list(upd_chapters, first_last: first_last, completed_before: late_time, new_after: new_after, show_last_author: show_last_author, show_unread_link: show_unread_link, spoiler_box: false, list_style: list_style, message: colon_message)
 
           if days_ago == 1
-            new_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].entry.time >= early_time}
+            new_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].time_new >= early_time}
             report_list(new_chapters, first_last: :first, completed_before: late_time, new_after: early_time, spoiler_box: 'New threads', message: colon_message) if new_chapters.present?
 
             dw_upd_chapters = upd_chapters.select {|chapter_thing| GlowficSiteHandlers::DreamwidthHandler.handles?(chapter_thing[:chapter]) }
@@ -816,7 +826,11 @@
             sec_upd_chapters.sort! do |chapter_thing1, chapter_thing2|
               sect_diff = chapter_thing1[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)} <=> chapter_thing2[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)}
               next sect_diff unless sect_diff == 0
-              next chapter_thing2[:first_update].time <=> chapter_thing1[:first_update].time
+              update_time2 = chapter_thing2[:chapter].time_new if chapter_thing2[:first_update] == chapter_thing2[:chapter].entry
+              update_time1 = chapter_thing1[:chapter].time_new if chapter_thing1[:first_update] == chapter_thing1[:chapter].entry
+              update_time2 ||= chapter_thing2[:first_update].time
+              update_time1 ||= chapter_thing1[:first_update].time
+              next update_time2 <=> update_time1
             end
             report_list(sec_upd_chapters, first_last: :first, completed_before: late_time, new_after: early_time, show_sections: true, spoiler_box: 'Continuities', message: colon_message) if sec_upd_chapters.present?
           end
