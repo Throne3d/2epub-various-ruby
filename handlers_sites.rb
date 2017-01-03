@@ -1360,17 +1360,21 @@
 
       Time.zone = 'Eastern Time (US & Canada)'
 
-      message_anchor = message_element.at_css("> a[name]")
+      message_anchor = message_element.at_css("> a[id*='reply-']")
       if message_anchor
-        message_id = message_anchor[:name].split("reply-").last
+        message_id = message_anchor[:id].split("reply-").last
         message_type = PostType::REPLY
       else
+        if message_element[:class].try(:split, ' ').map(&:downcase).detect{|i| i['post-reply']}
+          LOG.error "Failed to find a reply's ID!"
+        end
         entry_title = message_element.parent.at_css('#post-title').try(:at_css, 'a')
         LOG.error "Couldn't find the post's title! Gah!" unless entry_title
 
         message_id = entry_title[:href].split('posts/').last
         message_type = PostType::ENTRY
       end
+
 
       author_element = message_element.at_css('.post-author').try(:at_css, 'a')
       author_name = author_element.text.strip
@@ -1549,7 +1553,7 @@
 
               @notify_extras << "hiatus on #{date_display(chapter.time_hiatus)}" + ((old_time && old_time != chapter.time_hiatus) ? " (old time: #{date_display(old_time)})" : "")
             elsif post_ender.text.downcase['abandon']
-              old_tiem = chapter.time_abandoned
+              old_time = chapter.time_abandoned
               chapter.time_abandoned = last_time
               chapter.time_completed = nil if chapter.time_completed
 
