@@ -206,7 +206,6 @@
       if current_page.is_a?(String)
         current_page = Nokogiri::HTML(current_page)
       end
-      where = options.key?(:where) ? options[:where] : nil
       unless current_page.present?
         current_page = giri_or_cache(url, options)
       end
@@ -250,8 +249,6 @@
         chapter_url = chapter
       end
       return nil unless self.handles?(chapter_url)
-      notify = options.key?(:notify) ? options[:notify] : true
-      is_new = options.key?(:new) ? options[:new] : false
 
       page_urls = []
 
@@ -673,7 +670,6 @@
 
     def make_message(message_element, options = {})
       #message_element is .comment
-      in_context = (options.key?(:in_context) ? options[:in_context] : true)
       message_attributes = options.key?(:message_attributes) ? options[:message_attributes] : msg_attrs
 
       Time.zone = 'UTC'
@@ -738,7 +734,7 @@
           params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P")
         end
 
-        entry = Entry.new(params)
+        Entry.new(params)
       else
         parent_link = message_element.at_css('.link.commentparent').try(:at_css, 'a')
         if parent_link
@@ -756,7 +752,7 @@
           params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P (%Z)")
         end
 
-        reply = Comment.new(params)
+        Comment.new(params)
       end
     end
     def get_replies(chapter, options = {}, &block)
@@ -893,8 +889,6 @@
         chapter_url = chapter
       end
       return nil unless self.handles?(chapter_url)
-      notify = options.key?(:notify) ? options[:notify] : true
-      is_new = options.key?(:new) ? options[:new] : false
 
       page_urls = []
       start_page = options[:start_page] || 1
