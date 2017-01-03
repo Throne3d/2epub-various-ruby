@@ -68,7 +68,7 @@ def main(*args)
   end
 
   process_thing = nil
-  processes = {toc: :tocs, tocs: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, detail: :details, details: :details, process: :process, qprocess: :qprocess, clean: :clean, rem: :remove, remove: :remove, stat: :stats, stats: :stats, :"do" => :"do", epubdo: :epubdo, repdo: :repdo, output_epub: :output_epub, output_html: :output_html, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
+  processes = {toc: :tocs, tocs: :tocs, update_toc: :update_toc, qget: :qget, get: :get, epub: :epub, det: :details, detail: :details, details: :details, process: :process, qprocess: :qprocess, stat: :stats, stats: :stats, :"do" => :"do", epubdo: :epubdo, repdo: :repdo, output_epub: :output_epub, output_html: :output_html, report: :report, output_report: :output_report, output_rails: :output_rails, test1: :test1, test2: :test2, trash: :trash}
   # put these in order of "shortest match" to "longest match", so "toc" before "tocs" (larger match later, subsets before)
   processes.each do |key, value|
     if (option[0, key.length].to_sym == key || option[0, key.length].gsub(' ', '_').to_sym == key)
@@ -90,20 +90,18 @@ def main(*args)
 
   group_thing = nil
   showAuthors = false
-  unless process == :remove
-    group = nil
-    FIC_NAME_MAPPING.each do |key, findArr|
-      findArr.each do |findSym|
-        if (option[0, findSym.length].to_sym == findSym || option[0, findSym.length].gsub(' ', '_').to_sym == findSym)
-          group = key
-          group_thing = option[0, findSym.length]
-        end
+  group = nil
+  FIC_NAME_MAPPING.each do |key, findArr|
+    findArr.each do |findSym|
+      if (option[0, findSym.length].to_sym == findSym || option[0, findSym.length].gsub(' ', '_').to_sym == findSym)
+        group = key
+        group_thing = option[0, findSym.length]
       end
     end
-    abort "Unknown thing to download. Please try with a valid option (call with no parameters to see some examples)." unless group
-
-    showAuthors = FIC_SHOW_AUTHORS.include? group
   end
+  abort "Unknown thing to download. Please try with a valid option (call with no parameters to see some examples)." unless group
+
+  showAuthors = FIC_SHOW_AUTHORS.include? group
 
   option = option.sub(group_thing.to_s, '').sub(group_thing.to_s.gsub('_', ' '), '').strip.sub(/^\_/, '')
 
