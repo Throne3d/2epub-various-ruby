@@ -582,7 +582,7 @@ module GlowficIndexHandlers
     end
     def get_absolute_url(url_path, current_url)
       if url_path.start_with?("/")
-        url_path = "https://www.glowfic.com" + url_path
+        url_path = "https://glowfic.com" + url_path
       elsif not url_path.start_with?("http://") and not url_path.start_with?("https://")
         url_path = File.join((current_url.split("/")[0..-2]) * '/', url_path)
       end
@@ -789,13 +789,13 @@ module GlowficIndexHandlers
           {url: "http://autokinetic.dreamwidth.org/783.html?style=site",
           title: "(admissions procedures)",
           sections: ["AAAA-1-Effulgence", "AAAB-1-dance between the stars"]},
-          {url: "https://www.glowfic.com/posts/43",
+          {url: "https://glowfic.com/posts/43",
           title: "Book of Discovery",
           sections: ["AAAA-2-Zodiac", "AAAB-1-Book of the Moon"]},
-          {url: "https://www.glowfic.com/posts/50",
+          {url: "https://glowfic.com/posts/50",
           title: "Book of Experience",
           sections: ["AAAA-2-Zodiac", "AAAB-1-Book of the Moon"]},
-          {url: "https://www.glowfic.com/posts/53",
+          {url: "https://glowfic.com/posts/53",
           title: "A fresh start",
           sections: ["AAAA-2-Zodiac", "AAAB-2-Apricum"]},
           {url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",

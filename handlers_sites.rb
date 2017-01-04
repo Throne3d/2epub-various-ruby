@@ -873,9 +873,9 @@
 
     def get_permalink_for(message)
       if message.post_type == PostType::ENTRY
-        "https://www.glowfic.com/posts/#{message.id}"
+        "https://glowfic.com/posts/#{message.id}"
       else
-        "https://www.glowfic.com/replies/#{message.id}#reply-#{message.id}"
+        "https://glowfic.com/replies/#{message.id}#reply-#{message.id}"
       end
     end
     def get_full(chapter, options = {})
@@ -1045,7 +1045,7 @@
     end
 
     def get_moiety_by_id(character_id)
-      char_page = giri_or_cache("https://www.glowfic.com/characters/#{character_id}/", replace: false)
+      char_page = giri_or_cache("https://glowfic.com/characters/#{character_id}/", replace: false)
       LOG.debug "nokogiri'd profile page"
 
       breadcrumb1 = char_page.at_css('.flash.subber a')
@@ -1117,7 +1117,7 @@
       @icon_errors = [] unless @icon_errors
 
       if character_id and not @char_page_cache.key?(character_id) and not @char_page_errors.include?(character_id) and not character_id.start_with?("user#")
-        char_page_url = "https://www.glowfic.com/characters/#{character_id}/"
+        char_page_url = "https://glowfic.com/characters/#{character_id}/"
         char_page = giri_or_cache(char_page_url)
         LOG.debug "nokogiri'd"
         char_page_c = char_page.at_css("#content")
@@ -1191,7 +1191,7 @@
 
       if character_id and @char_user_map.key?(character_id)
         user_id = @char_user_map[character_id]
-        usergal_page_url = "https://www.glowfic.com/users/#{user_id}/galleries/"
+        usergal_page_url = "https://glowfic.com/users/#{user_id}/galleries/"
         usergal_page = giri_or_cache(usergal_page_url)
         LOG.debug "nokogiri'd"
 
@@ -1233,7 +1233,7 @@
 
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
 
-      icon_page = giri_or_cache("https://www.glowfic.com/icons/#{icon_id}/")
+      icon_page = giri_or_cache("https://glowfic.com/icons/#{icon_id}/")
       LOG.debug "nokogiri'd"
 
       icon_img = icon_page.at_css('#content img')
@@ -1296,7 +1296,7 @@
       if character_id.start_with?("user#")
         user_id = character_id.sub("user#", "")
 
-        user_page_url = "https://www.glowfic.com/users/#{user_id}/"
+        user_page_url = "https://glowfic.com/users/#{user_id}/"
         user_page = giri_or_cache(user_page_url)
         LOG.debug "nokogiri'd"
         user_page_c = user_page.at_css('#content')
@@ -1314,7 +1314,7 @@
         @author_param_cache[author.unique_id] = params
         return author
       else
-        char_page_url = "https://www.glowfic.com/characters/#{character_id}/"
+        char_page_url = "https://glowfic.com/characters/#{character_id}/"
         char_page = giri_or_cache(char_page_url)
         LOG.debug "nokogiri'd"
         char_page_c = char_page.at_css('#content')
