@@ -776,7 +776,7 @@ module GlowficIndexHandlers
   end
 
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt
+    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :reptest
     def initialize(options = {})
       super(options)
     end
@@ -812,6 +812,15 @@ module GlowficIndexHandlers
           title: "Darren summons Demon Cam",
           sections: ["AAAA-3-Demon Cam"],
           title_extras: "(with Aestrix)"}
+        ]
+      elsif @group == :reptest
+        [
+          {title: "Shame for us to part",
+          url: "https://glowfic.com/posts/519",
+          title_extras: "[b][color=#4F012E]tyrians[/color][/b] and [b][color=#960018]carmines[/color][/b] in Sunnyverse",
+          report_flags: "4F012E#3F00FF 960018#682860",
+          time_new: "2017-01-05T20:51:00"
+          }
         ]
       elsif @group == :temp_starlight
         [

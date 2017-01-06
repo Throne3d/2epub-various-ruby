@@ -94,6 +94,7 @@
     lintamande: [:lintamande, :elves],
 
     test: [:test],
+    reptest: [:reptest],
     temp_starlight: [:temp_starlight, :starlight],
     report: [:report, :daily]
   }
@@ -127,6 +128,7 @@
 
     #Test
     test: "https://glowfic.com/boards/7",
+    reptest: "https://glowfic.com/boards/7",
     temp_starlight: "https://alicornutopia.dreamwidth.org/29069.html",
     report: "https://glowfic.com/boards/"
   }

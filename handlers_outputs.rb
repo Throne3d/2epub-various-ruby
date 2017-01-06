@@ -763,21 +763,22 @@
           if days_ago > 0 && chapter.time_new.between?(early_time, late_time)
             first_update = chapter.entry
             last_update = chapter.entry
-            latest_update = chapter.entry if chapter.time_new.between?(early_time, late_time)
+            latest_update = chapter.entry
           end
           messages = chapter.replies
           messages.each do |message|
-            in_period = (days_ago > 0) ? message.time.between?(early_time, late_time) : false
-            first_update = message if in_period and not first_update
-            last_update = message if in_period
             latest_update = message if message.time < today_time
+            next unless days_ago > 0
+            in_period = message.time.between?(early_time, late_time)
+            next unless in_period
+            first_update = message unless first_update
+            last_update = message
           end
 
           if first_update
             upd_chapters << {chapter: chapter, first_update: first_update, last_update: last_update, latest_update: latest_update}
             done << chapter
-          end
-          if days_ago < 1
+          elsif days_ago < 1
             upd_chapters << {chapter: chapter, latest_update: latest_update}
             done << chapter
           end
