@@ -317,17 +317,13 @@ def main(*args)
     changed = handler.output
     set_chapters_data(chapter_list, group) if changed
   elsif (process == :output_report)
-    chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
-    LOG.info "Outputting a report for '#{group}'"
-
     params = {}
 
     if date_bit = option[/(\d+)((-|\s)?\d+)?{2}/]
-      date_bits = date_bit.split(/(-|\s)/)
+      date_bits = date_bit.split(/(?:-|\s)+/)
       day = date_bits.last.to_i
-      month = date_bits[date_bits.length-2].to_i
-      year = (date_bits.length > 2 ? date_bits[date_bits.length-3].to_i : DateTime.now.year)
+      month = date_bits[-2].to_i
+      year = (date_bits.length > 2 ? date_bits[-3].to_i : DateTime.now.year)
 
       params[:date] = Date.new(year, month, day)
       option = option.sub(date_bit, '').strip
@@ -337,6 +333,10 @@ def main(*args)
       params[:show_earlier] = true
       option = option.sub(early_bit, '').strip
     end
+
+    chapter_list ||= get_chapters_data(group)
+    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    LOG.info "Outputting a report for '#{group}'"
 
     # TODO: "number" (number of posts in the past day) or whatever as an option
 
