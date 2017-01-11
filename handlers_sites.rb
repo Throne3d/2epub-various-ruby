@@ -953,6 +953,10 @@
           new_content = page_new.at_css('#content')
           cache_content = page_cache.at_css('#content') if page_cache
 
+          old_content.at_css(".time-loaded").try(:remove)
+          new_content.at_css(".time-loaded").try(:remove)
+          cache_content.at_css(".time-loaded").try(:remove) if page_cache
+
           changed = (old_content.inner_html != new_content.inner_html)
           if changed
             LOG.debug "check page #{i}, #{check_page}, was different"
