@@ -1373,12 +1373,12 @@
         message_type = PostType::ENTRY
       end
 
-
-      author_element = message_element.at_css('.post-author').try(:at_css, 'a')
+      post_info_text = message_element.at_css('.post-info-text')
+      author_element = post_info_text.at_css('.post-author').at_css('a')
       author_name = author_element.text.strip
       author_id = author_element["href"].split("users/").last
 
-      character_element = message_element.at_css('.post-character').try(:at_css, 'a')
+      character_element = post_info_text.at_css('.post-character').try(:at_css, 'a')
       if character_element
         character_id = character_element["href"].split("characters/").last
         character_name = character_element.text.strip
@@ -1387,7 +1387,7 @@
         character_name = author_name
       end
 
-      date_element = message_element.at_css('.post-footer')
+      date_element = message_element.at_css('> .post-footer')
 
       params = {}
 
