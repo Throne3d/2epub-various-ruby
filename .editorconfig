@@ -1,0 +1,14 @@
+# See http://editorconfig.org
+
+# top-most
+root = true
+
+# UNIX-style newlines & endings
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+[*.{rb,haml}]
+charset = utf-8
+indent_style = space
+indent_size = 2
