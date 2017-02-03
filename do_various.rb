@@ -72,7 +72,7 @@ Individual processes:
 - update_toc          (deprecated) Update the data with the new ToC
 
 Groups:
-#{FIC_NAME_MAPPING.map{|i,j| "- " + i.to_s} * "\n"}
+#{FIC_NAME_MAPPING.map{|i,_| "- " + i.to_s} * "\n"}
 HEREDOC
 
   if __FILE__ == $0
@@ -97,20 +97,21 @@ def get_arg(args, shortarg, longarg, default=nil)
   arg_val = nil
   if argname_bit
     arg_index = args.index(argname_bit)
-    arg_val = if argname_bit['=']
-      argname_bit.split('=',2).last
-    elsif argname_bit[' ']
-      argname_bit.split(' ',2).last
-    else
-      temp_val = args[arg_index+1]
-      if temp_val.nil? || !temp_val.start_with?('-')
-        # if the value is nil, or it's not another argument
-        args.delete_at(arg_index+1)
+    arg_val =
+      if argname_bit['=']
+        argname_bit.split('=',2).last
+      elsif argname_bit[' ']
+        argname_bit.split(' ',2).last
       else
-        # if it's another argument
-        true
+        temp_val = args[arg_index+1]
+        if temp_val.nil? || !temp_val.start_with?('-')
+          # if the value is nil, or it's not another argument
+          args.delete_at(arg_index+1)
+        else
+          # if it's another argument
+          true
+        end
       end
-    end
     args.delete_at(arg_index)
   end
   # LOG.debug "get_arg got #{arg_val.inspect} for #{shortarg}, #{longarg}, default: #{default}"
@@ -140,6 +141,28 @@ def get_unguarded_arg(args, default=nil)
   arg || default
 end
 
+PROCESSES = {
+  tocs: [:toc, :tocs],
+  trash: [:trash],
+  update_toc: [:update_toc], # deprecated?
+  qget: [:qget],
+  get: [:get],
+  process: [:process],
+  qprocess: [:qprocess],
+  report: [:report],
+  output_epub: [:epub, :output_epub],
+  output_html: [:output_html],
+  output_report: [:output_report],
+  output_rails: [:output_rails],
+  stats: [:stat, :stats],
+  :"do" => [:"do"],
+  epubdo: [:epubdo],
+  repdo: [:repdo],
+  test1: [:test1],
+  test2: [:test2]
+  # details: [:detail, :details],
+}
+
 # Parses a list of arguments into an option structure.
 def parse_args(args)
   args = [args] if args.is_a?(String)
@@ -151,32 +174,10 @@ def parse_args(args)
 
   args = args.map(&:to_s).map(&:downcase)
 
-  processes = {
-    tocs: [:toc, :tocs],
-    trash: [:trash],
-    update_toc: [:update_toc], # deprecated?
-    qget: [:qget],
-    get: [:get],
-    process: [:process],
-    qprocess: [:qprocess],
-    report: [:report],
-    output_epub: [:epub, :output_epub],
-    output_html: [:output_html],
-    output_report: [:output_report],
-    output_rails: [:output_rails],
-    stats: [:stat, :stats],
-    :"do" => [:"do"],
-    epubdo: [:epubdo],
-    repdo: [:repdo],
-    test1: [:test1],
-    test2: [:test2]
-    # details: [:detail, :details],
-  }
-
   process_arg = get_arg(args, '-p', '--process', nil) || get_unguarded_arg(args)
   if process_arg
     process_sym = process_arg.to_s.downcase.strip.to_sym
-    options.process = processes.detect do |key, match_list|
+    options.process = PROCESSES.detect do |_, match_list|
       match_list.index(process_sym)
     end.try(:first)
   end
@@ -185,7 +186,7 @@ def parse_args(args)
   group_arg = get_arg(args, '-g', '--group', nil) || get_unguarded_arg(args)
   if group_arg
     group_sym = group_arg.to_s.downcase.strip.to_sym
-    options.group = FIC_NAME_MAPPING.detect do |key, match_list|
+    options.group = FIC_NAME_MAPPING.detect do |_, match_list|
       match_list.index(group_sym)
     end.try(:first)
   end
