@@ -44,11 +44,12 @@ class Array
     each {|e| if i = other.index(e) then other.delete_at(i) end }
     other.empty?
   end
-  def delete_once_if(&block)
-    value = detect(&block)
+  def delete_once(value)
     i = index(value)
     delete_at(i) if i
-    value
+  end
+  def delete_once_if(&block)
+    delete_once(detect(&block))
   end
 end
 
