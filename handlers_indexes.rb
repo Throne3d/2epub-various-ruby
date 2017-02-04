@@ -783,6 +783,12 @@ module GlowficIndexHandlers
     def toc_to_chapterlist(options = {}, &block)
       list = if @group == :test
         [
+          {url: "https://darkest-evening.dreamwidth.org/520.html?style=site",
+          title: "You've Got Mail",
+          sections: ["Incandescence"]},
+          {url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
+          title: "Clannish",
+          sections: ["Incandescence", "Chamomile"]},
           {url: "http://edgeofyourseat.dreamwidth.org/1949.html?style=site",
           title: "he couldn't have imagined",
           sections: ["AAAA-1-Effulgence", "AAAB-2-make a wish"]},
@@ -801,9 +807,6 @@ module GlowficIndexHandlers
           {url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
           title: "Double Witch",
           sections: ["AAAA-4-Bluebell Flames"]},
-          {url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
-          title: "Clannish",
-          sections: ["Incandescence", "Chamomile"]},
           {url: "https://alicornutopia.dreamwidth.org/6744.html?thread=2465368&style=site#cmt2465368",
           title: "A Joker summons Demon Cam",
           sections: ["AAAA-3-Demon Cam"],
