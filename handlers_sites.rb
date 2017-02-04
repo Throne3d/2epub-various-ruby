@@ -16,116 +16,105 @@
   class SiteHandler
     include GlowficEpub
     attr_reader :group, :chapter_list
-    def self.handles?(chapter)
-      false
-    end
-    def get_updated(chapter)
-      nil
-    end
-    def handles?(chapter)
-      return self.class.handles?(chapter)
-    end
+
+    def self.handles?(chapter); false; end
+
     def initialize(options = {})
-      @group = nil
-      @group = options[:group] if options.key?(:group)
+      @group = options[:group]
       @group_folder = "web_cache"
       @group_folder += "/#{@group}" if @group
-      @chapter_list = []
-      @chapter_list = options[:chapters] if options.key?(:chapters)
-      @chapter_list = options[:chapter_list] if options.key?(:chapter_list)
-      @chapter_list = GlowficEpub::Chapters.new if @chapter_list.is_a?(Array) and @chapter_list.empty?
+      @chapter_list = options[:chapters] || options[:chapter_list]
+      @chapter_list = GlowficEpub::Chapters.new if @chapter_list.nil? || (@chapter_list.is_a?(Array) && @chapter_list.empty?)
       @download_count = 0
       @downcache = {}
       @giricache = {}
     end
+
+    def handles?(chapter); self.class.handles?(chapter); end
+    def get_updated(chapter); nil; end
     def message_attributes(options = {})
       @message_attributes unless options.present?
-      only_attrs = options.key?(:attributes) ? options[:attributes] : (options.key?(:only) ? options[:only] : (options.key?(:only_attrs) ? options[:only_attrs] : nil))
-      except_attrs = options.key?(:except) ? options[:except] : (options.key?(:except_attrs) ? options[:except_attrs] : nil)
-      raise("Not allowed both :only and :expect on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs and except_attrs
+      only_attrs = options[:attributes] || options[:only] || options[:only_attrs]
+      except_attrs = options[:except] || options[:except_attrs]
+      raise("Not allowed both :only and :expect on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs && except_attrs
       message_attributes = (only_attrs ? only_attrs : msg_attrs)
-      message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       message_attributes.uniq!
+      message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       @message_attributes = message_attributes
     end
     def already_processed(chapter, options = {})
-      if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes(options)
-        if chapter.replies.empty?
-          LOG.error "#{chapter.title}: cached data contains no replies; not using"
-          return false
-        else
-          msg_str = "#{chapter.title}: unchanged, cached data used"
-          if block_given?
-            yield msg_str
-          elsif notify
-            LOG.info msg_str
-          end
-          return true
-        end
+      return false unless chapter.processed.try(:is_a?, Array) && chapter.processed.contains_all?(message_attributes(options))
+
+      if chapter.replies.empty?
+        LOG.error "#{chapter.title}: cached data contains no replies; not using"
+        return false
       end
-      false
+
+      msg_str = "#{chapter.title}: unchanged, cached data used"
+      if block_given?
+        yield msg_str
+      elsif notify
+        LOG.info msg_str
+      end
+      true
     end
+
     def down_or_cache(page, options = {})
-      where = options.key?(:where) ? options[:where] : nil
-      @downcache[where] = [] unless @downcache.key?(where)
+      where = options[:where]
+      @downcache[where] ||= []
 
       downd = @downcache[where].include?(page)
       options[:replace] = !downd
       data = get_page_data(page, options)
-      @download_count+=1 unless downd
-      @downcache[where] << page unless downd
+      return data if downd
+
+      @download_count+=1
+      @downcache[where] << page
       data
     end
     def giri_or_cache(page, options = {})
       LOG.debug "giri_or_cache(\"#{page}\"" + (options.empty? ? "" : ", #{options}") + ")"
-      where = options.key?(:where) ? options[:where] : nil
-      replace = options.key?(:replace) ? options[:replace] : true
-      @giricache[where] = {} unless @giricache.key?(where)
+      where = options[:where]
+      replace = options[:replace]
+      @giricache[where] ||= {}
       return @giricache[where][page] if @giricache[where].key?(page)
 
       predone = has_cache?(page, options)
-      unless options.key?(:headers)
-        options[:headers] = {"Accept" => "text/html"}
-      end
+
+      options[:headers] ||= {"Accept" => "text/html"}
       data = (replace ? down_or_cache(page, options) : get_page_data(page, options))
       giri = Nokogiri::HTML(data)
       @giricache[where][page] = giri if predone
       giri
     end
     def remove_cache(page, options = {})
-      where = options.key?(:where) ? options[:where] : nil
-      return unless @downcache.key?(where)
-      @downcache[where].delete(page)
+      where = options[:where]
+      @downcache[where].try(:delete, page)
     end
     def remove_giri_cache(page, options = {})
-      where = options.key?(:where) ? options[:where] : nil
+      where = options[:where]
       return unless @giricache.key?(where)
-      old_cache = nil
-      if @giricache[where].key?(page)
-        old_cache = @giricache[where][page]
-        @giricache[where].delete(page)
-      end
-      old_cache
+      return unless @giricache[where].key?(page)
+      @giricache[where].delete(page)
     end
-    def nokogiri_or_cache(page, options={})
-      giri_or_cache(page, options)
-    end
-    def has_cache?(page, options={})
-      where = (options.key?(:where)) ? options[:where] : nil
-      @downcache[where] = [] unless @downcache.key?(where)
-      @downcache[where].include?(page)
-    end
-    def save_down(page, data, options={})
-      where = (options.key?(:where)) ? options[:where] : nil
-      @downcache[where] = [] unless @downcache.key?(where)
+    alias_method :nokogiri_or_cache, :giri_or_cache
 
+    def has_cache?(page, options={})
+      @downcache[options[:where]].try(:include?, page)
+    end
+
+    def save_down(page, data, options={})
+      where = options[:where]
+      @downcache[where] ||= []
       @downcache[where] << page unless @downcache[where].include?(page)
+
       loc = get_page_location(page, options)
       open(loc, 'w') do |f|
         f.write data
       end
       data
     end
+
     def msg_attrs
       @msg_attrs ||= [:time, :edittime, :author, :face]
     end
