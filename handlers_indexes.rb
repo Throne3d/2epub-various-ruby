@@ -854,11 +854,8 @@ module GlowficIndexHandlers
         if File.file?(file_path)
           open(file_path) do |old|
             text = old.read
-            if text.strip.length > 10
-              open(file_path + '.bak', 'w') do |new|
-                new.write text
-              end
-            end
+            break if text.strip.length <= 10
+            open(file_path + '.bak', 'w') { |new| new.write text }
           end
         end
         report_json = get_page_data(url, where: @group_folder, replace: true).strip
@@ -882,24 +879,24 @@ module GlowficIndexHandlers
         if msg
           if @group == :mwf_leaf
             msg.css('> ul > li').each do |li|
-              if li.at_css('ul')
-                li.css('ul li a').each do |li_a|
-                  url = li_a[:href]
-                  if url["redirect.viglink.com"]
-                    url = url.split('&u=').last.gsub('%3A', ':').gsub('%3F', '?').gsub('%3D', '=').gsub('%26', '&')
-                  end
-                  name = li_a.text.strip
+              sections = nil
+              elems = if li.at_css('ul')
                   sections = ["Lioncourt's coronation party"]
-                  list << {url: url, title: name, sections: sections}
+                  li.css('ul li a')
+                elsif li.at_css('a')
+                  li.at_css('a')
                 end
-              elsif li.at_css('a')
-                li_a = li.at_css('a')
+
+              elems.each do |li_a|
                 url = li_a[:href]
                 if url["redirect.viglink.com"]
                   url = url.split('&u=').last.gsub('%3A', ':').gsub('%3F', '?').gsub('%3D', '=').gsub('%26', '&')
                 end
                 name = li_a.text.strip
-                list << {url: url, title: name}
+
+                param_hash = {url: url, title: name}
+                param_hash[:sections] = sections if sections
+                list << param_hash
               end
             end
           elsif @group == :mwf_lioncourt
@@ -910,10 +907,11 @@ module GlowficIndexHandlers
                 url = url.split('&u=').last.gsub('%3A', ':').gsub('%3F', '?').gsub('%3D', '=').gsub('%26', '&')
               end
               name = anchor.text.strip
-              if prev_url.present? and url.sub('http://', '').sub('https://', '').start_with?(prev_url.sub('http://', '').sub('https://', '').sub(/[&\?]style=site/, '').sub(/[&\?]view=flat/, ''))
+              neater_url = url.sub('http://', 'https://').sub(/[&\?]style=site/, '').sub(/[&\?]view=flat/, '')
+              if prev_url.present? and neater_url.start_with?(prev_url)
                 puts "Skipping #{name} because thread of previous"
-              elsif url.start_with?('http')
-                prev_url = url
+              elsif neater_url.start_with?('http')
+                prev_url = neater_url
                 list << {url: url, title: name}
               end
             end
