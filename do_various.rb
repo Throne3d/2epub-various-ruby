@@ -45,7 +45,10 @@ class Array
     other.empty?
   end
   def delete_once_if(&block)
-    delete(detect(&block))
+    value = detect(&block)
+    i = index(value)
+    delete_at(i) if i
+    value
   end
 end
 
