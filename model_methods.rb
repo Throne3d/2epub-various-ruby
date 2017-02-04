@@ -64,9 +64,9 @@
     FILELOG.fatal(str)
   end
 
-  COLLECTION_LIST_URL = 'https://rawgit.com/Throne3d/databox/master/collection_pages.txt'
-  MOIETY_LIST_URL = 'https://rawgit.com/Throne3d/databox/master/moiety_list.json'
-  REPORT_LIST_URL = 'https://rawgit.com/Throne3d/databox/master/toc_report.json'
+  COLLECTION_LIST_URL = 'https://raw.githubusercontent.com/Throne3d/databox/master/collection_pages.txt'
+  MOIETY_LIST_URL = 'https://raw.githubusercontent.com/Throne3d/databox/master/moiety_list.json'
+  REPORT_LIST_URL = 'https://raw.githubusercontent.com/Throne3d/databox/master/toc_report.json'
 
   FIC_NAME_MAPPING = {
     # put the mappings so subsets of followings come first (efful before effulgence, zod before zodiac, etc.)
