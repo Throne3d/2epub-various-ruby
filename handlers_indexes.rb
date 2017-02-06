@@ -3,6 +3,64 @@ module GlowficIndexHandlers
   require 'models'
   include GlowficEpubMethods
 
+  INDEX_PRESETS = {
+    test:
+    [
+      {url: "https://darkest-evening.dreamwidth.org/520.html?style=site",
+      title: "You've Got Mail",
+      sections: ["Incandescence"]},
+      {url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
+      title: "Clannish",
+      sections: ["Incandescence", "Chamomile"]},
+      {url: "http://edgeofyourseat.dreamwidth.org/1949.html?style=site",
+      title: "he couldn't have imagined",
+      sections: ["AAAA-1-Effulgence", "AAAB-2-make a wish"]},
+      {url: "http://autokinetic.dreamwidth.org/783.html?style=site",
+      title: "(admissions procedures)",
+      sections: ["AAAA-1-Effulgence", "AAAB-1-dance between the stars"]},
+      {url: "https://glowfic.com/posts/43",
+      title: "Book of Discovery",
+      sections: ["AAAA-2-Zodiac", "AAAB-1-Book of the Moon"]},
+      {url: "https://glowfic.com/posts/50",
+      title: "Book of Experience",
+      sections: ["AAAA-2-Zodiac", "AAAB-1-Book of the Moon"]},
+      {url: "https://glowfic.com/posts/53",
+      title: "A fresh start",
+      sections: ["AAAA-2-Zodiac", "AAAB-2-Apricum"]},
+      {url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
+      title: "Double Witch",
+      sections: ["AAAA-4-Bluebell Flames"]},
+      {url: "https://alicornutopia.dreamwidth.org/6744.html?thread=2465368&style=site#cmt2465368",
+      title: "A Joker summons Demon Cam",
+      sections: ["AAAA-3-Demon Cam"],
+      title_extras: "(with kappa)"},
+      {url: "https://alicornutopia.dreamwidth.org/6744.html?style=site&thread=2560344#cmt2560344",
+      title: "Darren summons Demon Cam",
+      sections: ["AAAA-3-Demon Cam"],
+      title_extras: "(with Aestrix)"}
+    ],
+    reptest:
+    [
+      {title: "Shame for us to part",
+      url: "https://glowfic.com/posts/519",
+      title_extras: "[b][color=#4F012E]tyrians[/color][/b] and [b][color=#960018]carmines[/color][/b] in Sunnyverse",
+      report_flags: "4F012E#3F00FF 960018#682860",
+      time_new: "2017-01-05T20:51:00"
+      }
+    ],
+    temp_starlight:
+    [
+      {url: "https://alicornutopia.dreamwidth.org/29069.html?style=site",
+      title: "and in my hands place honesty",
+      sections: ["Starlight"]},
+      {url: "https://alicornutopia.dreamwidth.org/29401.html?style=site",
+      title: "veritable",
+      sections: ["Starlight"]}
+    ],
+    lintamande:
+    []
+  }
+
   class IndexHandler
     attr_reader :group
     def initialize(options = {})
@@ -781,59 +839,7 @@ module GlowficIndexHandlers
       super(options)
     end
     def toc_to_chapterlist(options = {}, &block)
-      list = if @group == :test
-        [
-          {url: "http://edgeofyourseat.dreamwidth.org/1949.html?style=site",
-          title: "he couldn't have imagined",
-          sections: ["AAAA-1-Effulgence", "AAAB-2-make a wish"]},
-          {url: "http://autokinetic.dreamwidth.org/783.html?style=site",
-          title: "(admissions procedures)",
-          sections: ["AAAA-1-Effulgence", "AAAB-1-dance between the stars"]},
-          {url: "https://glowfic.com/posts/43",
-          title: "Book of Discovery",
-          sections: ["AAAA-2-Zodiac", "AAAB-1-Book of the Moon"]},
-          {url: "https://glowfic.com/posts/50",
-          title: "Book of Experience",
-          sections: ["AAAA-2-Zodiac", "AAAB-1-Book of the Moon"]},
-          {url: "https://glowfic.com/posts/53",
-          title: "A fresh start",
-          sections: ["AAAA-2-Zodiac", "AAAB-2-Apricum"]},
-          {url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
-          title: "Double Witch",
-          sections: ["AAAA-4-Bluebell Flames"]},
-          {url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
-          title: "Clannish",
-          sections: ["Incandescence", "Chamomile"]},
-          {url: "https://alicornutopia.dreamwidth.org/6744.html?thread=2465368&style=site#cmt2465368",
-          title: "A Joker summons Demon Cam",
-          sections: ["AAAA-3-Demon Cam"],
-          title_extras: "(with kappa)"},
-          {url: "https://alicornutopia.dreamwidth.org/6744.html?style=site&thread=2560344#cmt2560344",
-          title: "Darren summons Demon Cam",
-          sections: ["AAAA-3-Demon Cam"],
-          title_extras: "(with Aestrix)"}
-        ]
-      elsif @group == :reptest
-        [
-          {title: "Shame for us to part",
-          url: "https://glowfic.com/posts/519",
-          title_extras: "[b][color=#4F012E]tyrians[/color][/b] and [b][color=#960018]carmines[/color][/b] in Sunnyverse",
-          report_flags: "4F012E#3F00FF 960018#682860",
-          time_new: "2017-01-05T20:51:00"
-          }
-        ]
-      elsif @group == :temp_starlight
-        [
-          {url: "https://alicornutopia.dreamwidth.org/29069.html?style=site",
-          title: "and in my hands place honesty",
-          sections: ["Starlight"]},
-          {url: "https://alicornutopia.dreamwidth.org/29401.html?style=site",
-          title: "veritable",
-          sections: ["Starlight"]}
-        ]
-      elsif @group == :lintamande
-        []
-      end
+      list = INDEX_PRESETS[@group]
 
       if @group == :test
         chapter_list.sort_chapters = true
@@ -848,11 +854,8 @@ module GlowficIndexHandlers
         if File.file?(file_path)
           open(file_path) do |old|
             text = old.read
-            if text.strip.length > 10
-              open(file_path + '.bak', 'w') do |new|
-                new.write text
-              end
-            end
+            break if text.strip.length <= 10
+            open(file_path + '.bak', 'w') { |new| new.write text }
           end
         end
         report_json = get_page_data(url, where: @group_folder, replace: true).strip
@@ -876,24 +879,24 @@ module GlowficIndexHandlers
         if msg
           if @group == :mwf_leaf
             msg.css('> ul > li').each do |li|
-              if li.at_css('ul')
-                li.css('ul li a').each do |li_a|
-                  url = li_a[:href]
-                  if url["redirect.viglink.com"]
-                    url = url.split('&u=').last.gsub('%3A', ':').gsub('%3F', '?').gsub('%3D', '=').gsub('%26', '&')
-                  end
-                  name = li_a.text.strip
+              sections = nil
+              elems = if li.at_css('ul')
                   sections = ["Lioncourt's coronation party"]
-                  list << {url: url, title: name, sections: sections}
+                  li.css('ul li a')
+                elsif li.at_css('a')
+                  li.at_css('a')
                 end
-              elsif li.at_css('a')
-                li_a = li.at_css('a')
+
+              elems.each do |li_a|
                 url = li_a[:href]
                 if url["redirect.viglink.com"]
                   url = url.split('&u=').last.gsub('%3A', ':').gsub('%3F', '?').gsub('%3D', '=').gsub('%26', '&')
                 end
                 name = li_a.text.strip
-                list << {url: url, title: name}
+
+                param_hash = {url: url, title: name}
+                param_hash[:sections] = sections if sections
+                list << param_hash
               end
             end
           elsif @group == :mwf_lioncourt
@@ -904,10 +907,11 @@ module GlowficIndexHandlers
                 url = url.split('&u=').last.gsub('%3A', ':').gsub('%3F', '?').gsub('%3D', '=').gsub('%26', '&')
               end
               name = anchor.text.strip
-              if prev_url.present? and url.sub('http://', '').sub('https://', '').start_with?(prev_url.sub('http://', '').sub('https://', '').sub(/[&\?]style=site/, '').sub(/[&\?]view=flat/, ''))
+              neater_url = url.sub('http://', 'https://').sub(/[&\?]style=site/, '').sub(/[&\?]view=flat/, '')
+              if prev_url.present? and neater_url.start_with?(prev_url)
                 puts "Skipping #{name} because thread of previous"
-              elsif url.start_with?('http')
-                prev_url = url
+              elsif neater_url.start_with?('http')
+                prev_url = neater_url
                 list << {url: url, title: name}
               end
             end

@@ -16,116 +16,105 @@
   class SiteHandler
     include GlowficEpub
     attr_reader :group, :chapter_list
-    def self.handles?(chapter)
-      false
-    end
-    def get_updated(chapter)
-      nil
-    end
-    def handles?(chapter)
-      return self.class.handles?(chapter)
-    end
+
+    def self.handles?(chapter); false; end
+
     def initialize(options = {})
-      @group = nil
-      @group = options[:group] if options.key?(:group)
+      @group = options[:group]
       @group_folder = "web_cache"
       @group_folder += "/#{@group}" if @group
-      @chapter_list = []
-      @chapter_list = options[:chapters] if options.key?(:chapters)
-      @chapter_list = options[:chapter_list] if options.key?(:chapter_list)
-      @chapter_list = GlowficEpub::Chapters.new if @chapter_list.is_a?(Array) and @chapter_list.empty?
+      @chapter_list = options[:chapters] || options[:chapter_list]
+      @chapter_list = GlowficEpub::Chapters.new if @chapter_list.nil? || (@chapter_list.is_a?(Array) && @chapter_list.empty?)
       @download_count = 0
       @downcache = {}
       @giricache = {}
     end
+
+    def handles?(chapter); self.class.handles?(chapter); end
+    def get_updated(chapter); nil; end
     def message_attributes(options = {})
       @message_attributes unless options.present?
-      only_attrs = options.key?(:attributes) ? options[:attributes] : (options.key?(:only) ? options[:only] : (options.key?(:only_attrs) ? options[:only_attrs] : nil))
-      except_attrs = options.key?(:except) ? options[:except] : (options.key?(:except_attrs) ? options[:except_attrs] : nil)
-      raise("Not allowed both :only and :expect on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs and except_attrs
+      only_attrs = options[:attributes] || options[:only] || options[:only_attrs]
+      except_attrs = options[:except] || options[:except_attrs]
+      raise("Not allowed both :only and :expect on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs && except_attrs
       message_attributes = (only_attrs ? only_attrs : msg_attrs)
-      message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       message_attributes.uniq!
+      message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       @message_attributes = message_attributes
     end
     def already_processed(chapter, options = {})
-      if chapter.processed and chapter.processed.is_a?(Array) and chapter.processed.contains_all? message_attributes(options)
-        if chapter.replies.empty?
-          LOG.error "#{chapter.title}: cached data contains no replies; not using"
-          return false
-        else
-          msg_str = "#{chapter.title}: unchanged, cached data used"
-          if block_given?
-            yield msg_str
-          elsif notify
-            LOG.info msg_str
-          end
-          return true
-        end
+      return false unless chapter.processed.try(:is_a?, Array) && chapter.processed.contains_all?(message_attributes(options))
+
+      if chapter.replies.empty?
+        LOG.error "#{chapter.title}: cached data contains no replies; not using"
+        return false
       end
-      false
+
+      msg_str = "#{chapter.title}: unchanged, cached data used"
+      if block_given?
+        yield msg_str
+      elsif notify
+        LOG.info msg_str
+      end
+      true
     end
+
     def down_or_cache(page, options = {})
-      where = options.key?(:where) ? options[:where] : nil
-      @downcache[where] = [] unless @downcache.key?(where)
+      where = options[:where]
+      @downcache[where] ||= []
 
       downd = @downcache[where].include?(page)
       options[:replace] = !downd
       data = get_page_data(page, options)
-      @download_count+=1 unless downd
-      @downcache[where] << page unless downd
+      return data if downd
+
+      @download_count+=1
+      @downcache[where] << page
       data
     end
     def giri_or_cache(page, options = {})
       LOG.debug "giri_or_cache(\"#{page}\"" + (options.empty? ? "" : ", #{options}") + ")"
-      where = options.key?(:where) ? options[:where] : nil
+      where = options[:where]
       replace = options.key?(:replace) ? options[:replace] : true
-      @giricache[where] = {} unless @giricache.key?(where)
+      @giricache[where] ||= {}
       return @giricache[where][page] if @giricache[where].key?(page)
 
       predone = has_cache?(page, options)
-      unless options.key?(:headers)
-        options[:headers] = {"Accept" => "text/html"}
-      end
+
+      options[:headers] ||= {"Accept" => "text/html"}
       data = (replace ? down_or_cache(page, options) : get_page_data(page, options))
       giri = Nokogiri::HTML(data)
       @giricache[where][page] = giri if predone
       giri
     end
     def remove_cache(page, options = {})
-      where = options.key?(:where) ? options[:where] : nil
-      return unless @downcache.key?(where)
-      @downcache[where].delete(page)
+      where = options[:where]
+      @downcache[where].try(:delete, page)
     end
     def remove_giri_cache(page, options = {})
-      where = options.key?(:where) ? options[:where] : nil
+      where = options[:where]
       return unless @giricache.key?(where)
-      old_cache = nil
-      if @giricache[where].key?(page)
-        old_cache = @giricache[where][page]
-        @giricache[where].delete(page)
-      end
-      old_cache
+      return unless @giricache[where].key?(page)
+      @giricache[where].delete(page)
     end
-    def nokogiri_or_cache(page, options={})
-      giri_or_cache(page, options)
-    end
-    def has_cache?(page, options={})
-      where = (options.key?(:where)) ? options[:where] : nil
-      @downcache[where] = [] unless @downcache.key?(where)
-      @downcache[where].include?(page)
-    end
-    def save_down(page, data, options={})
-      where = (options.key?(:where)) ? options[:where] : nil
-      @downcache[where] = [] unless @downcache.key?(where)
+    alias_method :nokogiri_or_cache, :giri_or_cache
 
+    def has_cache?(page, options={})
+      @downcache[options[:where]].try(:include?, page)
+    end
+
+    def save_down(page, data, options={})
+      where = options[:where]
+      @downcache[where] ||= []
       @downcache[where] << page unless @downcache[where].include?(page)
+
       loc = get_page_location(page, options)
       open(loc, 'w') do |f|
         f.write data
       end
       data
     end
+
     def msg_attrs
       @msg_attrs ||= [:time, :edittime, :author, :face]
     end
@@ -135,16 +124,15 @@
     attr_reader :download_count
     def self.handles?(thing)
       return false if thing.nil?
-      if thing.is_a?(GlowficEpub::Author)
-        return thing.unique_id.start_with?('dreamwidth#')
-      else
-        chapter_url = (thing.is_a?(GlowficEpub::Chapter)) ? thing.url : thing
-        return false if chapter_url.nil? or chapter_url.empty?
+      return thing.unique_id.start_with?('dreamwidth#') if thing.is_a?(GlowficEpub::Author)
 
-        uri = URI.parse(chapter_url)
-        return uri.host.end_with?("dreamwidth.org")
-      end
+      chapter_url = (thing.is_a?(GlowficEpub::Chapter)) ? thing.url : thing
+      return false if chapter_url.nil? || chapter_url.empty?
+
+      uri = URI.parse(chapter_url)
+      uri.host.end_with?('dreamwidth.org')
     end
+
     def initialize(options = {})
       super options
       @face_cache = {} # {"alicornutopia" => {"pen" => "(url)"}}
@@ -167,91 +155,116 @@
     end
 
     def get_comment_link(comment)
-      @partial = comment.at_css('> .dwexpcomment > .partial')
-      @full = comment.at_css('> .dwexpcomment > .full') unless @partial
-      if @partial
-        comm_link = @partial.at_css('.comment-title').try(:at_css, 'a').try(:[], :href)
+      partial = comment.at_css('> .dwexpcomment > .partial')
+      if partial
+        full = nil
+        comm_link = partial.at_css('.comment-title').try(:at_css, 'a').try(:[], :href)
       else
-        comm_link = @full.try(:at_css, '.commentpermalink').try(:at_css, 'a').try(:[], :href)
+        full = comment.at_css('> .dwexpcomment > .full')
+        comm_link = full.try(:at_css, '.commentpermalink').try(:at_css, 'a').try(:[], :href)
       end
-      LOG.error "partial and no comm_link" if @partial and not comm_link
-      LOG.error "no partial, no full" if not @partial and not @full
-      LOG.error "#{(not @full) ? 'not ' : ''}full and no comm_link" if not @partial and not comm_link
-      if block_given?
-        yield @partial, @full, comm_link
-      end
-      if comm_link
-        params = {style: :site}
-        params[:thread] = get_url_param(comm_link, "thread")
-        comm_link = set_url_params(clear_url_params(comm_link), params)
-      end
+
+      yield partial, full, comm_link if block_given?
+      return unless comm_link
+
+      params = {style: :site}
+      params[:thread] = get_url_param(comm_link, "thread")
+      comm_link = set_url_params(clear_url_params(comm_link), params)
       return comm_link
     end
     def get_permalink_for(message)
-      if message.post_type == "PostType::ENTRY"
-        set_url_params(clear_url_params(message.chapter.url), {view: :flat})
-      else
-        if message.page_no
-          set_url_params(clear_url_params(message.chapter.url), {view: :flat, page: message.page_no}) + "#comment-#{message.id}"
-        else
-          set_url_params(clear_url_params(message.chapter.url), {thread: message.id}) + "#comment-#{message.id}"
-        end
-      end
+      return set_url_params(clear_url_params(message.chapter.url), {view: :flat}) if message.post_type == "PostType::ENTRY"
+      return set_url_params(clear_url_params(message.chapter.url), {view: :flat, page: message.page_no}) + "#comment-#{message.id}" if message.page_no
+      set_url_params(clear_url_params(message.chapter.url), {thread: message.id}) + "#comment-#{message.id}"
     end
     def get_undiscretioned(url, options = {})
-      current_page = options.key?(:current_page) ? options[:current_page] : (options.key?(:current) ? options[:current] : nil)
-      options.delete(:current_page)
-      options.delete(:current)
-
-      if current_page.is_a?(String)
+      current_page = options.delete(:current_page) || options.delete(:current)
+      if current_page.present?
         current_page = Nokogiri::HTML(current_page)
-      end
-      unless current_page.present?
+      else
         current_page = giri_or_cache(url, options)
       end
 
       content = current_page.at_css('#content')
 
       text_thing = 'Discretion Advised'
-
       nsfw_warning = content.at_css('.panel.callout').try(:at_css, '.text-center').try(:text)
-      if nsfw_warning.try(:[], text_thing)
-        LOG.debug "Got a discretion advised – trying to fix with Mechanize"
-        page = @mech_agent.get(url)
-        sleep 0.05
-        discretion_form = page.forms.select{|form| form.action["/adult_concepts"]}.first
+      return current_page unless nsfw_warning.try(:[], text_thing)
 
-        remove_giri_cache(url, options)
-        if discretion_form
-          data_page = discretion_form.submit
-          save_down(url, data_page.content, options)
-        else
-          save_down(url, page.content, options)
-        end
-        current_page = giri_or_cache(url, options)
-        nsfw_warning = current_page.at_css('.panel.callout').try(:at_css, '.text-center').try(:text)
-        if nsfw_warning.try(:[], text_thing)
-          LOG.error "Failed to fix discretion advised warning for page #{url}"
-          return nil
-        else
-          LOG.debug "Fixed a discretion advised warning"
-        end
+      LOG.debug "Got a discretion advised – trying to fix with Mechanize"
+      page = @mech_agent.get(url)
+      sleep 0.05
+      discretion_form = page.forms.select{|form| form.action["/adult_concepts"]}.first
+
+      remove_giri_cache(url, options)
+      save_down(url, (discretion_form.try(:submit) || page).content, options)
+      current_page = giri_or_cache(url, options)
+
+      nsfw_warning = current_page.at_css('.panel.callout').try(:at_css, '.text-center').try(:text)
+      if nsfw_warning.try(:[], text_thing)
+        LOG.error "Failed to fix discretion advised warning for page #{url}"
+        return
       end
 
-      return current_page
+      LOG.debug "Fixed a discretion advised warning"
+      current_page
     end
+
+    # returns comment_count
+    def find_check_pages(chapter, main_page_stuff)
+      main_page_content = main_page_stuff.at_css('#content')
+      comments = main_page_content.css('.comment-thread')
+      prev_chain = []
+      prev_depth = 0
+      comm_depth = 0
+      comment_count = 0
+      comments.each do |comment|
+        comment_count += 1
+        prev_chain = prev_chain.drop(prev_chain.length - 3) if prev_chain.length > 3
+        (LOG.error "Error: failed comment depth"; next) unless comment[:class]["comment-depth-"]
+
+        comm_depth = 0
+        comm_depth = comment[:class].split('comment-depth-').last.split(/\s+/).first.to_i
+
+        last_comment = comment == comments.last
+        if comm_depth > prev_depth
+          prev_chain << comment
+          prev_depth = comm_depth
+          next unless last_comment
+        else
+          LOG.debug "comment depth has decreased (#{prev_depth} -> #{comm_depth}); new branch." unless last_comment
+        end
+
+        upper_comment = prev_chain.first
+        @cont = false
+        comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
+          unless comm_link
+            LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
+            @cont = true
+          end
+        end
+        next if @cont
+
+        chapter.check_pages << comm_link
+        LOG.debug "Added to chapter check_pages: #{comm_link}"
+        break if last_comment
+
+        prev_chain = [comment]
+        prev_depth = comm_depth
+      end
+      comment_count
+    end
+
     def get_full(chapter, options = {})
       if chapter.is_a?(GlowficEpub::Chapter)
         params = {style: :site}
         params[:thread] = chapter.thread if chapter.thread
         chapter_url = set_url_params(clear_url_params(chapter.url), params)
-      else
-        chapter_url = chapter
       end
-      return nil unless self.handles?(chapter_url)
+      chapter_url ||= chapter
+      return unless self.handles?(chapter_url)
 
       page_urls = []
-
       params = {style: :site, view: :flat, page: 1}
       first_page = set_url_params(clear_url_params(chapter.url), params)
       first_page_stuff = get_undiscretioned(first_page, where: @group_folder)
@@ -265,8 +278,8 @@
       first_page_content = first_page_stuff.at_css('#content')
 
       page_count = first_page_content.try(:at_css, '.comment-pages').try(:at_css, '.page-links').try(:at_css, 'a:last').try(:text).try(:strip)
-      page_count = page_count.gsub("[","").gsub("]","").to_i if page_count
-      page_count = 1 unless page_count
+                  .try(:gsub, '[', '').try(:gsub, ']', '').try(:to_i)
+      page_count ||= 1
 
       1.upto(page_count).each do |num|
         params[:page] = num
@@ -281,23 +294,24 @@
       return page_urls
     end
     def get_updated(chapter, options = {})
-      return nil unless self.handles?(chapter)
+      return unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
 
       is_new = true
       prev_pages = chapter.pages
       check_pages = chapter.check_pages
-      if prev_pages and not prev_pages.empty?
+      if prev_pages.present?
         is_new = false
 
         @download_count = 0
         changed = false
         same_comment_count = false
         check_pages.reverse.each_with_index do |check_page, i|
-          if i == check_pages.count - 1 && same_comment_count
+          if check_page == check_pages.first && same_comment_count
             LOG.debug "Same non-main pages & comment count, skipping main page."
             next
           end
+
           page_location = get_page_location(check_page, where: @group_folder)
           was_file = File.file?(page_location)
 
@@ -307,12 +321,14 @@
             changed = true
             break
           end
+
           page_new = get_undiscretioned(check_page, where: 'temp')
           page_old = Nokogiri::HTML(page_old_data)
-          page_cache = (i == check_pages.count - 1) ? nil : chapter.check_page_data[check_page]
+
+          page_cache = (check_page == check_pages.first) ? nil : chapter.check_page_data[check_page]
           page_cache = Nokogiri::HTML(page_cache) if page_cache
 
-          chapter.check_page_data_set(check_page, page_old_data) unless page_cache || i == check_pages.count - 1
+          chapter.check_page_data_set(check_page, page_old_data) unless page_cache || check_page == check_pages.first
 
           unless page_new
             @error = "Page failed to load (discretion advised warning?)"
@@ -327,7 +343,7 @@
           old_comment_count = old_content.at_css('.entry-readlink').try(:text).try(:strip).try(:[], /\d+/)
           new_comment_count = new_content.at_css('.entry-readlink').try(:text).try(:strip).try(:[], /\d+/)
           cache_comment_count = cache_content.at_css('.entry-readlink').try(:text).try(:strip).try(:[], /\d+/) if page_cache
-          same_comment_count = true if old_comment_count == new_comment_count && old_comment_count.present? && new_comment_count.present? && (page_cache.blank? || cache_comment_count == old_comment_count)
+          same_comment_count = true if (old_comment_count && new_comment_count && old_comment_count == new_comment_count) && (page_cache.blank? || cache_comment_count == old_comment_count)
 
           old_content.at_css(".entry-interaction-links").try(:remove)
           new_content.at_css(".entry-interaction-links").try(:remove)
@@ -349,20 +365,20 @@
           LOG.debug "check page #{i} was not different"
         end
 
-        LOG.debug "#{(not changed) ? 'not ' : ''}changed!"
+        LOG.debug "#{changed ? '' : 'not '}changed!"
 
         pages_exist = true
         prev_pages.each_with_index do |page_url, i|
           page_loc = get_page_location(page_url, where: @group_folder)
-          if not File.file?(page_loc)
-            pages_exist = false
-            LOG.error "Failed to find a file (page #{i}) for chapter #{chapter}. Will get again."
-            break
-          end
+          next if File.file?(page_loc)
+
+          pages_exist = false
+          LOG.error "Failed to find a file (page #{i}) for chapter #{chapter}. Will get again."
+          break
         end #Check if all the pages exist, in case someone deleted them
 
         LOG.debug "Content is different for #{chapter}" if changed
-        if pages_exist and not changed
+        if pages_exist && !changed
           msg_str = "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (checked #{@download_count} page#{@download_count != 1 ? 's' : ''})"
           if block_given?
             yield msg_str
@@ -378,7 +394,7 @@
       #Hasn't been done before, or it's outdated, or some pages were deleted; re-get.
       @download_count = 0
       @success = false
-      pages = get_full(chapter, options.merge({new: (not changed)}))
+      pages = get_full(chapter, options.merge({new: !changed}))
 
       params = {style: :site}
       params[:thread] = chapter.thread if chapter.thread
@@ -392,56 +408,9 @@
 
       comment_count = 0
       if main_page_stuff
-        #Check the comments and find each branch-end and get a link to them all :D
+        #Check the comments and find each branch-end and get a link to them all
         chapter.check_pages = [main_page]
-        main_page_content = main_page_stuff.at_css('#content')
-        comments = main_page_content.css('.comment-thread')
-        prev_chain = []
-        prev_depth = 0
-        comm_depth = 0
-        comments.each do |comment|
-          comment_count += 1
-          prev_chain = prev_chain.drop(prev_chain.length - 3) if prev_chain.length > 3
-
-          comm_depth = 0
-          (LOG.error "Error: failed comment depth" and next) unless comment[:class]["comment-depth-"]
-          comm_depth = comment[:class].split('comment-depth-').last.split(/\s+/).first.to_i
-
-          if comm_depth > prev_depth
-            prev_chain << comment
-            prev_depth = comm_depth
-            next
-          end
-
-          LOG.debug "depth (#{comm_depth}) was lower than prev_depth (#{prev_depth}), therefore new branch, let's track the previous one."
-
-          upper_comment = prev_chain.first
-          @cont = false
-          comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
-            unless comm_link
-              LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
-              @cont = true
-            end
-          end
-          next if @cont
-
-          chapter.check_pages << comm_link
-          LOG.debug "Added to chapter check_pages: #{comm_link}"
-
-          prev_chain = [comment]
-          prev_depth = comm_depth
-        end
-
-        unless prev_chain.empty?
-          upper_comment = prev_chain.first
-          comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
-            unless comm_link
-              LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
-            end
-          end
-          chapter.check_pages << comm_link
-          LOG.debug "Added to chapter check_pages: #{comm_link}"
-        end
+        comment_count = find_check_pages(chapter, main_page_stuff)
 
         chapter.pages = pages
         chapter.check_page_data = {}
@@ -452,13 +421,13 @@
           else
             down_or_cache(check_page, where: @group_folder)
           end
-          if check_page != chapter.check_pages.first
+          unless check_page == chapter.check_pages.first
             chapter.check_page_data_set(check_page, down_or_cache(check_page, where: @group_folder))
           end
         end
       end
 
-      page_count = (comment_count < 50) ? 1 : (comment_count * 1.0 / 25).ceil
+      page_count = (comment_count < 50) ? 1 : (comment_count / 25.0).ceil
       msg_str = if @success
         "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{page_count} page#{page_count != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})"
       else
@@ -470,9 +439,10 @@
         elsif notify
           LOG.info msg_str
         end
-      else
-        LOG.error msg_str
+        return chapter
       end
+
+      LOG.error msg_str
       return chapter
     end
 
@@ -482,14 +452,12 @@
       return @moiety_cache[user_id] if @moiety_cache.key?(user_id)
 
       moieties = []
-      GlowficEpub.moieties.keys.each do |author|
-        moieties << author if GlowficEpub.moieties[author].include?(profile) or GlowficEpub.moieties[author].include?(user_id)
+      GlowficEpub.moieties.each do |author, account_list|
+        moieties << author if account_list.include?(profile) || account_list.include?(user_id)
       end
 
-      icon_moiety = moieties * ' '
-      (LOG.error "No moiety for #{profile}") if icon_moiety.empty?
-      @moiety_cache[user_id] = icon_moiety
-      icon_moiety
+      LOG.error "No moiety for #{profile}" if moieties.empty?
+      @moiety_cache[user_id] = moieties * ' '
     end
 
     def set_face_cache(face)
@@ -524,14 +492,12 @@
       end
       user_profile = face_id.split('#').first
       face_name = face_id.sub("#{user_profile}#", "")
-      face_name = "default" if face_name == face_id
-      face_name = "default" if face_name == "(Default)"
-      @icon_page_errors = [] unless @icon_page_errors
-      @icon_errors = [] unless @icon_errors
-
+      face_name = "default" if face_name == face_id || face_name == "(Default)"
+      @icon_page_errors ||= []
+      @icon_errors ||= []
       return if @icon_page_errors.include?(user_profile)
 
-      unless @face_cache.key?(user_profile) or @face_cache.key?(user_profile.gsub('_', '-'))
+      unless @face_cache.key?(user_profile) || @face_cache.key?(user_profile.gsub('_', '-'))
         user_id = user_profile.gsub('_', '-')
 
         icon_page = giri_or_cache("http://#{user_id}.dreamwidth.org/icons")
@@ -551,7 +517,7 @@
           icon_img = icon_element.at_css('.icon-image img')
           icon_src = icon_img.try(:[], :src)
 
-          (LOG.error "Failed to find an img URL on the icon page for #{user_id}" and next) if icon_src.nil? or icon_src.empty?
+          (LOG.error "Failed to find an img URL on the icon page for #{user_id}"; next) if icon_src.nil? or icon_src.empty?
 
           icon_keywords = icon_element.css('.icon-info .icon-keywords li')
 
@@ -593,10 +559,10 @@
 
       LOG.error "Failed to find a face for user: #{user_profile} and face: #{face_name}" + (face_url.present? ? " and URL: #{face_url}" : '') unless @icon_errors.include?(face_id)
       @icon_errors << face_id unless @icon_errors.include?(face_id)
-      return nil
+      return
     end
     def get_updated_face(face)
-      return nil unless face
+      return unless face
       return get_face_by_id(face.unique_id) if @face_param_cache.key?(face.unique_id)
 
       params = {}
@@ -657,10 +623,10 @@
       @author_id_cache[author_id] = author
     end
     def get_updated_author(author)
-      return nil unless author
+      return unless author
       return get_author_by_id(author.unique_id) if @author_param_cache.key?(author.unique_id)
 
-      done_author = get_author_by_id(author.unique_id, try_chapterauthor: false)
+      get_author_by_id(author.unique_id, try_chapterauthor: false)
       author_hash = @author_param_cache[author.unique_id]
       author.from_json! author_hash
       set_author_cache(author)
@@ -670,12 +636,12 @@
 
     def make_message(message_element, options = {})
       #message_element is .comment
-      message_attributes = options.key?(:message_attributes) ? options[:message_attributes] : msg_attrs
+      message_attributes = options[:message_attributes] || msg_attrs
 
       Time.zone = 'UTC'
 
-      message_id = message_element["id"].sub("comment-", "").sub("entry-", "")
-      message_type = (message_element["id"]["entry"]) ? PostType::ENTRY : PostType::REPLY
+      message_id = message_element['id'].sub('comment-', '').sub('entry-', '')
+      message_type = message_element['id']['entry'] ? PostType::ENTRY : PostType::REPLY
 
       author_id = message_element.at_css('span.ljuser').try(:[], "lj:user")
 
@@ -734,53 +700,56 @@
           params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P")
         end
 
-        Entry.new(params)
-      else
-        parent_link = message_element.at_css('.link.commentparent').try(:at_css, 'a')
-        if parent_link
-          parent_href = parent_link[:href]
-          parent_id = "cmt" + get_url_param(parent_href, "thread")
-          @replies.each do |reply|
-            params[:parent] = reply if reply.id == parent_id
-          end
-        else
-          params[:parent] = @chapter.entry
-        end
-
-        if message_attributes.include?(:time)
-          time_text = message_element.at_css('.datetime').text.strip
-          params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P (%Z)")
-        end
-
-        Comment.new(params)
+        return Entry.new(params)
       end
+
+      parent_link = message_element.at_css('.link.commentparent').try(:at_css, 'a')
+      if parent_link
+        parent_href = parent_link[:href]
+        parent_id = "cmt" + get_url_param(parent_href, "thread")
+        @replies.each do |reply|
+          params[:parent] = reply if reply.id == parent_id
+        end
+      else
+        params[:parent] = @chapter.entry
+      end
+
+      if message_attributes.include?(:time)
+        time_text = message_element.at_css('.datetime').text.strip
+        params[:time] = DateTime.strptime(time_text, "%Y-%m-%d %I:%M %P (%Z)")
+      end
+
+      Comment.new(params)
     end
     def get_replies(chapter, options = {}, &block)
-      return nil unless self.handles?(chapter)
+      return unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
 
       return chapter.replies if already_processed(chapter, options, &block)
 
       pages = chapter.pages
-      (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
+      (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? || pages.empty?
 
       @chapter = chapter
       @replies = []
       @reply_ids = []
-      @reply_ids << -1 unless chapter.thread
-      threadcmt = (chapter.thread ? "cmt#{chapter.thread}" : "")
-      @reply_ids << threadcmt if chapter.thread
-      LOG.debug "Thread comment: \"#{threadcmt}\"" if chapter.thread
+      if chapter.thread
+        threadcmt = "cmt#{chapter.thread}"
+        @reply_ids << threadcmt
+        LOG.debug "Thread comment: \"#{threadcmt}\""
+      else
+        threadcmt = ''
+        @reply_ids << -1 unless chapter.thread
+      end
 
       pages.each do |page_url|
-        page = nil
-        comments = nil
         @repeated_page_cache[@group_folder] ||= {}
         if @repeated_page_cache[@group_folder].key?(page_url)
           page = @repeated_page_cache[@group_folder][page_url][:page]
           comments = @repeated_page_cache[@group_folder][page_url][:comments]
         end
-        page = get_undiscretioned(page_url, replace: false, where: @group_folder) unless page.present?
+
+        page ||= get_undiscretioned(page_url, replace: false, where: @group_folder)
         unless page
           LOG.error "Page failed to load (discretion advised warning?)"
           break
@@ -792,12 +761,11 @@
           entry = make_message(entry_element, message_attributes: message_attributes)
           chapter.entry = entry
         end
-
         page_no = get_url_param(page_url, 'page')
 
-        comments = page_content.css('.comment-wrapper.full') unless comments.present?
+        comments ||= page_content.css('.comment-wrapper.full')
         if @page_list.include?(page_url)
-          @repeated_page_cache[@group_folder][page_url] = {page: page, comments: comments} unless @repeated_page_cache[@group_folder].key?(page_url)
+          @repeated_page_cache[@group_folder][page_url] ||= {page: page, comments: comments}
         end
         comments.each do |comment|
           comment_element = comment.at_css('.comment')
@@ -847,15 +815,12 @@
     attr_reader :download_count
     def self.handles?(thing)
       return false if thing.nil?
-      if thing.is_a?(GlowficEpub::Author)
-        return thing.unique_id.start_with?('constellation#')
-      else
-        chapter_url = (thing.is_a?(GlowficEpub::Chapter)) ? thing.url : thing
-        return false if chapter_url.nil? or chapter_url.empty?
+      return thing.unique_id.start_with?('constellation#') if thing.is_a?(GlowficEpub::Author)
+      chapter_url = (thing.is_a?(GlowficEpub::Chapter)) ? thing.url : thing
+      return false if chapter_url.blank?
 
-        uri = URI.parse(chapter_url)
-        return uri.host.end_with?("vast-journey-9935.herokuapp.com") || uri.host.end_with?("glowfic.com")
-      end
+      uri = URI.parse(chapter_url)
+      uri.host.end_with?("vast-journey-9935.herokuapp.com") || uri.host.end_with?("glowfic.com")
     end
     def initialize(options = {})
       super options
@@ -888,7 +853,7 @@
       else
         chapter_url = chapter
       end
-      return nil unless self.handles?(chapter_url)
+      return unless self.handles?(chapter_url)
 
       page_urls = []
       start_page = options[:start_page] || 1
@@ -978,11 +943,10 @@
         pages_exist = true
         prev_pages.each_with_index do |page_url, i|
           page_loc = get_page_location(page_url, where: @group_folder)
-          if not File.file?(page_loc)
-            pages_exist = false
-            LOG.error "Failed to find a file (page #{i}) for chapter #{chapter}. Will get again."
-            break
-          end
+          next if File.file?(page_loc)
+          pages_exist = false
+          LOG.error "Failed to find a file (page #{i}) for chapter #{chapter}. Will get again."
+          break
         end #Check if all the pages exist, in case someone deleted them
 
         start_page = 1 unless pages_exist
@@ -1023,9 +987,9 @@
       #Needs to be updated / hasn't been got
       @download_count = 0
 
-      start_page ||= (chapter.replies.count * 1.0 / 500).ceil - 1
+      start_page ||= (chapter.replies.count / 500.0).ceil - 1
       start_page = 1 if start_page < 1
-      pages = get_some(chapter, options.merge({new: (not changed), start_page: start_page}))
+      pages = get_some(chapter, options.merge({new: !changed, start_page: start_page}))
 
       chapter.pages = pages
       chapter.check_page_data = {}
@@ -1053,7 +1017,7 @@
       LOG.debug "nokogiri'd profile page"
 
       breadcrumb1 = char_page.at_css('.flash.subber a')
-      if breadcrumb1 and breadcrumb1.text.strip == "Characters"
+      if breadcrumb1 && breadcrumb1.text.strip == "Characters"
         user_info = char_page.at_css('#header #user-info')
         user_info.at_css('img').try(:remove)
         username = user_info.text.strip
@@ -1061,8 +1025,7 @@
         username = breadcrumb1.text.split("Characters").first.strip
         username = username[0..-3] if username.end_with?("'s")
       end
-      moiety = username.gsub(/[^\w]/, '_')
-      moiety
+      username.gsub(/[^\w]/, '_')
     end
 
     def set_face_cache(face)
@@ -1070,12 +1033,11 @@
       face_id = face_id.sub("constellation#", "") if face_id.start_with?("constellation#")
       icon_id = face_id.split('#').last
       character_id = face_id.sub("##{icon_id}", '')
-      character_id = nil if character_id == face_id
-      character_id = nil if character_id.blank?
+      character_id = nil if character_id == face_id || character_id.blank?
       @face_id_cache[icon_id] = face
 
       @chapter_list.replace_face(face)
-      @face_id_cache[face_id] = face if icon_id == 'none' and character_id.try(:start_with?, 'user#')
+      @face_id_cache[face_id] = face if icon_id == 'none' && character_id.try(:start_with?, 'user#')
       @face_id_cache[face.unique_id] = face
 
       if character_id && @char_page_cache.key?(character_id)
@@ -1102,10 +1064,9 @@
         end
       end
 
-      character_id = nil if character_id == face_id
-      character_id = nil if character_id.blank?
+      character_id = nil if character_id == face_id || character_id.blank?
 
-      if icon_id == "none" and character_id.try(:start_with?, 'user#')
+      if icon_id == "none" && character_id.try(:start_with?, 'user#')
         face_params = {}
         face_params[:imageURL] = nil
         face_params[:keyword] = "none"
@@ -1120,7 +1081,7 @@
 
       @icon_errors = [] unless @icon_errors
 
-      if character_id and not @char_page_cache.key?(character_id) and not @char_page_errors.include?(character_id) and not character_id.start_with?("user#")
+      if character_id && !character_id.start_with?("user#") && !@char_page_cache.key?(character_id) && !@char_page_errors.include?(character_id)
         char_page_url = "https://glowfic.com/characters/#{character_id}/"
         char_page = giri_or_cache(char_page_url)
         LOG.debug "nokogiri'd"
@@ -1128,7 +1089,7 @@
         icons = char_page_c.css(".gallery-icon")
 
         breadcrumb1 = char_page.at_css('.flash.subber a')
-        if breadcrumb1 and breadcrumb1.text.strip == "Characters"
+        if breadcrumb1 && breadcrumb1.text.strip == "Characters"
           user_info = char_page.at_css('#header #user-info')
           user_url = user_info.at_css('a')["href"]
           user_id = user_url.split('users/').last
@@ -1158,7 +1119,7 @@
             icon_img = icon_link.at_css('img')
             icon_src = icon_img.try(:[], :src)
 
-            (LOG.error "Failed to find an img URL on the icon page for character ##{character_id}" and next) if icon_src.nil? or icon_src.empty?
+            (LOG.error "Failed to find an img URL on the icon page for character ##{character_id}"; next) if icon_src.nil? || icon_src.empty?
 
             icon_keyword = icon_img.try(:[], :title)
             icon_numid = icon_url.split("icons/").last if icon_url
@@ -1193,7 +1154,7 @@
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
       return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
 
-      if character_id and @char_user_map.key?(character_id)
+      if character_id && @char_user_map.key?(character_id)
         user_id = @char_user_map[character_id]
         usergal_page_url = "https://glowfic.com/users/#{user_id}/galleries/"
         usergal_page = giri_or_cache(usergal_page_url)
@@ -1260,7 +1221,7 @@
       return default
     end
     def get_updated_face(face)
-      return nil unless face
+      return unless face
       return get_face_by_id(face.unique_id) if @face_param_cache.key?(face.unique_id)
 
       done_face = get_face_by_id(face.unique_id, try_chapterface: false)
@@ -1341,10 +1302,10 @@
       end
     end
     def get_updated_author(author)
-      return nil unless author
+      return unless author
       return get_author_by_id(author.unique_id) if @author_param_cache.key?(author.unique_id)
 
-      done_author = get_author_by_id(author.unique_id, try_chapterauthor: false)
+      get_author_by_id(author.unique_id, try_chapterauthor: false)
       author_hash = @author_param_cache[author.unique_id]
       author.from_json! author_hash
       set_author_cache(author)
@@ -1354,7 +1315,7 @@
 
     def make_message(message_element, options = {})
       #message_element is the ".post-container"
-      message_attributes = options.key?(:message_attributes) ? options[:message_attributes] : msg_attrs
+      message_attributes = options[:message_attributes] || msg_attrs
 
       Time.zone = 'Eastern Time (US & Canada)'
 
@@ -1453,15 +1414,11 @@
 
       if message_type == PostType::ENTRY
         params[:entry_title] = @entry_title
-
-        entry = Entry.new(params)
-        @previous_message = entry
-      else
-        params[:parent] = @previous_message if @previous_message
-
-        reply = Comment.new(params)
-        @previous_message = reply
+        return @previous_message = Entry.new(params)
       end
+
+      params[:parent] = @previous_message if @previous_message
+      @previous_message = Comment.new(params)
     end
     def get_replies(chapter, options = {}, &block)
       return nil unless self.handles?(chapter)
@@ -1470,7 +1427,7 @@
       return chapter.replies if already_processed(chapter, options, &block)
 
       pages = chapter.pages
-      (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? or pages.empty?
+      (LOG.error "Chapter (#{chapter.title}) has no pages"; return) if pages.nil? || pages.empty?
 
       @entry_title = nil
       @chapter = chapter
@@ -1513,8 +1470,7 @@
             sections = []
             section_links.each do |section_link|
               link_href = section_link[:href]
-              next unless link_href.present?
-              next if link_href[/\/boards(\/3)?\/?$/]
+              next if link_href.blank? || link_href[/\/boards(\/3)?\/?$/]
               section_id = ''
               link_href = link_href[0..-2] if link_href.end_with?('/')
               section_id = 'AAAA-' + link_href.split('boards/').last if link_href['boards/']
@@ -1537,37 +1493,46 @@
           if post_ender
             things = [chapter.entry] + @replies
             last_time = things.last.try(:time)
-            if not last_time
+            ender_text = post_ender.text.downcase
+            if !last_time
               LOG.error "#{chapter.title}: ended but cannot get last_time. (???)"
-            elsif post_ender.text.downcase['ends'] or post_ender.text.downcase['complete']
+            elsif ender_text['ends'] || ender_text['complete']
               old_time = chapter.time_completed
               chapter.time_completed = last_time
 
               @notify_extras << "completed on '#{date_display(chapter.time_completed)}'" + ((old_time && old_time != chapter.time_completed) ? " (old time: #{date_display(old_time)})" : "")
-            elsif post_ender.text.downcase['hiatus']
+            elsif ender_text['hiatus']
               old_time = chapter.time_hiatus
-              chapter.time_hiatus = last_time
-              chapter.time_completed = nil if chapter.time_completed and chapter.time_hiatus >= chapter.time_completed
+              if chapter.time_completed && last_time >= chapter.time_completed
+                chapter.time_hiatus = last_time
+                chapter.time_completed = nil
+              end
 
               @notify_extras << "hiatus on #{date_display(chapter.time_hiatus)}" + ((old_time && old_time != chapter.time_hiatus) ? " (old time: #{date_display(old_time)})" : "")
-            elsif post_ender.text.downcase['abandon']
+            elsif ender_text['abandon']
               old_time = chapter.time_abandoned
-              chapter.time_abandoned = last_time
-              chapter.time_completed = nil if chapter.time_completed
+              if chapter.time_completed && last_time >= chapter.time_completed
+                chapter.time_abandoned = last_time
+                chapter.time_completed = nil
+              end
 
               @notify_extras << "abandoned on #{date_display(chapter.time_abandoned)}" + ((old_time && old_time != chapter.time_abandoned) ? " (old time: #{date_display(old_time)})" : "")
             else
               LOG.error "#{chapter.title}: ended non-hiatus non-complete non-abandoned on #{date_display(last_time)} (???)"
             end
-          elsif chapter.time_completed or chapter.time_hiatus
-            @notify_extras << "no ender; wiping" + (chapter.time_completed ? " completed #{date_display(chapter.time_completed)}" : '') + (chapter.time_hiatus ? " hiatus #{date_display(chapter.time_hiatus)}" : '')
+          elsif chapter.time_completed || chapter.time_hiatus || chapter.time_abandoned
+            @notify_extras << "no ender; wiping" +
+              (chapter.time_completed ? " completed #{date_display(chapter.time_completed)}" : '') +
+              (chapter.time_hiatus ? " hiatus #{date_display(chapter.time_hiatus)}" : '') +
+              (chapter.time_abandoned ? " abandoned #{date_display(chapter.time_abandoned)}" : '')
             chapter.time_completed = nil
             chapter.time_hiatus = nil
+            chapter.time_abandoned = nil
           end
         end
       end
 
-      pages_effectual = (@replies.length * 1.0 / 25).ceil
+      pages_effectual = (@replies.length / 25.0).ceil
       pages_effectual = 1 if pages_effectual < 1
 
       msg_str = "#{chapter.title}: parsed #{pages_effectual} page#{pages_effectual == 1 ? '' : 's'}" + (@notify_extras.present? ? ", #{@notify_extras * ', '}" : '')

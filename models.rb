@@ -150,9 +150,6 @@
       self.class.param_transform
     end
 
-    def to_json(options={})
-      Oj.dump(as_json)
-    end
     def as_json(options={})
       return @old_hash if @old_hash && !dirty?
       hash = {}
