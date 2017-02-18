@@ -541,6 +541,7 @@
     def replies=(newval)
       dirty!
       @replies=newval
+      @authors=[]
       @replies.each do |reply|
         reply.chapter = self
       end
