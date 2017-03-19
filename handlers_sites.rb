@@ -1503,7 +1503,7 @@
               @notify_extras << "completed on '#{date_display(chapter.time_completed)}'" + ((old_time && old_time != chapter.time_completed) ? " (old time: #{date_display(old_time)})" : "")
             elsif ender_text['hiatus']
               old_time = chapter.time_hiatus
-              if chapter.time_completed && last_time >= chapter.time_completed
+              if chapter.time_completed.nil? || (chapter.time_completed && last_time >= chapter.time_completed)
                 chapter.time_hiatus = last_time
                 chapter.time_completed = nil
               end
@@ -1511,7 +1511,7 @@
               @notify_extras << "hiatus on #{date_display(chapter.time_hiatus)}" + ((old_time && old_time != chapter.time_hiatus) ? " (old time: #{date_display(old_time)})" : "")
             elsif ender_text['abandon']
               old_time = chapter.time_abandoned
-              if chapter.time_completed && last_time >= chapter.time_completed
+              if chapter.time_completed.nil? || (chapter.time_completed && last_time >= chapter.time_completed)
                 chapter.time_abandoned = last_time
                 chapter.time_completed = nil
               end
