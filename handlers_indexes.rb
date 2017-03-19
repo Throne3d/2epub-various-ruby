@@ -46,7 +46,12 @@ module GlowficIndexHandlers
       title_extras: "[b][color=#4F012E]tyrians[/color][/b] and [b][color=#960018]carmines[/color][/b] in Sunnyverse",
       report_flags: "4F012E#3F00FF 960018#682860",
       time_new: "2017-01-05T20:51:00"
-      }
+      },
+      {title: "Topology",
+      url: "https://glowfic.com/posts/428",
+      title_extras: "[b][color=#960018]Rachel[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in the [b][color=#FF5C5C]City of Angles[/color][/b]",
+      report_flags: "960018#682860 FF5C5C#FFB25C"
+      },
     ],
     temp_starlight:
     [
