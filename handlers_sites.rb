@@ -7,7 +7,7 @@
 
   def self.get_handler_for(thing)
     site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
-    site_handlers.select! {|c| c.is_a? Class and c < GlowficSiteHandlers::SiteHandler }
+    site_handlers.select! {|c| c.is_a?(Class) && c < GlowficSiteHandlers::SiteHandler }
     chapter_handlers = site_handlers.select {|c| c.handles? thing}
     return chapter_handlers.first if chapter_handlers.length == 1
     chapter_handlers
@@ -33,13 +33,18 @@
     def handles?(chapter); self.class.handles?(chapter); end
     def get_updated(chapter); nil; end
     def message_attributes(options = {})
-      @message_attributes unless options.present?
+      return @message_attributes unless options.present?
       only_attrs = options[:attributes] || options[:only] || options[:only_attrs]
       except_attrs = options[:except] || options[:except_attrs]
-      raise("Not allowed both :only and :expect on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs && except_attrs
-      message_attributes = (only_attrs ? only_attrs : msg_attrs)
+      raise("Not allowed both :only and :except on get_replies; #{only_attrs * ','} and #{except_attrs * ','}") if only_attrs && except_attrs
+
+      message_attributes = msg_attrs
+      if only_attrs
+        message_attributes = only_attrs
+      elsif except_attrs
+        message_attributes = msg_attrs.reject! {|thing| except_attrs.include?(thing)}
+      end
       message_attributes.uniq!
-      message_attributes.reject! {|thing| except_attrs.include?(thing)} if except_attrs
       @message_attributes = message_attributes
     end
     def already_processed(chapter, options = {})
@@ -88,13 +93,11 @@
       giri
     end
     def remove_cache(page, options = {})
-      where = options[:where]
-      @downcache[where].try(:delete, page)
+      @downcache[options[:where]].try(:delete, page)
     end
     def remove_giri_cache(page, options = {})
       where = options[:where]
-      return unless @giricache.key?(where)
-      return unless @giricache[where].key?(page)
+      return unless @giricache[where].try(:key?, page)
       @giricache[where].delete(page)
     end
     alias_method :nokogiri_or_cache, :giri_or_cache
@@ -123,11 +126,12 @@
   class DreamwidthHandler < SiteHandler
     attr_reader :download_count
     def self.handles?(thing)
-      return false if thing.nil?
+      return if thing.nil?
       return thing.unique_id.start_with?('dreamwidth#') if thing.is_a?(GlowficEpub::Author)
 
-      chapter_url = (thing.is_a?(GlowficEpub::Chapter)) ? thing.url : thing
-      return false if chapter_url.nil? || chapter_url.empty?
+      chapter_url = thing
+      chapter_url = thing.url if thing.is_a?(GlowficEpub::Chapter)
+      return if chapter_url.nil? || chapter_url.empty?
 
       uri = URI.parse(chapter_url)
       uri.host.end_with?('dreamwidth.org')
