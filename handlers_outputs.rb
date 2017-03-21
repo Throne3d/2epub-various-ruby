@@ -937,7 +937,7 @@
       return @user_cache[author.unique_id] if @user_cache.key?(author.unique_id)
       return nil unless author.unique_id
       set_coauthors = options.key?(:set_coauthors) ? options[:set_coauthors] : @set_coauthors
-      moieties = author.moiety.try(:split, ' ').try(:uniq)
+      moieties = author.moieties
       moieties = ['Unknown Author'] unless moieties.present?
       moiety = moieties.first
       cached_moiety = moieties.find {|moiety_val| @usermoiety_cache.key?(moiety_val) }

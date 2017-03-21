@@ -461,7 +461,7 @@
       end
 
       LOG.error "No moiety for #{profile}" if moieties.empty?
-      @moiety_cache[user_id] = moieties * ' '
+      @moiety_cache[user_id] = moieties
     end
 
     def set_face_cache(face)
@@ -1031,7 +1031,7 @@
         username = breadcrumb1.text.split("Characters").first.strip
         username = username[0..-3] if username.end_with?("'s")
       end
-      username.gsub(/[^\w]/, '_')
+      [username]
     end
 
     def set_face_cache(face)

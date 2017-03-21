@@ -665,7 +665,7 @@
       @moieties = []
       authors.each do |author|
         (LOG.error "nil author for #{self}" and next) unless author
-        author.moiety.split(' ').each do |moiety|
+        author.moieties.each do |moiety|
           @moieties << moiety unless @moieties.include?(moiety)
         end
       end
@@ -1300,7 +1300,7 @@
   end
 
   class Author < Model
-    attr_accessor :moiety, :name, :screenname, :chapter_list, :display, :unique_id, :default_face
+    attr_accessor :name, :screenname, :chapter_list, :display, :unique_id, :default_face
     serialize_ignore :faces, :chapters, :chapter_list, :allowed_params, :default_face, :site_handler
 
     def allowed_params
@@ -1366,6 +1366,24 @@
       @default_face
     end
 
+    def moiety
+      return @moiety if @moieties.nil? || @moieties.empty?
+      @moieties.map{|m|m.gsub(/[^\w]/,'_')} * '_'
+    end
+    def moiety=(val)
+      if val.is_a?(Array)
+        @moieties = val.uniq
+        @moiety = nil
+      else
+        @moiety = val
+        @moieties = nil
+      end
+    end
+    def moieties
+      return [@moiety] if @moieties.nil? || @moieties.empty?
+      @moieties
+    end
+
     def as_json(options={})
       hash = {}
       self.instance_variables.each do |var|
@@ -1381,6 +1399,8 @@
         next if var_str == 'dirty' || var_str == 'old_hash'
         hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
       end
+      hash.delete(:moiety) if hash[:moieties]
+      hash.delete(:moieties) if hash[:moiety]
       if @default_face
         hash[:default_face] = (@default_face.is_a?(Face) ? @default_face.unique_id : @default_face)
       end
