@@ -44,7 +44,7 @@
       @moieties[moiety_key] << collection_id
       count = 0
       collection.css('#members_people_body a').each do |user_element|
-        @moieties[moiety_key] << user_element.text.strip.gsub('_', '-')
+        @moieties[moiety_key] << user_element.text.strip.tr('_', '-')
         count += 1
       end
 
@@ -95,9 +95,38 @@
         end
       end
     end
+
+    def self.dirty_datetime_accessors(*method_names)
+      GlowficEpub::LOG.debug "Defining dirty datetime accessors for #{self}: #{method_names * ', '}"
+      method_names.each do |method_name|
+        method_name = method_name.to_sym
+        method_name_str = method_name.to_s
+        local_instance_var = '@' + method_name_str
+        define_method(method_name_str) do
+          val = instance_variable_get(local_instance_var)
+          to_datetime(val)
+        end
+        define_method(method_name_str + '=') do |val|
+          val = to_datetime(val)
+          instance_variable_set(local_instance_var, val)
+          dirty!
+          val
+        end
+      end
+    end
+
     def dirty!; @dirty = true; end
     def dirty?; @dirty; end
     def dirty; @dirty; end
+
+    def to_datetime(val)
+      if val.is_a?(String)
+        val = DateTime.parse(val)
+      elsif val.is_a?(Date)
+        val = val.to_datetime
+      end
+      val
+    end
 
     def self.serialize_ignore? thing
       return if @serialize_ignore.nil?
@@ -136,12 +165,21 @@
     end
     def param_transform; self.class.param_transform; end
 
-    def as_json(options={})
-      return @old_hash if @old_hash && !dirty?
+    def json_hash_from_arg(arg)
+      if arg.is_a? String
+        JSON.parse(arg)
+      elsif arg.is_a? Hash
+        arg
+      else
+        raise(ArgumentError, "Not a string or a hash.")
+      end
+    end
+
+    def as_json_meta(_options={}) #, skip_list=[]
       hash = {}
       self.instance_variables.each do |var|
-        var_str = (var.is_a? String) ? var : var.to_s
-        if var_str[0] == '@' and var_str[1] != '@'
+        var_str = var.to_s
+        if var_str[0] == '@' && var_str[1] != '@'
           var_str = var_str[1..-1]
           var_sym = var_str.to_sym
         elsif var.is_a?(Symbol)
@@ -149,21 +187,19 @@
         else
           var_sym = var_str.to_sym
         end
-        next if var_str == 'dirty' || var_str == 'old_hash'
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
+        next if var_str == 'dirty' || var_str == 'old_hash' || var_str == 'skip_list'
+        # TODO: implement skip_list when used
+        hash[var_sym] = self.instance_variable_get(var) unless serialize_ignore?(var_sym)
       end
-      @old_hash = hash
-      @dirty = false
       hash
     end
+
+    def as_json(options={})
+      as_json_meta(options)
+    end
+
     def from_json! string
-      json_hash = if string.is_a? String
-        JSON.parse(string)
-      elsif string.is_a? Hash
-        string
-      else
-        raise(ArgumentError, "Not a string or a hash.")
-      end
+      json_hash = json_hash_from_arg(string)
 
       json_hash.each do |var, val|
         var = var.to_s unless var.is_a?(String)
@@ -311,13 +347,7 @@
     def each_with_index(&block); chapters.each_with_index(&block); end
 
     def from_json! string
-      json_hash = if string.is_a? String
-        JSON.parse(string)
-      elsif string.is_a? Hash
-        string
-      else
-        raise(ArgumentError, "Not a string or a hash.")
-      end
+      json_hash = json_hash_from_arg(string)
 
       json_hash.each do |var, val|
         var = var.to_s unless var.is_a?(String)
@@ -361,6 +391,7 @@
   class Chapter < Model
     dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output, :check_page_data, :marked_complete
     attr_reader :entry
+    dirty_datetime_accessors :time_completed, :time_abandoned, :time_hiatus, :time_new
 
     param_transform name: :title, name_extras: :title_extras, processed_epub: :processed_output
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
@@ -417,8 +448,8 @@
     def processed_output?(thing)
       processed_output.include?(thing.to_s)
     end
-    def processed_output(thing); processed_output?(thing); end
-    def processed_output
+    def processed_output(thing)
+      return processed_output?(thing) unless thing.nil?
       @processed_output ||= []
     end
     def processed_output_add(thing)
@@ -554,86 +585,10 @@
       newval
     end
 
-    def time_completed
-      if @time_completed.is_a?(String)
-        @time_completed = DateTime.parse(@time_completed)
-      elsif @time_completed.is_a?(Date)
-        @time_completed = @time_completed.to_datetime
-      else
-        @time_completed
-      end
-    end
-    def time_completed=(val)
-      dirty!
-      if val.is_a?(String)
-        @time_completed = DateTime.parse(val)
-      elsif val.is_a?(Date)
-        @time_completed = val.to_datetime
-      else
-        @time_completed = val
-      end
-    end
-
-    def time_abandoned
-      if @time_abandoned.is_a?(String)
-        @time_abandoned = DateTime.parse(@time_abandoned)
-      elsif @time_abandoned.is_a?(Date)
-        @time_abandoned = @time_abandoned.to_datetime
-      else
-        @time_abandoned
-      end
-    end
-    def time_abandoned=(val)
-      dirty!
-      if val.is_a?(String)
-        @time_abandoned = DateTime.parse(val)
-      elsif val.is_a?(Date)
-        @time_abandoned = val.to_datetime
-      else
-        @time_abandoned = val
-      end
-    end
-
-    def time_hiatus
-      if @time_hiatus.is_a?(String)
-        @time_hiatus = DateTime.parse(@time_hiatus)
-      elsif @time_hiatus.is_a?(Date)
-        @time_hiatus = @time_hiatus.to_datetime
-      else
-        @time_hiatus
-      end
-    end
-    def time_hiatus=(val)
-      dirty!
-      if val.is_a?(String)
-        @time_hiatus = DateTime.parse(val)
-      elsif val.is_a?(Date)
-        @time_hiatus = val.to_datetime
-      else
-        @time_hiatus = val
-      end
-    end
-
     def time_new_set?; !@time_new.nil?; end
     def time_new
       return entry.time if @time_new.nil? && entry.present?
-      if @time_new.is_a?(String)
-        @time_new = DateTime.parse(@time_new)
-      elsif @time_new.is_a?(Date)
-        @time_new = @time_new.to_datetime
-      else
-        @time_new
-      end
-    end
-    def time_new=(val)
-      dirty!
-      if val.is_a?(String)
-        @time_new = DateTime.parse(val)
-      elsif val.is_a?(Date)
-        @time_new = val.to_datetime
-      else
-        @time_new = val
-      end
+      to_datetime(@time_new)
     end
 
     def moieties
@@ -657,7 +612,7 @@
       end
       same_id = authors.detect { |author| (author.is_a?(Author) ? author.unique_id : author) == (newauthor.is_a?(Author) ? newauthor.unique_id : newauthor) }
       if same_id && !authors.include?(newauthor)
-        LOG.debug "#{self}.add_author: author with same ID but not same object exists. Will be duped. Existing author: #{same_id}, is_a?(#{same_id.class.to_s}), newauthor(#{newauthor}), is_a?(#{newauthor.class.to_s})"
+        LOG.debug "#{self}.add_author: author with same ID but not same object exists. Will be duped. Existing author: #{same_id}, is_a?(#{same_id.class}), newauthor(#{newauthor}), is_a?(#{newauthor.class})"
         LOG.debug "Existing authors: #{authors.map{|author| author.to_s} * ', '}"
       end
       unless authors.include?(newauthor)
@@ -696,6 +651,7 @@
       str = "\"#{title}\""
       str += " #{title_extras}" unless title_extras.nil? or title_extras.empty?
       str += ": #{smallURL}"
+      str
     end
 
     def self.fauxID(chapter)
@@ -717,39 +673,21 @@
     def fauxID; Chapter.fauxID(self); end
 
     def as_json(options={})
-      return @old_hash if @old_hash && !dirty? && !is_huge_cannot_dirty(chapter_list)
-      hash = {}
+      dirtiable = !is_huge_cannot_dirty(chapter_list)
+      return @old_hash if dirtiable && @old_hash && !dirty?
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
-      self.instance_variables.each do |var|
-        var_str = (var.is_a? String) ? var : var.to_s
-        if var_str[0] == '@' and var_str[1] != '@'
-          var_str = var_str[1..-1]
-          var_sym = var_str.to_sym
-        elsif var.is_a?(Symbol)
-          var_sym = var
-        else
-          var_sym = var_str.to_sym
-        end
-        next if var_str == 'dirty' || var_str == 'old_hash'
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
-      end
+      hash = as_json_meta(options)
       if @authors
-        hash[:authors] = @authors.map{|author| author.is_a?(Author) ? author.unique_id : author}
+        hash[:authors] = @authors.map { |author| author.is_a?(Author) ? author.unique_id : author }
       end
-      unless is_huge_cannot_dirty(chapter_list)
+      if dirtiable
         @old_hash = hash
         @dirty = false
       end
       hash
     end
     def from_json! string
-      json_hash = if string.is_a? String
-        JSON.parse(string)
-      elsif string.is_a? Hash
-        string
-      else
-        raise(ArgumentError, "Not a string or a hash.")
-      end
+      json_hash = json_hash_from_arg(string)
 
       json_hash.each do |var, val|
         var = var.to_s unless var.is_a?(String)
@@ -823,7 +761,6 @@
       params.reject! do |param|
         unless allowed_params.include?(param)
           raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
-          true
         end
       end
 
@@ -837,20 +774,7 @@
     end
 
     def as_json(options={})
-      hash = {}
-      self.instance_variables.each do |var|
-        var_str = (var.is_a? String) ? var : var.to_s
-        if var_str[0] == '@' and var_str[1] != '@'
-          var_str = var_str[1..-1]
-          var_sym = var_str.to_sym
-        elsif var.is_a?(Symbol)
-          var_sym = var
-        else
-          var_sym = var_str.to_sym
-        end
-        next if var_str == 'dirty' || var_str == 'old_hash'
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
-      end
+      hash = as_json_meta(options)
       if @author
         hash[:author] = (author.is_a?(Author) ? author.unique_id : author)
       end
@@ -1127,48 +1051,39 @@
     end
 
     def as_json(options={})
-      return @old_hash if @old_hash && !dirty? && !is_huge_cannot_dirty(chapter_list)
-      hash = {}
+      dirtiable = !is_huge_cannot_dirty(chapter_list)
+      return @old_hash if dirtiable && @old_hash && !dirty?
+      hash = as_json_meta(options)
 
-      self.instance_variables.each do |var|
-        var_str = (var.is_a? String) ? var : var.to_s
-        if var_str[0] == '@' and var_str[1] != '@'
-          var_str = var_str[1..-1]
-          var_sym = var_str.to_sym
-        elsif var.is_a?(Symbol)
-          var_sym = var
-        else
-          var_sym = var_str.to_sym
-        end
-        next if var_str == 'dirty' || var_str == 'old_hash'
-        hash[var_str] = self.instance_variable_get var unless serialize_ignore?(var_sym)
-      end
       if @parent
         if @parent.is_a?(Message)
           if @parent.post_type == PostType::ENTRY
-            hash['parent'] = [chapter.smallURL, @parent.id]
+            hash[:parent] = [chapter.smallURL, @parent.id]
           else
-            hash['parent'] = [chapter.smallURL, (chapter.entry.present? ? chapter.entry.id : nil), @parent.id]
+            hash[:parent] = [chapter.smallURL, (chapter.entry.present? ? chapter.entry.id : nil), @parent.id]
           end
         else
-          hash['parent'] = @parent
+          hash[:parent] = @parent
         end
       end
+
       if @author
         if @author.is_a?(Author)
-          hash['author'] = @author.unique_id
+          hash[:author] = @author.unique_id
         else
-          hash['author'] = @author
+          hash[:author] = @author
         end
       end
+
       if @face
         if @face.is_a?(Face)
-          hash['face'] = @face.unique_id
+          hash[:face] = @face.unique_id
         else
-          hash['face'] = @face
+          hash[:face] = @face
         end
       end
-      unless is_huge_cannot_dirty(chapter_list)
+
+      if dirtiable
         @old_hash = hash
         @dirty = false
       end
@@ -1176,13 +1091,7 @@
     end
 
     def from_json! string
-      json_hash = if string.is_a? String
-        JSON.parse(string)
-      elsif string.is_a? Hash
-        string
-      else
-        raise(ArgumentError, "Not a string or a hash.")
-      end
+      json_hash = json_hash_from_arg(string)
 
       json_hash.each do |var, val|
         var = var.to_s unless var.is_a?(String)
@@ -1240,7 +1149,6 @@
       params.reject! do |param|
         unless allowed_params.include?(param)
           raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
-          true
         end
       end
 
@@ -1314,20 +1222,7 @@
     end
 
     def as_json(options={})
-      hash = {}
-      self.instance_variables.each do |var|
-        var_str = (var.is_a? String) ? var : var.to_s
-        if var_str[0] == '@' and var_str[1] != '@'
-          var_str = var_str[1..-1]
-          var_sym = var_str.to_sym
-        elsif var.is_a?(Symbol)
-          var_sym = var
-        else
-          var_sym = var_str.to_sym
-        end
-        next if var_str == 'dirty' || var_str == 'old_hash'
-        hash[var_sym] = self.instance_variable_get var unless serialize_ignore?(var_sym)
-      end
+      hash = as_json_meta(options)
       hash.delete(:moiety) if hash[:moieties]
       hash.delete(:moieties) if hash[:moiety]
       if @default_face
