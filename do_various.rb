@@ -249,7 +249,7 @@ def main(*args)
   elsif (process == :tocs)
     chapter_list ||= GlowficEpub::Chapters.new(group: group)
 
-    (LOG.fatal "Group #{group} has no TOC" and abort) unless FIC_TOCS.has_key? group and not FIC_TOCS[group].empty?
+    (LOG.fatal "Group #{group} has no TOC"; abort) unless FIC_TOCS.has_key? group && !FIC_TOCS[group].empty?
     fic_toc_url = FIC_TOCS[group]
 
     LOG.info "Parsing TOC (of #{group})"
@@ -260,11 +260,11 @@ def main(*args)
     chapter_list.old_faces = data.faces
 
     group_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
-    group_handlers.select! {|c| c.is_a? Class and c < GlowficIndexHandlers::IndexHandler }
+    group_handlers.select! {|c| c.is_a? Class && c < GlowficIndexHandlers::IndexHandler }
 
     group_handler = group_handlers.select {|c| c.handles? group }
-    (LOG.fatal "No index handlers for #{group}!" and abort) if group_handler.nil? or group_handler.empty?
-    (LOG.fatal "Too many index handlers for #{group}! [#{group_handler * ', '}]" and abort) if group_handler.length > 1
+    (LOG.fatal "No index handlers for #{group}!"; abort) if group_handler.nil? || group_handler.empty?
+    (LOG.fatal "Too many index handlers for #{group}! [#{group_handler * ', '}]"; abort) if group_handler.length > 1
 
     group_handler = group_handler.first
 
@@ -277,7 +277,7 @@ def main(*args)
     return chapter_list
   elsif (process == :get || process == :qget)
     chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
     LOG.info "Getting '#{group}'"
     LOG.info "Chapter count: #{chapter_list.length}"
 
@@ -290,9 +290,9 @@ def main(*args)
       chapter_list.each_with_index do |chapter, i|
         site_handler = GlowficSiteHandlers.get_handler_for(chapter)
 
-        if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?) or (site_handler.is_a?(Array) and site_handler.length > 1)
-          LOG.error "ERROR: No site handler for #{chapter.title}!" if site_handler.nil? or (site_handler.is_a?(Array) and site_handler.empty?)
-          LOG.error "ERROR: Too many site handlers for #{chapter.title}! [#{site_handler * ', '}]" if (site_handler.is_a?(Array) and site_handler.length > 1)
+        if site_handler.nil? || (site_handler.is_a?(Array) && site_handler.length != 1)
+          LOG.error "ERROR: No site handler for #{chapter.title}!" if site_handler.nil? || site_handler.empty?
+          LOG.error "ERROR: Too many site handlers for #{chapter.title}! [#{site_handler * ', '}]" if !site_handler.nil? && site_handler.length > 1
           unhandled_chapters << chapter
           next
         end
@@ -316,16 +316,16 @@ def main(*args)
       end
       raise e
     end
-    set_chapters_data(chapter_list, group) if process == :qget or !diff
+    set_chapters_data(chapter_list, group) if process == :qget || !diff
     return chapter_list
   elsif (process == :process || process == :qprocess || process == :report)
     chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
     LOG.info "Processing '#{group}'" + (process == :report ? " (daily report)" : "")
     LOG.info "Chapter count: #{chapter_list.length}"
 
     site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
-    site_handlers.select! {|c| c.is_a? Class and c < GlowficSiteHandlers::SiteHandler }
+    site_handlers.select! {|c| c.is_a? Class && c < GlowficSiteHandlers::SiteHandler }
 
     instance_handlers = {}
     chapter_count = chapter_list.count
@@ -334,13 +334,13 @@ def main(*args)
         diff = true
         site_handler = site_handlers.select {|c| c.handles? chapter}
 
-        if site_handler.nil? or site_handler.empty? or site_handler.length > 1
-          LOG.error "ERROR: No site handler for #{chapter.title}!" if site_handler.nil? or site_handler.empty?
+        if site_handler.nil? || site_handler.length != 1
+          LOG.error "ERROR: No site handler for #{chapter.title}!" if site_handler.nil? || site_handler.empty?
           LOG.error "ERROR: Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if site_handler.length > 1
           next
         end
 
-        if chapter.pages.nil? or chapter.pages.empty?
+        if chapter.pages.nil? || chapter.pages.empty?
           LOG.error "No pages for #{chapter.title}!"
           next
         end
@@ -370,10 +370,10 @@ def main(*args)
     return chapter_list
   elsif (process == :output_epub || process == :output_html)
     chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
     LOG.info "Outputting an EPUB for '#{group}'" if process == :output_epub
     LOG.info "Outputting an HTML copy of '#{group}'" if process == :output_html
-    (LOG.fatal "Invalid output mode #{process}" and abort) unless process == :output_epub or process == :output_html
+    (LOG.fatal "Invalid output mode #{process}"; abort) unless process == :output_epub || process == :output_html
 
     no_split = option[/no[_\s\-]split/]
 
@@ -403,7 +403,7 @@ def main(*args)
     end
 
     chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
     LOG.info "Outputting a report for '#{group}'"
 
     # TODO: "number" (number of posts in the past day) or whatever as an option
@@ -413,7 +413,7 @@ def main(*args)
     handler.output(params)
   elsif (process == :output_rails)
     chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
     LOG.info "Outputting Rails stuff for '#{group}'"
 
     handler = GlowficOutputHandlers::RailsHandler
@@ -426,7 +426,7 @@ def main(*args)
     5.times { set_chapters_data(chapter_list, group) }
   elsif (process == :stats)
     chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first" and abort) if chapter_list.nil? or chapter_list.empty?
+    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
     LOG.info "Doing stats for '#{group}'"
 
     #replies by author, replies by character, icon uses
@@ -445,7 +445,7 @@ def main(*args)
 
     chapter_list.each do |chapter|
       next unless chapter.entry
-      (LOG.info "Skipping duplicate: #{chapter}" and next) if chapter_urls.include?(chapter.url)
+      (LOG.info "Skipping duplicate: #{chapter}"; next) if chapter_urls.include?(chapter.url)
       chapter_urls << chapter.url
 
       msgs = [chapter.entry] + chapter.replies
