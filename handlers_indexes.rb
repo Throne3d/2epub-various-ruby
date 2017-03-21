@@ -316,12 +316,12 @@ module GlowficIndexHandlers
         section_list = section_list + [subsection_text]
       end
 
-      chapter_links.each do |chapter_link|
-        next if @group == :silmaril && @silmaril_handling != :constellation && chapter_link.text.strip["constellation import"]
+      chapter_links.each do |c_link|
+        next if @group == :silmaril && @silmaril_handling != :constellation && c_link.text.strip["constellation import"]
 
         params = {}
-        params[:title] = get_text_on_line(chapter_link, after: false).strip
-        params[:title_extras] = get_text_on_line(chapter_link, include_node: false, before: false).strip
+        params[:title] = get_text_on_line(c_link, after: false).strip
+        params[:title_extras] = get_text_on_line(c_link, include_node: false, before: false).strip
 
         params[:title_extras] = params[:title_extras].gsub(/\(?constellation import\)?/, '').strip if @group == :silmaril && @silmaril_handling != :constellation
 
@@ -330,7 +330,7 @@ module GlowficIndexHandlers
           params[:title] += ")"
           params[:title_extras] = params[:title_extras][1..-1]
         end
-        params[:url] = chapter_link.try(:[], :href)
+        params[:url] = c_link.try(:[], :href)
         next unless params[:url]
 
         params[:sections] = section_list
@@ -376,9 +376,9 @@ module GlowficIndexHandlers
         get_chapters(section, section_list, section_index) do |chapter_details|
           chapter_list << chapter_details
           sections = chapter_details.sections
-          sections.each_with_index do |section, i|
-            if previous_sections.length <= i || previous_sections[i] != section
-              LOG.info "- Section (depth #{i+1}): #{section}"
+          sections.each_with_index do |s, i|
+            if previous_sections.length <= i || previous_sections[i] != s
+              LOG.info "- Section (depth #{i+1}): #{s}"
             end
           end
           previous_sections = sections
@@ -745,8 +745,6 @@ module GlowficIndexHandlers
       user_toc_data = get_page_data(user_url, replace: true, headers: {"Accept" => "text/html"})
       user_toc = Nokogiri::HTML(user_toc_data)
 
-      content = user_toc.at_css('#content')
-
       pages = user_toc.at_css('.pagination')
       last_url = user_url
       if pages
@@ -830,11 +828,12 @@ module GlowficIndexHandlers
         chapter_list.get_sections = true
         userlist_to_block(user_url: fic_toc_url) do |chapter_details|
           if chapter_details.sections.present?
-            board_name = if chapter_details.sections.is_a?(Array)
-              chapter_details.sections.first
-            else
-              chapter_details.sections
-            end
+            board_name =
+              if chapter_details.sections.is_a?(Array)
+                chapter_details.sections.first
+              else
+                chapter_details.sections
+              end
             next if ignore_sections.include?(board_name)
           end
 
@@ -896,7 +895,8 @@ module GlowficIndexHandlers
           if @group == :mwf_leaf
             msg.css('> ul > li').each do |li|
               sections = nil
-              elems = if li.at_css('ul')
+              elems =
+                if li.at_css('ul')
                   sections = ["Lioncourt's coronation party"]
                   li.css('ul li a')
                 elsif li.at_css('a')
