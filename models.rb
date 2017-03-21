@@ -399,9 +399,7 @@
       replies.each { |reply| reply.unpack! } if replies
     end
 
-    def entry_title
-      @entry_title || @title
-    end
+    def entry_title; @entry_title || @title; end
 
     def processed=(val)
       dirty!
@@ -413,9 +411,7 @@
     end
     def processed; processed?; end
 
-    def processed_epub?
-      processed_output?(:epub)
-    end
+    def processed_epub?; processed_output?(:epub); end
     def processed_epub; processed_epub?; end
 
     def processed_output?(thing)

@@ -226,7 +226,8 @@ module GlowficIndexHandlers
           chapter_tags.each do |tag_link|
             tag_text = tag_link.text.strip
             if tag_text.downcase.start_with?("continuity:")
-              params[:sections] = [tag_text[12..-1].strip.to_sym]
+              section = tag_text[12..-1].strip.to_sym
+              params[:sections] = (section.empty?) ? [defaultCont] : [section]
             end
             if tag_text.downcase.start_with?("meta:")
               skip = true
@@ -236,11 +237,10 @@ module GlowficIndexHandlers
               complete = true
             end
           end
-
           next if skip
-          params[:marked_complete] = complete
 
-          params[:sections] = [defaultCont] if params[:sections].first.empty?
+          params[:marked_complete] = complete
+          params[:sections] ||= [defaultCont]
           chapter_details = chapter_from_toc(params)
           if block_given?
             yield chapter_details
