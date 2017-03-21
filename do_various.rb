@@ -32,7 +32,7 @@ FileUtils.mkdir "web_cache" unless File.directory?("web_cache")
 FileUtils.mkdir "logs" unless File.directory?("logs")
 
 set_trace_func proc {
-  |event, file, line, id, binding, classname|
+  |event, _file, _line, _id, _binding, _classname|
   if event == "call" && caller_locations.length > 500
     fail "stack level too deep"
   end
@@ -41,7 +41,7 @@ set_trace_func proc {
 class Array
   def contains_all? other
     other = other.dup
-    each {|e| if i = other.index(e) then other.delete_at(i) end }
+    each {|e| i = other.index(e); if i then other.delete_at(i) end }
     other.empty?
   end
   def delete_once(value)
@@ -223,21 +223,20 @@ def main(*args)
 
   LOG.info "-" * 60
 
-  if (process == :"do")
+  if [:"do", :epubdo, :repdo].include?(process)
     chapter_list = main('tocs', group)
-    chapter_list = main('get', group, chapter_list)
-    chapter_list = main('process', group, chapter_list)
+    chapter_list = main('qget', group, chapter_list)
+
+    processmethods = {:"do" => 'process', epubdo: 'qprocess', repdo: 'report'}
+    processmethod = processmethods[process]
+    chapter_list = main(processmethod, group, chapter_list)
+
+    if process == :epubdo
+      chapter_list = main('output_epub', group, chapter_list)
+    elsif process == :repdo
+      chapter_list = main('output_report', group, chapter_list)
+    end
     return chapter_list
-  elsif (process == :epubdo)
-    chapter_list = main('tocs', group)
-    chapter_list = main('qget', group, chapter_list)
-    chapter_list = main('qprocess', group, chapter_list)
-    return main('output_epub', group, chapter_list)
-  elsif (process == :repdo)
-    chapter_list = main('tocs', group)
-    chapter_list = main('qget', group, chapter_list)
-    chapter_list = main('report', group, chapter_list)
-    return main('output_report', group, chapter_list)
   elsif (process == :trash)
     LOG.info "Trashing (oldifying) #{group}"
 
@@ -354,7 +353,8 @@ def main(*args)
 
     params = {}
 
-    if date_bit = option[/(\d+)((-|\s)?\d+)?{2}/]
+    date_bit = option[/(\d+)((-|\s)?\d+)?{2}/]
+    if date_bit
       date_bits = date_bit.split(/(?:-|\s)+/)
       day = date_bits.last.to_i
       month = date_bits[-2].to_i
@@ -364,7 +364,8 @@ def main(*args)
       option = option.sub(date_bit, '').strip
     end
 
-    if early_bit = option[/(show)?[_\-\s]?earl(y|ier)/]
+    early_bit = option[/(show)?[_\-\s]?earl(y|ier)/]
+    if early_bit
       params[:show_earlier] = true
       option = option.sub(early_bit, '').strip
     end
