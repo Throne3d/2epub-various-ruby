@@ -199,13 +199,16 @@
     uri_query = sort_query(uri.query)
     uri_host = uri.host
     uri_path = uri.path
-    uri_folder = (uri_path[-1] == '/') ? uri_path[0..-2] : File.dirname(uri_path)
-    uri_file = uri_path.sub(uri_folder + '/', '')
-    uri_file = "index" if (uri_file.nil? || uri_file.empty?)
+    if uri_path[-1] == '/'
+      uri_folder = uri_path[0..-2]
+      uri_file = 'index'
+    else
+      uri_folder = File.dirname(uri_path)
+      uri_file = uri_path.sub(uri_folder + '/', '')
+    end
     uri_file += "~QMARK~#{uri_query}" unless uri_query.nil?
 
-    save_path = File.join(where, uri_host, uri_folder, uri_file)
-    save_path
+    File.join(where, uri_host, uri_folder, uri_file)
   end
   def sanitize_local_path(local_path)
     local_path.gsub("\\", "~BACKSLASH~").gsub(":", "~COLON~").gsub("*", "~ASTERISK~").gsub("?", "~QMARK~").gsub("\"", "~QUOT~").gsub("<", "~LT~").gsub(">", "~GT~").gsub("|", "~BAR~")
@@ -213,7 +216,6 @@
 
   def download_file(file_url, options={})
     LOG.debug "download_file('#{file_url}', #{options})"
-
     standardize_params(options)
     headers = options[:headers] || {}
     save_path = options[:save_path] || get_page_location(file_url, options)
@@ -222,8 +224,7 @@
     FileUtils::mkdir_p save_folder
 
     retries = 3
-    success = false
-    has_retried = false
+    success = has_retried = false
     begin
       param_hash = {:ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE, :allow_redirections => :all}.merge(headers)
       open(file_url, param_hash) do |webpage|
@@ -385,8 +386,8 @@
     old_where = options[:where] || options[:old] || options[:old_where] || "web_cache/chapterdetails_#{group}.txt"
     new_where = options[:new] || options[:new_where] || ''
 
-    old_where = old_where.gsub("\\", "/")
-    new_where = new_where.gsub("\\", "/")
+    old_where = old_where.tr("\\", "/")
+    new_where = new_where.tr("\\", "/")
     if new_where.empty?
       where_bits = old_where.split('/')
       where_bits[-1] = "old_" + where_bits.last
