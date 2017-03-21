@@ -1,8 +1,0 @@
-﻿
-From Python version:
-* Testing on Linux seems to show that it still works (with the new hopefully-Windows-compatible file-naming system)
-* Find a better way to handle the "discretion advised" warning. Ugh.
-* Ensure the new "save the previous epub generation and use it where applicable" system functions properly (seems to for now! :D).
-* Test the new "fix changed icons" thing (so if you have epub HTML loaded (from flats, actually, not just epub), it'll update icons to the most recent)
-  - It doesn't die on finding an icon that *hasn't* changed
-  - It's untested on finding an icon that *has* changed
