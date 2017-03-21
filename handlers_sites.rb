@@ -818,10 +818,12 @@
   class ConstellationHandler < SiteHandler
     attr_reader :download_count
     def self.handles?(thing)
-      return false if thing.nil?
+      return if thing.nil?
       return thing.unique_id.start_with?('constellation#') if thing.is_a?(GlowficEpub::Author)
-      chapter_url = (thing.is_a?(GlowficEpub::Chapter)) ? thing.url : thing
-      return false if chapter_url.blank?
+
+      chapter_url = thing
+      chapter_url = thing.url if thing.is_a?(GlowficEpub::Chapter)
+      return if chapter_url.blank?
 
       uri = URI.parse(chapter_url)
       uri.host.end_with?("vast-journey-9935.herokuapp.com") || uri.host.end_with?("glowfic.com")
@@ -887,7 +889,7 @@
       return page_urls
     end
     def get_updated(chapter, options = {})
-      return nil unless self.handles?(chapter)
+      return unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
 
       chapter.url = set_url_params(clear_url_params(chapter.url), {per_page: :all}) unless chapter.url["per_page=all"]
@@ -895,7 +897,7 @@
       is_new = true
       prev_pages = chapter.pages
       check_pages = chapter.check_pages
-      if prev_pages and not prev_pages.empty?
+      if prev_pages && !prev_pages.empty?
         is_new = false
 
         @download_count = 0
@@ -942,7 +944,7 @@
           LOG.debug "check page #{i} was not different"
         end
 
-        LOG.debug "#{(not changed) ? 'not ': ''}changed!"
+        LOG.debug "#{(!changed) ? 'not ': ''}changed!"
 
         pages_exist = true
         prev_pages.each_with_index do |page_url, i|
@@ -1425,7 +1427,7 @@
       @previous_message = Comment.new(params)
     end
     def get_replies(chapter, options = {}, &block)
-      return nil unless self.handles?(chapter)
+      return unless self.handles?(chapter)
       notify = options.key?(:notify) ? options[:notify] : true
 
       return chapter.replies if already_processed(chapter, options, &block)
