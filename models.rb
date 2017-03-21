@@ -1156,9 +1156,9 @@
 
     def author_str
       return @author_str if @author_str.present?
-      return @author.moiety if @author and @author.is_a?(Author)
+      return @author.moieties * ', ' if @author and @author.is_a?(Author)
       return @author.to_s if @author
-      return nil
+      nil
     end
     def author_str=(val)
       dirty!
