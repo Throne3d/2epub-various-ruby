@@ -188,7 +188,7 @@ module GlowficIndexHandlers
       super(options)
     end
 
-    def toc_to_chapterlist(options = {}, &block)
+    def toc_to_chapterlist(options = {})
       fic_toc_url = options[:fic_toc_url]
 
       defaultCont = :"no continuity"
@@ -360,7 +360,7 @@ module GlowficIndexHandlers
         end
       end
     end
-    def toc_to_chapterlist(options={}, &block)
+    def toc_to_chapterlist(options={})
       fic_toc_url = options[:fic_toc_url]
 
       LOG.info "TOC Page: #{fic_toc_url}"
@@ -395,7 +395,7 @@ module GlowficIndexHandlers
     def initialize(options = {})
       super(options)
     end
-    def toc_to_chapterlist(options = {}, &block)
+    def toc_to_chapterlist(options = {})
       fic_toc_url = options[:fic_toc_url]
 
       LOG.info "TOC Page: #{fic_toc_url}"
@@ -411,7 +411,7 @@ module GlowficIndexHandlers
         max_dist = 3
         test_node = node
         is_heading = false
-        max_dist.times do |i|
+        max_dist.times do
           test_node = test_node.previous
           break unless test_node
           next unless test_node.text?
@@ -421,7 +421,7 @@ module GlowficIndexHandlers
 
         test_node = node
         is_heading = false
-        max_dist.times do |i|
+        max_dist.times do
           test_node = test_node.next
           break unless test_node
           next unless test_node.text?
@@ -459,7 +459,6 @@ module GlowficIndexHandlers
         heading = nil
         superheading = nil
         heading_text = nil
-        superheading_text = nil
         prev_element = top_level.previous
         while prev_element && superheading.nil?
           heading = prev_element if headings.include?(prev_element) && heading.nil?
@@ -550,7 +549,7 @@ module GlowficIndexHandlers
       end
       return encapsule || node
     end
-    def toc_to_chapterlist(options = {}, &block)
+    def toc_to_chapterlist(options = {})
       fic_toc_url = options[:fic_toc_url]
 
       LOG.info "TOC Page: #{fic_toc_url}"
@@ -669,7 +668,7 @@ module GlowficIndexHandlers
       url_path
     end
 
-    def board_to_block(options = {}, &block)
+    def board_to_block(options = {})
       board_url = options[:board_url]
       board_url = fix_url_folder(board_url)
       LOG.info "TOC Page: #{board_url}"
@@ -738,7 +737,7 @@ module GlowficIndexHandlers
       end
     end
 
-    def userlist_to_block(options = {}, &block)
+    def userlist_to_block(options = {})
       user_url = options[:user_url]
       user_url = fix_url_folder(user_url)
       LOG.info "TOC Page: #{user_url}"
@@ -793,7 +792,7 @@ module GlowficIndexHandlers
       end
     end
 
-    def toc_to_chapterlist(options = {}, &block)
+    def toc_to_chapterlist(options = {})
       fic_toc_url = options[:fic_toc_url]
       fic_toc_url = fix_url_folder(fic_toc_url)
       ignore_sections = options[:ignore_sections] || []
@@ -853,7 +852,7 @@ module GlowficIndexHandlers
     def initialize(options = {})
       super(options)
     end
-    def toc_to_chapterlist(options = {}, &block)
+    def toc_to_chapterlist(options = {})
       list = INDEX_PRESETS[@group]
 
       if @group == :test
@@ -862,7 +861,6 @@ module GlowficIndexHandlers
       elsif @group == :report
         chapter_list.sort_chapters = true
         chapter_list.get_sections = true
-        report_json = ""
         @group_folder = "web_cache/#{@group}"
         url = REPORT_LIST_URL
         file_path = get_page_location(url, where: @group_folder)
@@ -870,7 +868,7 @@ module GlowficIndexHandlers
           open(file_path) do |old|
             text = old.read
             break if text.strip.length <= 10
-            open(file_path + '.bak', 'w') { |new| new.write text }
+            open(file_path + '.bak', 'w') { |newf| newf.write text }
           end
         end
         report_json = get_page_data(url, where: @group_folder, replace: true).strip
