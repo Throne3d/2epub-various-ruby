@@ -71,6 +71,14 @@ module GlowficIndexHandlers
     []
   }
 
+  def self.get_handler_for(thing)
+    index_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
+    index_handlers.select! {|c| c.is_a?(Class) && c < GlowficIndexHandlers::IndexHandler }
+    chapter_handlers = index_handlers.select {|c| c.handles? thing}
+    return chapter_handlers.first if chapter_handlers.length == 1
+    chapter_handlers
+  end
+
   class IndexHandler
     attr_reader :group
     def initialize(options = {})

@@ -249,8 +249,8 @@ def main(*args)
   elsif (process == :tocs)
     chapter_list ||= GlowficEpub::Chapters.new(group: group)
 
-    (LOG.fatal "Group #{group} has no TOC"; abort) unless FIC_TOCS.has_key? group && !FIC_TOCS[group].empty?
     fic_toc_url = FIC_TOCS[group]
+    (LOG.fatal "Group #{group} has no TOC"; abort) unless fic_toc_url.present?
 
     LOG.info "Parsing TOC (of #{group})"
 
@@ -259,14 +259,9 @@ def main(*args)
     chapter_list.old_authors = data.authors
     chapter_list.old_faces = data.faces
 
-    group_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
-    group_handlers.select! {|c| c.is_a? Class && c < GlowficIndexHandlers::IndexHandler }
-
-    group_handler = group_handlers.select {|c| c.handles? group }
-    (LOG.fatal "No index handlers for #{group}!"; abort) if group_handler.nil? || group_handler.empty?
-    (LOG.fatal "Too many index handlers for #{group}! [#{group_handler * ', '}]"; abort) if group_handler.length > 1
-
-    group_handler = group_handler.first
+    group_handler = GlowficIndexHandlers.get_handler_for(group)
+    (LOG.fatal "No index handlers for #{group}!"; abort) if group_handler.nil?
+    (LOG.fatal "Too many index handlers for #{group}! [#{group_handler * ', '}]"; abort) if group_handler.is_a?(Array) && group_handler.length > 1
 
     handler = group_handler.new(group: group, chapter_list: chapter_list, old_chapter_list: data)
     chapter_list = handler.toc_to_chapterlist(fic_toc_url: fic_toc_url) do |chapter|
