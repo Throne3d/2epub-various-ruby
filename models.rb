@@ -64,17 +64,17 @@
     end
     def standardize_params(params = {})
       params.keys.each do |param|
-        if param.is_a? String
+        if param.is_a?(String)
           params[param.to_sym] = params[param]
           params.delete param
           param = param.to_sym
         end
         if param_transform.key?(param)
           params[param_transform[param]] = params[param]
-          params.delete param
+          params.delete(param)
           param = param_transform[param]
         end
-        params.delete param if params[param].nil?
+        params.delete(param) if params[param].nil?
       end
       params
     end
@@ -95,45 +95,33 @@
         end
       end
     end
-    def dirty!
-      @dirty = true
-    end
-    def dirty?
-      @dirty
-    end
-    def dirty
-      @dirty
-    end
+    def dirty!; @dirty = true; end
+    def dirty?; @dirty; end
+    def dirty; @dirty; end
 
     def self.serialize_ignore? thing
-      return false if @serialize_ignore.nil?
-      return false unless thing.is_a?(String) or thing.is_a?(Symbol)
-      thing = thing.to_sym if thing.is_a? String
-      @serialize_ignore.include? thing
+      return if @serialize_ignore.nil?
+      return unless thing.is_a?(String) || thing.is_a?(Symbol)
+      thing = thing.to_sym if thing.is_a?(String)
+      @serialize_ignore.include?(thing)
     end
     def self.serialize_ignore(*things)
-      return @serialize_ignore if things.length == 0
+      return @serialize_ignore if things.empty?
       self.serialize_ignore!(*things)
     end
-    def serialize_ignore
-      @serialize_ignore
-    end
+    def serialize_ignore; @serialize_ignore; end
     def self.serialize_ignore!(*things)
-      things = things.first if things.length == 1 and things.first.is_a? Array
+      things = things.first if things.length == 1 && things.first.is_a?(Array)
       things = things.map do |thing|
         (thing.is_a? String) ? thing.to_sym : thing
       end
-      @serialize_ignore = [] unless @serialize_ignore
-      things.each {|thing| @serialize_ignore << thing}
+      @serialize_ignore ||= []
+      things.each { |thing| @serialize_ignore << thing }
     end
-    def serialize_ignore?(thing)
-      self.class.serialize_ignore?(thing)
-    end
+    def serialize_ignore?(thing); self.class.serialize_ignore?(thing); end
 
     def self.param_transform(**things)
-      if things.length == 0
-        return @param_transform || {}
-      end
+      return @param_transform || {} if things.length == 0
       things.keys.each do |param|
         if param.is_a? String
           things[param.to_sym] = things[param]
@@ -146,9 +134,7 @@
       end
       @param_transform = things
     end
-    def param_transform
-      self.class.param_transform
-    end
+    def param_transform; self.class.param_transform; end
 
     def as_json(options={})
       return @old_hash if @old_hash && !dirty?
@@ -189,6 +175,7 @@
   class Chapters < Model
     attr_reader :chapters, :faces, :authors, :group, :trash_messages
     attr_accessor :group, :old_authors, :old_faces, :sort_chapters
+    attr_writer :get_sections
     serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces, :kept_authors, :kept_faces, :failed_authors, :failed_faces, :unpacked
     def initialize(options = {})
       @chapters = []
@@ -207,14 +194,11 @@
     def get_sections?
       @get_sections ||= false
     end
-    def get_sections=(val)
-      @get_sections = val
-    end
 
     def unpack!
-      was_unpacked = @unpacked
+      return if @unpacked
+      each { |chapter| chapter.unpack! }
       @unpacked = true
-      each {|chapter| chapter.unpack! } unless was_unpacked
     end
     def unpacked?
       @unpacked ||= false
@@ -230,24 +214,24 @@
       arg
     end
     def get_author_by_id(author_id)
-      found_author = authors.find {|author| author.unique_id == author_id}
-      if old_authors.present? and not found_author.present?
-        found_author = old_authors.find {|author| author.unique_id == author_id}
+      found_author = authors.find { |author| author.unique_id == author_id}
+      if old_authors.present? && found_author.blank?
+        found_author = old_authors.find { |author| author.unique_id == author_id}
         add_author(found_author) if found_author
       end
-      unless found_author.present?
+      if found_author.blank?
         LOG.debug "chapterlist(#{self}).get_author_by_id(#{author_id.inspect}) ⇒ not present"
         LOG.debug "authors.length == #{authors.length}; " + (old_authors.present? ? "old_authors.length == #{old_authors.length}" : "No old authors")
       end
       found_author
     end
     def keep_old_author(author_id)
-      return nil unless old_authors.present?
+      return if old_authors.blank?
       @kept_authors ||= {}
       @failed_authors ||= []
       return @kept_authors[author_id] if @kept_authors.key?(author_id)
       return if @failed_authors.include?(author_id)
-      found_author = old_authors.find {|author| author.unique_id == author_id}
+      found_author = old_authors.find { |author| author.unique_id == author_id}
       if found_author.present?
         add_author(found_author)
         @kept_authors[author_id] = found_author
@@ -267,20 +251,20 @@
       arg
     end
     def get_face_by_id(face_id)
-      found_face = faces.find {|face| face.unique_id == face_id}
-      if old_faces.present? and not found_face
-        old_faces.find {|face| face.unique_id == face_id}
+      found_face = faces.find { |face| face.unique_id == face_id}
+      if old_faces.present? && found_face.blank?
+        old_faces.find { |face| face.unique_id == face_id}
         add_face(found_face) if found_face
       end
       found_face
     end
     def keep_old_face(face_id)
-      return nil unless old_faces.present?
+      return if old_faces.blank?
       @kept_faces ||= {}
       @failed_faces ||= []
       return @kept_faces[face_id] if @kept_faces.key?(face_id)
       return if @failed_faces.include?(face_id)
-      found_face = old_faces.find {|face| face.unique_id == face_id}
+      found_face = old_faces.find { |face| face.unique_id == face_id}
       if found_face.present?
         add_face(found_face)
         @kept_faces[face_id] = found_face
@@ -294,24 +278,17 @@
     def add_chapter(arg)
       chapters << arg unless chapters.include?(arg)
       arg.chapter_list = self unless arg.chapter_list == self
-      if sort_chapters
-        sort_chapters!
-      end
+      sort_chapters! if sort_chapters
     end
 
     def sort_chapters!
-      #TODO: do better
+      # TODO: do better
       chapters.sort! do |chapter1, chapter2|
-        sections1 = if chapter1.section_sorts.present?
-          chapter1.section_sorts.map(&:downcase)
-        else
-          []
-        end
-        sections2 = if chapter2.section_sorts.present?
-          chapter2.section_sorts.map(&:downcase)
-        else
-          []
-        end
+        sections1 = chapter1.section_sorts.try(:map, &:downcase)
+        sections1 = [] unless sections1.present?
+        sections2 = chapter2.section_sorts.try(:map, &:downcase)
+        sections2 = [] unless sections2.present?
+
         sections1 <=> sections2
       end
     end
@@ -325,24 +302,14 @@
         self.add_chapter(arg)
       end
     end
-    def length
-      chapters.length
-    end
-    def count
-      chapters.count
-    end
-    def empty?
-      chapters.empty?
-    end
-    def map(&block)
-      chapters.map(&block)
-    end
-    def each(&block)
-      chapters.each(&block)
-    end
-    def each_with_index(&block)
-      chapters.each_with_index(&block)
-    end
+
+    def length; chapters.length; end
+    def count; chapters.count; end
+    def empty?; chapters.empty?; end
+    def map(&block); chapters.map(&block); end
+    def each(&block); chapters.each(&block); end
+    def each_with_index(&block); chapters.each_with_index(&block); end
+
     def from_json! string
       json_hash = if string.is_a? String
         JSON.parse(string)
@@ -392,28 +359,50 @@
   end
 
   class Chapter < Model
-    dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output, :check_page_data
+    dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output, :check_page_data, :marked_complete
     attr_reader :entry
 
-    param_transform :name => :title, :name_extras => :title_extras, :processed_epub => :processed_output
+    param_transform name: :title, name_extras: :title_extras, processed_epub: :processed_output
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
 
+    def initialize(params={})
+      if params.key?(:trash_messages)
+        @trash_messages = params[:trash_messages]
+        params.delete(:trash_messages)
+      end
+      return if params.empty?
+      params = standardize_params(params)
+
+      params.reject! do |param|
+        unless allowed_params.include?(param)
+          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
+        end
+      end
+
+      @pages = []
+      @check_pages = []
+      @replies = []
+      @sections = []
+      @authors = []
+
+      allowed_params.each do |symbol|
+        public_send("#{symbol}=", params[symbol]) if params[symbol]
+      end
+    end
+
     def allowed_params
-      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :time_abandoned, :time_new, :report_flags, :processed, :processed_output, :check_page_data, :get_sections, :section_sorts]
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :time_abandoned, :time_new, :report_flags, :processed, :processed_output, :check_page_data, :get_sections, :section_sorts, :marked_complete]
     end
 
     def unpack!
       entry.unpack! if entry
-      replies.each {|reply| reply.unpack! } if replies
+      replies.each { |reply| reply.unpack! } if replies
     end
 
     def entry_title
       @entry_title || @title
     end
 
-    def processed
-      processed?
-    end
     def processed=(val)
       dirty!
       @processed_output = []
@@ -422,20 +411,17 @@
     def processed?
      @processed ||= false
     end
+    def processed; processed?; end
 
-    def processed_epub
-      processed_epub?
-    end
     def processed_epub?
       processed_output?(:epub)
     end
+    def processed_epub; processed_epub?; end
 
     def processed_output?(thing)
       processed_output.include?(thing.to_s)
     end
-    def processed_output(thing)
-      processed_output?(thing)
-    end
+    def processed_output(thing); processed_output?(thing); end
     def processed_output
       @processed_output ||= []
     end
@@ -451,7 +437,7 @@
     def get_sections?
       return @get_sections unless @get_sections.nil?
       return chapter_list.get_sections? if chapter_list
-      return false
+      false
     end
     def get_sections=(val)
       return val if @get_sections == val
@@ -493,9 +479,7 @@
       @section_sorts = val
     end
 
-    def report_flags_processed?
-      report_flags_processed
-    end
+    def report_flags_processed?; report_flags_processed; end
 
     def check_page_data
       @check_page_data ||= {}
@@ -505,9 +489,7 @@
       @check_page_data[index] = val
     end
 
-    def group
-      @chapter_list.group
-    end
+    def group; @chapter_list.group; end
     def site_handler
       return @site_handler unless @site_handler.nil?
       handler_type = GlowficSiteHandlers.get_handler_for(self)
@@ -636,9 +618,7 @@
       end
     end
 
-    def time_new_set?
-      !!@time_new
-    end
+    def time_new_set?; !@time_new.nil?; end
     def time_new
       return entry.time if @time_new.nil? && entry.present?
       if @time_new.is_a?(String)
@@ -661,10 +641,10 @@
     end
 
     def moieties
-      @moieties if @moieties and not @moieties.empty?
+      @moieties if @moieties.present?
       @moieties = []
       authors.each do |author|
-        (LOG.error "nil author for #{self}" and next) unless author
+        (LOG.error "nil author for #{self}"; next) unless author
         author.moieties.each do |moiety|
           @moieties << moiety unless @moieties.include?(moiety)
         end
@@ -679,7 +659,7 @@
         puts caller
         return
       end
-      same_id = authors.detect{|author| (author.is_a?(Author) ? author.unique_id : author) == (newauthor.is_a?(Author) ? newauthor.unique_id : newauthor) }
+      same_id = authors.detect { |author| (author.is_a?(Author) ? author.unique_id : author) == (newauthor.is_a?(Author) ? newauthor.unique_id : newauthor) }
       if same_id && !authors.include?(newauthor)
         LOG.debug "#{self}.add_author: author with same ID but not same object exists. Will be duped. Existing author: #{same_id}, is_a?(#{same_id.class.to_s}), newauthor(#{newauthor}), is_a?(#{newauthor.class.to_s})"
         LOG.debug "Existing authors: #{authors.map{|author| author.to_s} * ', '}"
@@ -693,37 +673,10 @@
       chapter_list.add_author(newauthor)
     end
 
-    def initialize(params={})
-      if params.key?(:trash_messages)
-        @trash_messages = params[:trash_messages]
-        params.delete(:trash_messages)
-      end
-      return if params.empty?
-      params = standardize_params(params)
-
-      params.reject! do |param|
-        unless allowed_params.include?(param)
-          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
-          true
-        end
-      end
-
-      @pages = []
-      @check_pages = []
-      @replies = []
-      @sections = []
-      @authors = []
-
-      allowed_params.each do |symbol|
-        public_send("#{symbol}=", params[symbol]) if params[symbol]
-      end
-    end
     def smallURL
       @smallURL ||= Chapter.shortenURL(@url)
     end
-    def shortURL
-      smallURL
-    end
+    def shortURL; smallURL; end
     def url=(val)
       dirty!
       @smallURL = nil
@@ -765,9 +718,7 @@
       end
       str
     end
-    def fauxID
-      Chapter.fauxID(self)
-    end
+    def fauxID; Chapter.fauxID(self); end
 
     def as_json(options={})
       return @old_hash if @old_hash && !dirty? && !is_huge_cannot_dirty(chapter_list)
@@ -849,18 +800,15 @@
 
   class Face < Model
     attr_accessor :imageURL, :keyword, :unique_id, :chapter_list
+    attr_writer :author
     serialize_ignore :allowed_params, :author, :chapter_list
 
     def allowed_params
       @allowed_params ||= [:chapter_list, :imageURL, :keyword, :unique_id, :author]
     end
 
-    def user_display
-      author.display
-    end
-    def moiety
-      author.moiety
-    end
+    def user_display; author.display; end
+    def moiety; author.moiety; end
 
     def imageURL=(newval)
       @imageURL = newval.gsub(" ", "%20")
@@ -870,9 +818,6 @@
       return unless @author
       @author = chapter_list.get_author_by_id(@author) if chapter_list and not @author.is_a?(Author)
       @author
-    end
-    def author=(author)
-      @author = author
     end
 
     def initialize(params={})
@@ -931,6 +876,24 @@
       serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_author, :post_type
     end
 
+    def initialize(params={})
+      return if params.empty?
+      params = standardize_params(params)
+
+      params.reject! do |param|
+        unless allowed_params.include?(param)
+          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
+          true
+        end
+      end
+
+      raise(ArgumentError, "Content must be given") unless params.key?(:content)
+      raise(ArgumentError, "Chapter must be given") unless params.key?(:chapter)
+      allowed_params.each do |symbol|
+        public_send("#{symbol}=", params[symbol]) if params[symbol]
+      end
+    end
+
     def allowed_params
       @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face, :entry_title, :page_no, :author_str]
     end
@@ -945,10 +908,11 @@
       chapter.dirty! if chapter
     end
 
+    def site_handler; chapter.try(:site_handler); end
+    def chapter_list; chapter.try(:chapter_list); end
+
     @push_title = false
-    def entry_title
-      chapter.entry_title
-    end
+    def entry_title; chapter.entry_title; end
     def entry_title=(newval)
       dirty!
       if chapter
@@ -1003,7 +967,7 @@
     end
 
     def depth
-      if parent and not @depth
+      if parent && !@depth
         @depth = parent.depth + 1
       end
       @depth ||= 0
@@ -1019,10 +983,7 @@
       children.delete(val) if children.include?(val)
       val.parent = nil if val.parent == self
     end
-    def moiety
-      return "" unless face
-      face.moiety
-    end
+    def moiety; face.try(:moiety) || ''; end
 
     def post_type_str
       if post_type == PostType::ENTRY
@@ -1034,9 +995,7 @@
       end
     end
 
-    def permalink
-      site_handler.get_permalink_for(self)
-    end
+    def permalink; site_handler.get_permalink_for(self); end
 
     def parent=(newparent)
       return newparent if @parent == newparent
@@ -1074,13 +1033,6 @@
         @depth = @parent.depth + 1
       end
       @parent
-    end
-
-    def site_handler
-      chapter.site_handler if chapter
-    end
-    def chapter_list
-      chapter.chapter_list if chapter
     end
 
     def face
@@ -1158,30 +1110,12 @@
       return @author_str if @author_str.present?
       return @author.moieties * ', ' if @author and @author.is_a?(Author)
       return @author.to_s if @author
-      nil
     end
     def author_str=(val)
       dirty!
       @author_str = val
     end
 
-    def initialize(params={})
-      return if params.empty?
-      params = standardize_params(params)
-
-      params.reject! do |param|
-        unless allowed_params.include?(param)
-          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
-          true
-        end
-      end
-
-      raise(ArgumentError, "Content must be given") unless params.key?(:content)
-      raise(ArgumentError, "Chapter must be given") unless params.key?(:chapter)
-      allowed_params.each do |symbol|
-        public_send("#{symbol}=", params[symbol]) if params[symbol]
-      end
-    end
     def to_s
       if chapter.nil?
         "#{author}##{id} @ #{time}"
@@ -1303,16 +1237,6 @@
     attr_accessor :name, :screenname, :chapter_list, :display, :unique_id, :default_face
     serialize_ignore :faces, :chapters, :chapter_list, :allowed_params, :default_face, :site_handler
 
-    def allowed_params
-      @allowed_params ||= [:chapter_list, :moiety, :name, :screenname, :display, :unique_id, :default_face]
-    end
-    def site_handler
-      return @site_handler unless @site_handler.nil?
-      handler_type = GlowficSiteHandlers.get_handler_for(self)
-      chapter_list.site_handlers[handler_type] ||= handler_type.new(group: group, chapters: chapter_list)
-      @site_handler ||= chapter_list.site_handlers[handler_type]
-    end
-
     def initialize(params={})
       return if params.empty?
       params = standardize_params(params)
@@ -1330,9 +1254,18 @@
         public_send("#{symbol}=", params[symbol]) if params[symbol]
       end
     end
-    def to_s
-      "#{display}"
+
+    def allowed_params
+      @allowed_params ||= [:chapter_list, :moiety, :name, :screenname, :display, :unique_id, :default_face]
     end
+    def site_handler
+      return @site_handler unless @site_handler.nil?
+      handler_type = GlowficSiteHandlers.get_handler_for(self)
+      chapter_list.site_handlers[handler_type] ||= handler_type.new(group: group, chapters: chapter_list)
+      @site_handler ||= chapter_list.site_handlers[handler_type]
+    end
+
+    def to_s; display.to_s; end
 
     def default_face_id
       return unless @default_face.present?
