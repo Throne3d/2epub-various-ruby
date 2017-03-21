@@ -329,6 +329,7 @@
 
   def standardize_chapter_url(url)
     uri = URI.parse(url)
+    url = url.sub('glowfic.herokuapp.com', 'glowfic.com')
     if uri.host.end_with?("dreamwidth.org")
       uri.fragment = nil
       thread = get_url_param(url, "thread")

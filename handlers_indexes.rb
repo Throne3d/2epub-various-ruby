@@ -82,40 +82,52 @@ module GlowficIndexHandlers
   class IndexHandler
     attr_reader :group
     def initialize(options = {})
-      @group = options[:group] if options.key?(:group)
-      @chapter_list = options[:chapter_list] if options.key?(:chapter_list)
-      @old_chapter_list = options[:old_chapter_list] if options.key?(:old_chapter_list)
+      @group = options[:group]
+      @chapter_list = options[:chapter_list]
+      @old_chapter_list = options[:old_chapter_list]
     end
+
     def self.handles(*args)
       @handles = args
     end
     def self.handles?(thing)
-      return false unless @handles
-      return @handles.include?(thing)
+      return unless @handles
+      @handles.include?(thing)
     end
     def handles?(thing)
-      return self.handles? thing
+      self.handles?(thing)
     end
+
     def chapter_list
       @chapter_list ||= GlowficEpub::Chapters.new
     end
 
     def persist_chapter_data(params)
       raise(ArgumentException, "params must be a hash") unless params.is_a?(Hash)
+
+      get_detail_params = {only_present: true, chapter_list: @old_chapter_list}
       url = params[:url]
       persists.each do |persist|
+        thing = persist[:thing]
+        next if !persist[:override] && params[thing].present?
         next if persist[:if] && !params[persist[:if]]
         next if persist[:unless] && params[persist[:unless]]
-        next if params[persist[:thing]].present? && !persist[:override]
-        persist_data = get_prev_chapter_detail(group, detail: persist[:thing], only_present: true, chapter_list: @old_chapter_list)
+
+        get_detail_params[:detail] = thing
+        persist_data = get_prev_chapter_detail(group, get_detail_params)
         next unless persist_data.key?(url)
-        params[persist[:thing]] = persist_data[url]
+
+        params[thing] = persist_data[url]
       end
-      time_new_set = get_prev_chapter_detail(group, detail: :"time_new_set?", only_present: true, chapter_list: @old_chapter_list)
-      if time_new_set.key(url) && time_new_set[url] && !params[:time_new].present?
-        time_news = get_prev_chapter_detail(group, detail: :time_new, only_present: true, chapter_list: @old_chapter_list)
+
+      get_detail_params[:detail] = :"time_new_set?"
+      time_new_set = get_prev_chapter_detail(group, get_detail_params)
+      if time_new_set[url] && params[:time_new].blank?
+        get_detail_params[:detail] = :time_new
+        time_news = get_prev_chapter_detail(group, get_detail_params)
         params[:time_new] = time_news[url] if time_news.key?(url)
       end
+
       params
     end
     def persists
@@ -135,6 +147,7 @@ module GlowficIndexHandlers
         {thing: :processed_epub, :if => :processed}
       ]
     end
+
     def get_chapter_titles(chapter_link, options = {})
       backward = true
       backward = options[:backward] if options.key?(:backward)
@@ -142,27 +155,27 @@ module GlowficIndexHandlers
       chapter_text = get_text_on_line(chapter_link, stop_at: :a, backward: backward, forward: false).strip
       chapter_text_extras = get_text_on_line(chapter_link, stop_at: :a, backward: false, include_node: false).strip
 
-      if (chapter_text.index("(") and chapter_text_extras.index(")")) or (chapter_text.index("[") and chapter_text_extras.index("]"))
+      if (chapter_text.index('(') && chapter_text_extras.index(')')) || (chapter_text.index('[') && chapter_text_extras.index(']'))
         chapter_text = get_text_on_line(chapter_link, stop_at: :a, backward: backward).strip
-        chapter_text_extras = ""
-      end #If the thing's got brackets split between the text & extras, shove it together
+        chapter_text_extras = ''
+      end # If the title has brackets split between the text & extras, squish it
 
-      if (chapter_text_extras.index("(") == chapter_text_extras.length or chapter_text_extras.index("[") == chapter_text_extras.length)
+      if (chapter_text_extras.index('(') == chapter_text_extras.length || chapter_text_extras.index('[') == chapter_text_extras.length)
         chapter_text_extras = chapter_text_extras[0..-2].strip
-      end #If it ends in a start-bracket, remove it
-      if (chapter_text_extras.index(")") == chapter_text_extras.length and not chapter_text_extras.index("(")) or (chapter_text_extras.index("]") == chapter_text_extras.length and not chapter_text_extras.index("["))
+      end # If it ends in a start-bracket, remove it
+      if (chapter_text_extras.index(')') == chapter_text_extras.length && !chapter_text_extras.index('(')) || (chapter_text_extras.index(']') == chapter_text_extras.length && !chapter_text_extras.index('['))
         chapter_text_extras = chapter_text_extras[0..-2].strip
-      end #If it ends in an end-bracket, and there's not corresponding start bracket, remove it
+      end # If it ends in an end-bracket, and there's no corresponding start bracket, remove it
 
       chapter_text_extras = nil if chapter_text_extras.empty?
-
       [chapter_text, chapter_text_extras]
     end
+
     def chapter_from_toc(params = {})
-      params[:thread] = get_url_param(params[:url], "thread")
+      params[:thread] ||= get_url_param(params[:url], 'thread')
       params[:url] = standardize_chapter_url(params[:url])
       params.delete(:thread) unless params[:thread]
-      params.delete(:title_extras) if params.key?(:title_extras) and (params[:title_extras].nil? or params[:title_extras].empty?)
+      params.delete(:title_extras) if params[:title_extras].nil? || params[:title_extras].empty?
 
       persist_chapter_data(params)
       return GlowficEpub::Chapter.new(params)
@@ -174,13 +187,14 @@ module GlowficIndexHandlers
     def initialize(options = {})
       super(options)
     end
+
     def toc_to_chapterlist(options = {}, &block)
-      fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
+      fic_toc_url = options[:fic_toc_url]
 
       defaultCont = :"no continuity"
       chapter_list = {}
 
-      while not fic_toc_url.nil? and fic_toc_url != ""
+      while fic_toc_url.present?
         LOG.info "TOC Page: #{fic_toc_url}"
         fic_toc_data = get_page_data(fic_toc_url, replace: true)
         fic_toc = Nokogiri::HTML(fic_toc_data)
@@ -189,7 +203,6 @@ module GlowficIndexHandlers
         fic_toc_url = nil
         if (next_page_link)
           fic_toc_url = next_page_link.try(:[], :href).try(:strip)
-          #LOG.info "URL: #{fic_toc_url}"
         else
           LOG.info "No next page link"
         end
@@ -198,71 +211,64 @@ module GlowficIndexHandlers
         entries.each do |entry|
           entry_box = entry.parent
           entry_link = entry.at_css('a')
-          chapter_title = entry_link.try(:text)
-          chapter_title_extras = nil
-          chapter_url = entry_link.try(:[], :href)
-          next unless chapter_url
-          chapter_section = defaultCont
-          if (chapter_url.nil? or chapter_url.empty?)
-            next
-          end
 
-          chapter_url = standardize_chapter_url(chapter_url)
+          params = {}
+          params[:title] = entry_link.try(:text)
+          params[:title_extras] = nil
+          params[:url] = entry_link.try(:[], :href)
+          next if params[:url].nil? || params[:url].empty?
+
+          params[:url] = standardize_chapter_url(params[:url])
 
           chapter_tags = entry_box.css("div.tag ul li a")
           skip = false
           complete = false
           chapter_tags.each do |tag_link|
             tag_text = tag_link.text.strip
-            if tag_text.downcase[0..10] == "continuity:"
-              chapter_section = tag_text[12..-1].strip.to_sym
+            if tag_text.downcase.start_with?("continuity:")
+              params[:sections] = [tag_text[12..-1].strip.to_sym]
             end
-            if tag_text.downcase[0..4] == "meta:"
+            if tag_text.downcase.start_with?("meta:")
               skip = true
               break
             end
-            if tag_text.downcase[0..6] == "status:"
-              if tag_text[": complete"]
-                complete = true
-              end
+            if tag_text.downcase.start_with?("status:") && tag_text[": complete"]
+              complete = true
             end
           end
 
-          if skip
-            next
-          end
-          chapter_title_extras = "+" unless complete
+          next if skip
+          params[:marked_complete] = complete
 
-          chapter_sections = (chapter_section) ? [chapter_section] : []
-          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, title_extras: chapter_title_extras, sections: chapter_sections)
+          params[:sections] = [defaultCont] if params[:sections].first.empty?
+          chapter_details = chapter_from_toc(params)
           if block_given?
             yield chapter_details
           end
 
-          chapter_list[chapter_section] = [] unless chapter_list.key? chapter_section
-          chapter_list[chapter_section] << chapter_details
+          chapter_list[params[:sections].first] ||= []
+          chapter_list[params[:sections].first] << chapter_details
         end
       end
+
       continuities = chapter_list.keys.sort
       sorted_chapter_list = self.chapter_list
 
       continuities.each do |continuity|
-        next if (continuity == defaultCont or continuity.downcase == "oneshot")
+        next if (continuity == defaultCont || continuity.downcase == "oneshot")
         chapter_list[continuity].each do |chapter|
           sorted_chapter_list << chapter
         end
       end
 
-      if chapter_list.key?(defaultCont)
-        chapter_list[defaultCont].each do |chapter|
-          sorted_chapter_list << chapter
+      [defaultCont, 'oneshot'].each do |cont|
+        if chapter_list.key?(cont)
+          chapter_list[cont].each do |chapter|
+            sorted_chapter_list << chapter
+          end
         end
       end
-      if chapter_list.key?("oneshot")
-        chapter_list[defaultCont].each do |chapter|
-          sorted_chapter_list << chapter
-        end
-      end
+
       sorted_chapter_list
     end
   end
@@ -271,61 +277,69 @@ module GlowficIndexHandlers
     handles :effulgence, :pixiethreads, :incandescence, :radon, :silmaril
     def initialize(options = {})
       super(options)
-      @strip_li_end = (@group == :incandescence or @group == :silmaril)
-      @strip_li_end = options[:strip_li_end] if options.key?(:strip_li_end)
-      @silmaril_handling = :constellation # or :constellation, try not DDoS please thanks
+      @strip_li_end = (@group == :incandescence || @group == :silmaril)
+      @strip_li_end = options[:strip_li_end]
+      @silmaril_handling = :constellation
     end
+
     def get_chapters(section, section_list, index=1, &block)
       #puts "Find chapters in (#{section_list}): #{section.text}"
 
       chapters = section.css('> ol > li')
-      if chapters and not chapters.empty?
+      if chapters.present?
         chapters.each_with_index do |chapter, i|
           get_chapters(chapter, section_list, i, &block)
         end
+        return
+      end
+
+      chapter_link = section.at_css('> a')
+      if chapter_link
+        if @group == :silmaril && @silmaril_handling == :constellation
+          links = section.css('> a')
+          chapter_link = links.detect { |link| link[:href]["vast-journey-9935.herokuapp.com/posts/"] || link[:href]["glowfic.com/posts/"] } || chapter_link if links.length > 1
+        end
+        chapter_links = [chapter_link]
       else
-        chapter_link = section.at_css('> a')
-        if chapter_link
-          if @group == :silmaril && @silmaril_handling == :constellation
-            links = section.css('> a')
-            chapter_link = links.detect{|link| link[:href]["vast-journey-9935.herokuapp.com/posts/"] || link[:href]["glowfic.com/posts/"]} || chapter_link if links.length > 1
-          end
-          chapter_links = [chapter_link]
-        else
-          sublist = section.at_css('> ul')
-          return unless sublist.present?
-          chapter_links = sublist.css("> li a")
-          return unless chapter_links.present?
-          subsection_text = ""
-          curr_element = sublist.previous
-          while curr_element
-            subsection_text = curr_element.text + subsection_text
-            curr_element = curr_element.previous
-          end
-          subsection_text.strip!
-          subsection_text = index.to_s if subsection_text.empty?
-          section_list = section_list + [subsection_text]
+        sublist = section.at_css('> ul')
+        return unless sublist.present?
+        chapter_links = sublist.css("> li a")
+        return unless chapter_links.present?
+
+        subsection_text = ""
+        curr_element = sublist.previous
+        while curr_element
+          subsection_text = curr_element.text + subsection_text
+          curr_element = curr_element.previous
         end
 
-        chapter_links.each do |chapter_link|
-          next if chapter_link.text.strip["constellation import"] && @group == :silmaril && @silmaril_handling == :not_constellation
-          chapter_text = get_text_on_line(chapter_link, after: false).strip
-          chapter_text_extras = get_text_on_line(chapter_link, include_node: false, before: false).strip
-          chapter_text_extras = chapter_text_extras.gsub(/\(?constellation import\)?/, '').strip if @group == :silmaril && @silmaril_handling == :not_constellation
-          open_count = chapter_text.scan("(").count - chapter_text.scan(")").count
-          if open_count > 0 and chapter_text_extras.start_with?(")")
-            chapter_text += ")"
-            chapter_text_extras = chapter_text_extras[1..-1]
-          end
-          chapter_text_extras = nil if chapter_text_extras.empty?
-          chapter_url = chapter_link.try(:[], :href)
-          next unless chapter_url
-          chapter_url = chapter_url.sub('glowfic.herokuapp.com', 'glowfic.com') if chapter_url['glowfic.herokuapp.com']
+        subsection_text.strip!
+        subsection_text = index.to_s if subsection_text.empty?
+        section_list = section_list + [subsection_text]
+      end
 
-          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list)
-          if block_given?
-            yield chapter_details
-          end
+      chapter_links.each do |chapter_link|
+        next if @group == :silmaril && @silmaril_handling != :constellation && chapter_link.text.strip["constellation import"]
+
+        params = {}
+        params[:title] = get_text_on_line(chapter_link, after: false).strip
+        params[:title_extras] = get_text_on_line(chapter_link, include_node: false, before: false).strip
+
+        params[:title_extras] = params[:title_extras].gsub(/\(?constellation import\)?/, '').strip if @group == :silmaril && @silmaril_handling != :constellation
+
+        open_count = params[:title].scan("(").count - params[:title].scan(")").count
+        if open_count > 0 && params[:title_extras].start_with?(")")
+          params[:title] += ")"
+          params[:title_extras] = params[:title_extras][1..-1]
+        end
+        params[:url] = chapter_link.try(:[], :href)
+        next unless params[:url]
+
+        params[:sections] = section_list
+        chapter_details = chapter_from_toc(params)
+
+        if block_given?
+          yield chapter_details
         end
       end
     end
@@ -336,7 +350,7 @@ module GlowficIndexHandlers
         i = i.next
         sublist = section.at_css('> ol')
         if sublist
-          subsection_text = ""
+          subsection_text = ''
           curr_element = sublist.previous
           while curr_element
             subsection_text = curr_element.text + subsection_text
@@ -351,15 +365,15 @@ module GlowficIndexHandlers
       end
     end
     def toc_to_chapterlist(options={}, &block)
-      fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
+      fic_toc_url = options[:fic_toc_url]
 
       LOG.info "TOC Page: #{fic_toc_url}"
       fic_toc_data = get_page_data(fic_toc_url, replace: true)
-      fic_toc_data = fic_toc_data.gsub("</li>", "") if @strip_li_end
+      fic_toc_data = fic_toc_data.gsub('</li>', '') if @strip_li_end
       fic_toc = Nokogiri::HTML(fic_toc_data)
 
-      entry = fic_toc.at_css(".entry-content")
-      return nil unless entry
+      entry = fic_toc.at_css('.entry-content')
+      return unless entry
 
       previous_sections = []
       each_section(entry, []) do |section, section_list, section_index|
@@ -367,7 +381,7 @@ module GlowficIndexHandlers
           chapter_list << chapter_details
           sections = chapter_details.sections
           sections.each_with_index do |section, i|
-            if previous_sections.length <= i or previous_sections[i] != section
+            if previous_sections.length <= i || previous_sections[i] != section
               LOG.info "- Section (depth #{i+1}): #{section}"
             end
           end
@@ -388,14 +402,14 @@ module GlowficIndexHandlers
       super(options)
     end
     def toc_to_chapterlist(options = {}, &block)
-      fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
+      fic_toc_url = options[:fic_toc_url]
 
       LOG.info "TOC Page: #{fic_toc_url}"
       fic_toc_data = get_page_data(fic_toc_url, replace: true)
       fic_toc = Nokogiri::HTML(fic_toc_data)
 
-      entry = fic_toc.at_css(".entry-content")
-      return nil unless entry
+      entry = fic_toc.at_css('.entry-content')
+      return unless entry
 
       potential_headings = entry.css('b')
       uber_headings = []
@@ -408,7 +422,6 @@ module GlowficIndexHandlers
           break unless test_node
           next unless test_node.text?
           is_heading = test_node.text[/\-{3,}/]
-          is_heading = !!is_heading
         end
         next unless is_heading
 
@@ -419,7 +432,6 @@ module GlowficIndexHandlers
           break unless test_node
           next unless test_node.text?
           is_heading = test_node.text[/\-{3,}/]
-          is_heading = !!is_heading
         end
         uber_headings << node if is_heading
       end
@@ -455,26 +467,26 @@ module GlowficIndexHandlers
         heading_text = nil
         superheading_text = nil
         prev_element = top_level.previous
-        while prev_element and superheading.nil?
-          heading = prev_element if headings.include?(prev_element) and heading.nil?
+        while prev_element && superheading.nil?
+          heading = prev_element if headings.include?(prev_element) && heading.nil?
           superheading = prev_element if uber_headings.include?(prev_element)
           prev_element = prev_element.previous
         end
 
         in_li = false
-        if link.parent.name == "li" and heading.nil?
+        if link.parent.name == "li" && heading.nil?
           parent = link.parent
           in_li = true
-          while parent and parent != entry and parent.name != "ol" and parent.name != "ul"
+          while parent && parent != entry && parent.name != "ol" && parent.name != "ul"
             parent = parent.parent
           end
-          if parent and parent != entry
+          if parent && parent != entry
             list = parent
             previous = list.previous
-            while previous and previous.name != "i" and previous != superheading
+            while previous && previous.name != "i" && previous != superheading
               previous = previous.previous
             end
-            if previous and previous != superheading
+            if previous && previous != superheading
               heading_text = get_text_on_line(previous).strip
             end
           end
@@ -485,12 +497,13 @@ module GlowficIndexHandlers
         superheading_text = get_text_on_line(superheading).strip
         heading_text = get_text_on_line(heading).strip if heading
 
-        if superheading_text != prev_superheading
+        unless superheading_text == prev_superheading
           prev_heading = nil
           prev_superheading = superheading_text
           puts "Superheading: #{superheading_text}"
         end
-        if heading_text and heading_text != prev_heading
+
+        if heading_text && heading_text != prev_heading
           prev_heading = heading_text
           puts "Heading: #{heading_text}"
         end
@@ -501,7 +514,7 @@ module GlowficIndexHandlers
         next unless chapter_url
 
         section_list = [superheading_text, heading_text]
-        section_list.reject! {|thing| thing.nil? }
+        section_list.compact!
 
         chapter_details = chapter_from_toc(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list)
         if block_given?
@@ -520,40 +533,40 @@ module GlowficIndexHandlers
     attr_reader :entry
     def initialize(options = {})
       super(options)
-      @heading_selects = ["b, strong", "u", "em, i"]
+      @heading_selects = ['b, strong', 'u', 'em, i']
       if group == :maggie
-        @heading_selects[0] = "u"
-        @heading_selects[1] = "b, strong"
+        @heading_selects[0] = 'u'
+        @heading_selects[1] = 'b, strong'
       elsif group == :throne
-        @heading_selects = ["h4", "h5"]
+        @heading_selects = ['h4', 'h5']
       end
     end
     def get_heading_encapsule(node)
       text = get_text_on_line(node).strip
       node_text = node.text.strip
-      return if not text or not node_text or text.empty? or node_text.empty? or text.index(node_text) > 0
+      return unless text.present? && node_text.present? && text.start_with?(node_text)
 
       parenter = node
-      while parenter and parenter != @entry and parenter.name != "li"
+      while parenter && parenter != @entry && parenter.name != "li"
         parenter = parenter.parent
       end
       return unless parenter == @entry
 
       encapsule = node
-      while encapsule and encapsule.parent and encapsule.parent.text == encapsule.text and encapsule.parent != @entry
+      while encapsule && encapsule.parent && encapsule.parent.text == encapsule.text && encapsule.parent != @entry
         encapsule = encapsule.parent
       end
-      return (encapsule or node)
+      return encapsule || node
     end
     def toc_to_chapterlist(options = {}, &block)
-      fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
+      fic_toc_url = options[:fic_toc_url]
 
       LOG.info "TOC Page: #{fic_toc_url}"
       fic_toc_data = get_page_data(fic_toc_url, replace: true)
       fic_toc = Nokogiri::HTML(fic_toc_data)
 
       @entry = fic_toc.at_css(".entry-content")
-      return nil unless entry
+      return unless entry
 
       links = entry.css('a')
       #Bold, underlined, italics
@@ -595,8 +608,8 @@ module GlowficIndexHandlers
         heading = []
         heading_text = []
         prev_element = top_level.previous
-        if (not heading_levels.empty?)
-          while prev_element and (heading.empty? or heading[0].nil?)
+        unless heading_levels.empty?
+          while prev_element && (heading.empty? || heading[0].nil?)
             (heading_levels.length-1).downto(0).each do |i|
               supers_nil = true
               (i).downto(0).each do |y|
@@ -605,20 +618,20 @@ module GlowficIndexHandlers
                   break
                 end
               end
-              heading[i] = prev_element if supers_nil and heading_levels[i].include?(prev_element)
+              heading[i] = prev_element if supers_nil && heading_levels[i].include?(prev_element)
             end
             prev_element = prev_element.previous
           end
         end
 
-        next if (heading.empty? or heading[0].nil?) and not heading_levels.empty?
+        next if (heading.empty? || heading[0].nil?) && !heading_levels.empty?
 
         heading.each_with_index do |node, i|
           heading_text[i] = get_text_on_line(node).strip if node
         end
 
         heading_text.each_with_index do |text, i|
-          if text != prev_headings[i]
+          unless text == prev_headings[i]
             (i).upto(heading_text.length-1).each do |y|
               prev_headings[y] = nil
             end
@@ -633,7 +646,7 @@ module GlowficIndexHandlers
         next unless chapter_url
 
         section_list = heading_text
-        section_list.reject! {|thing| thing.nil? }
+        section_list.compact!
 
         chapter_details = chapter_from_toc(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list)
         if block_given?
@@ -654,12 +667,12 @@ module GlowficIndexHandlers
     end
 
     def fix_url_folder(url)
-      url.sub(/(users|boards|galleries|characters)\/(\d+)(\?|$)/, '\1/\2/\3')
+      url.sub(/(users|boards|galleries|characters)\/(\d+)(\?|#|$)/, '\1/\2/\3')
     end
     def get_absolute_url(url_path, current_url)
-      if url_path.start_with?("/")
+      if url_path.start_with?('/')
         url_path = "https://glowfic.com" + url_path
-      elsif not url_path.start_with?("http://") and not url_path.start_with?("https://")
+      elsif !url_path.start_with?("http://") && !url_path.start_with?("https://")
         url_path = File.join((current_url.split("/")[0..-2]) * '/', url_path)
       end
       url_path = fix_url_folder(url_path)
@@ -667,7 +680,7 @@ module GlowficIndexHandlers
     end
 
     def board_to_block(options = {}, &block)
-      board_url = options[:board_url] if options.key?(:board_url)
+      board_url = options[:board_url]
       board_url = fix_url_folder(board_url)
       LOG.info "TOC Page: #{board_url}"
 
@@ -678,7 +691,7 @@ module GlowficIndexHandlers
       board_sections = content.css('tbody tr th')
 
       board_title_ele = content.at_css('tr th')
-      board_title_ele.at_css("a").try(:remove)
+      board_title_ele.at_css('a').try(:remove)
       board_name = board_title_ele.text.strip
 
       pages = board_toc.at_css('.pagination')
@@ -701,25 +714,28 @@ module GlowficIndexHandlers
         chapters = board_body.css('tr')
         chapters = chapters.reverse unless board_sections
         chapters.each do |chapter_row|
-          thead = chapter_row.at_css('th')
-          next if thead and not thead.try(:[], :colspan)
+          th = chapter_row.at_css('th')
+          next if th && !th.try(:[], :colspan)
           chapter_sections = [board_name] if chapter_row.at_css('td.continuity-spacer')
           next if chapter_row[:colspan]
           next if chapter_row.at_css('td').try(:[], :colspan)
 
           no_post = chapter_row.at_css('.centered.padding-10')
-          next if no_post and no_post.text["No posts"]
+          next if no_post && no_post.text['No posts']
 
-          if thead
-            section_name = thead.at_css('a').try(:text).try(:strip)
-            chapter_sections = [board_name, section_name] if section_name
-            LOG.error "couldn't get section name for thead #{thead}" unless section_name
+          if th
+            section_name = th.at_css('a').try(:text).try(:strip)
+            if section_name
+              chapter_sections = [board_name, section_name]
+            else
+              LOG.error "couldn't get section name for th #{th}"
+            end
             next
           end
 
           chapter_link = chapter_row.at_css('td a')
           chapter_title = chapter_link.text.strip
-          chapter_url = get_absolute_url(chapter_link["href"], board_url)
+          chapter_url = get_absolute_url(chapter_link['href'], board_url)
 
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
 
@@ -735,7 +751,7 @@ module GlowficIndexHandlers
     end
 
     def userlist_to_block(options = {}, &block)
-      user_url = options[:user_url] if options.key?(:user_url)
+      user_url = options[:user_url]
       user_url = fix_url_folder(user_url)
       LOG.info "TOC Page: #{user_url}"
       user_toc_data = get_page_data(user_url, replace: true, headers: {"Accept" => "text/html"})
@@ -756,26 +772,28 @@ module GlowficIndexHandlers
         puts "URL: #{previous_url}"
         user_toc_data = get_page_data(previous_url, replace: (previous_url != user_url), headers: {"Accept" => "text/html"})
         user_toc = Nokogiri::HTML(user_toc_data)
-        user_posts_header = user_toc.css('th[colspan]').select{|bit| bit.text['Recent Posts']}
-        LOG.warn "Many 'recent post' headers!" if user_posts_header.length > 1
-        if user_posts_header.length < 1
+        user_posts_header = user_toc.css('th[colspan]').select { |bit| bit.text['Recent Posts'] }
+
+        if user_posts_header.empty?
           LOG.error "No 'recent post' headers for user!"
           return
+        elsif user_posts_header.length > 1
+          LOG.warn "Many 'recent post' headers!"
         end
         user_body = user_posts_header.first.ancestors('table').first.at_css('tbody')
 
         chapters = user_body.css('tr')
         chapters = chapters.reverse
         chapters.each do |chapter_row|
-          thead = chapter_row.at_css('th')
-          next if thead
+          th = chapter_row.at_css('th')
+          next if th
 
           no_post = chapter_row.at_css('.centered.padding-10')
-          next if no_post and no_post.text["No posts"]
+          next if no_post && no_post.text['No posts']
 
           chapter_link = chapter_row.at_css('td a')
           chapter_title = chapter_link.text.strip
-          chapter_url = get_absolute_url(chapter_link["href"], user_url)
+          chapter_url = get_absolute_url(chapter_link[:href], user_url)
           chapter_sections = chapter_row.at_css('.post-board').try(:text).try(:strip)
 
           next if @group == :lintamande && chapter_sections == 'Silmaril'
@@ -792,11 +810,11 @@ module GlowficIndexHandlers
     end
 
     def toc_to_chapterlist(options = {}, &block)
-      fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
+      fic_toc_url = options[:fic_toc_url]
       fic_toc_url = fix_url_folder(fic_toc_url)
       ignore_sections = options[:ignore_sections] || []
 
-      if fic_toc_url.end_with?("/boards/")
+      if fic_toc_url.end_with?('/boards/')
         LOG.info "TOC Page: #{fic_toc_url}"
         fic_toc_data = get_page_data(fic_toc_url, replace: true)
         fic_toc = Nokogiri::HTML(fic_toc_data)
@@ -807,7 +825,7 @@ module GlowficIndexHandlers
 
           board_link = board.at_css('a')
           board_name = board_link.text.strip
-          next if board_name == "Site testing" or board_name == "Effulgence" or board_name == "Witchlight" or board_name == "Lighthouse" or board_name == "Opalescence" or board_name == "Silmaril" or board_name == "Zodiac" or board_name == "Rapid Nova"
+          next if ['Site testing', 'Effulgence', 'Witchlight', 'Lighthouse', 'Opalescence', 'Silmaril', 'Zodiac', 'Rapid Nova'].include?(board_name)
           next if ignore_sections.include?(board_name)
           board_url = get_absolute_url(board_link["href"], fic_toc_url)
 
@@ -845,7 +863,7 @@ module GlowficIndexHandlers
           end
         end
       else
-        raise(ArgumentException, "Chapter URL is not /boards or /boards/:id or /users/:id – failed")
+        raise(ArgumentException, "URL is not an accepted format – failed")
       end
       chapter_list
     end
@@ -886,7 +904,7 @@ module GlowficIndexHandlers
           end
         end
       elsif @group == :mwf_leaf || @group == :mwf_lioncourt
-        fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
+        fic_toc_url = options[:fic_toc_url]
 
         LOG.info "TOC Page: #{fic_toc_url}"
         fic_toc_data = get_page_data(fic_toc_url, replace: true)
@@ -962,40 +980,40 @@ module GlowficIndexHandlers
   end
 
   ##
-  #class HandlerTemplate < IndexHandler
-  #  def initialize(options = {})
-  #    super(options)
-  #  end
-  #  def toc_to_chapterlist(options = {}, &block)
-  #    fic_toc_url = options[:fic_toc_url] if options.key?(:fic_toc_url)
+  # class HandlerTemplate < IndexHandler
+  #   def initialize(options = {})
+  #     super(options)
+  #   end
   #
-  #    LOG.info "TOC Page: #{fic_toc_url}"
-  #    fic_toc_data = get_page_data(fic_toc_url, replace: true)
-  #    fic_toc = Nokogiri::HTML(fic_toc_data)
+  #   # chapter_list is initialized when used
   #
-  #    entry = fic_toc.at_css(".entry-content")
-  #    return nil unless entry
+  #   def toc_to_chapterlist(options = {}, &block)
+  #     fic_toc_url = options[:fic_toc_url]
   #
-  #    chapter_link = entry.at_css('a')
-  #    return unless chapter_link
-  #    chapter_text = get_text_on_line(chapter_link).strip
-  #    chapter_url = chapter_link.try(:[], :href)
-  #    #next unless chapter_url
-  #    chapter_thread = get_url_param(chapter_url, "thread")
-  #    chapter_thread = nil unless chapter_thread
+  #     LOG.info "TOC Page: #{fic_toc_url}"
+  #     fic_toc_data = get_page_data(fic_toc_url, replace: true)
+  #     fic_toc = Nokogiri::HTML(fic_toc_data)
   #
-  #    chapter_url = standardize_chapter_url(chapter_url)
+  #     ### Gather information from the page to generate appropriate chapter details
+  #     ### e.g.
+  #     entry = fic_toc.at_css('.entry-content')
+  #     return unless entry
   #
-  #    section_list = ["no section"]
+  #     chapter_link = entry.at_css('a')
+  #     chapter_url = chapter_link.try(:[], :href)
+  #     chapter_title = get_text_on_line(chapter_link).strip
+  #     return unless chapter_url
   #
-  #    chapter_details = GlowficEpub::Chapter.new(url: chapter_url, title: chapter_text, sections: section_list)
-  #    if block_given?
-  #      yield chapter_details
-  #    end
+  #     section_list = ["no section"]
   #
-  #    chapter_list << chapter_details
+  #     chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: section_list)
   #
-  #    chapter_list
-  #  end
-  #end
+  #     if block_given?
+  #       yield chapter_details
+  #     end
+  #
+  #     chapter_list << chapter_details
+  #     chapter_list
+  #   end
+  # end
 end
