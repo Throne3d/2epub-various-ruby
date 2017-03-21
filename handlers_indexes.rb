@@ -242,9 +242,7 @@ module GlowficIndexHandlers
           params[:marked_complete] = complete
           params[:sections] ||= [defaultCont]
           chapter_details = chapter_from_toc(params)
-          if block_given?
-            yield chapter_details
-          end
+          yield chapter_details if block_given?
 
           chapter_list[params[:sections].first] ||= []
           chapter_list[params[:sections].first] << chapter_details
@@ -338,9 +336,7 @@ module GlowficIndexHandlers
         params[:sections] = section_list
         chapter_details = chapter_from_toc(params)
 
-        if block_given?
-          yield chapter_details
-        end
+        yield chapter_details if block_given?
       end
     end
     def each_section(node, section_list, &block)
@@ -386,9 +382,7 @@ module GlowficIndexHandlers
             end
           end
           previous_sections = sections
-          if block_given?
-            yield chapter_details
-          end
+          yield chapter_details if block_given?
         end
       end
 
@@ -517,9 +511,7 @@ module GlowficIndexHandlers
         section_list.compact!
 
         chapter_details = chapter_from_toc(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list)
-        if block_given?
-          yield chapter_details
-        end
+        yield chapter_details if block_given?
 
         chapter_list << chapter_details
       end
@@ -649,9 +641,7 @@ module GlowficIndexHandlers
         section_list.compact!
 
         chapter_details = chapter_from_toc(url: chapter_url, title: chapter_text, title_extras: chapter_text_extras, sections: section_list)
-        if block_given?
-          yield chapter_details
-        end
+        yield chapter_details if block_given?
 
         chapter_list << chapter_details
       end
@@ -739,9 +729,7 @@ module GlowficIndexHandlers
 
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
 
-          if block_given?
-            yield chapter_details
-          end
+          yield chapter_details if block_given?
         end
 
         temp_url = previous_url
@@ -798,9 +786,7 @@ module GlowficIndexHandlers
 
           next if @group == :lintamande && chapter_sections == 'Silmaril'
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
-          if block_given?
-            yield chapter_details
-          end
+          yield chapter_details if block_given?
         end
 
         temp_url = previous_url
@@ -831,17 +817,13 @@ module GlowficIndexHandlers
 
           board_to_block(board_url: board_url) do |chapter_details|
             chapter_list << chapter_details
-            if block_given?
-              yield chapter_details
-            end
+            yield chapter_details if block_given?
           end
         end
       elsif fic_toc_url[/\/boards\/\d+/]
         board_to_block(board_url: fic_toc_url) do |chapter_details|
           chapter_list << chapter_details
-          if block_given?
-            yield chapter_details
-          end
+          yield chapter_details if block_given?
         end
       elsif fic_toc_url[/\/users\/\d+/]
         chapter_list.sort_chapters = true
@@ -858,9 +840,7 @@ module GlowficIndexHandlers
 
           chapter_details.sections = nil # Clear sections so it'll get the sections in the handlers_sites thing.
           chapter_list << chapter_details
-          if block_given?
-            yield chapter_details
-          end
+          yield chapter_details if block_given?
         end
       else
         raise(ArgumentException, "URL is not an accepted format – failed")
@@ -958,9 +938,7 @@ module GlowficIndexHandlers
         chapter_list.sort_chapters = true
         chapter_list.get_sections = true
         const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group], ignore_sections: ['Silmaril']) do |chapter|
-          if block_given?
-            yield chapter
-          end
+          yield chapter if block_given?
         end
         const_chapters.each do |chapter|
           chapter_list << chapter
@@ -969,9 +947,7 @@ module GlowficIndexHandlers
 
       list.each do |item|
         chapter_details = chapter_from_toc(item)
-        if block_given?
-          yield chapter_details
-        end
+        yield chapter_details if block_given?
         chapter_list << chapter_details
       end
 
@@ -1008,9 +984,7 @@ module GlowficIndexHandlers
   #
   #     chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: section_list)
   #
-  #     if block_given?
-  #       yield chapter_details
-  #     end
+  #     yield chapter_details if block_given?
   #
   #     chapter_list << chapter_details
   #     chapter_list
