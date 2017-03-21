@@ -52,6 +52,11 @@ module GlowficIndexHandlers
       title_extras: "[b][color=#960018]Rachel[/color][/b] and [b][color=#FF5C5C]Sadde[/color][/b] in the [b][color=#FF5C5C]City of Angles[/color][/b]",
       report_flags: "960018#682860 FF5C5C#FFB25C"
       },
+      {title: "The Origin and Misadventures of the Avian Twins",
+      url: "https://glowfic.com/posts/489",
+      title_extras: "Tabby and Zeke in [b][color=#000000]Rockeye's new world[/color][/b]",
+      report_flags: "000000"
+      },
     ],
     temp_starlight:
     [
