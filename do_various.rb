@@ -270,15 +270,19 @@ def main(*args)
     set_chapters_data(chapter_list, group)
     clear_old_data
     return chapter_list
-  elsif (process == :get || process == :qget)
+  elsif (process == :get || process == :qget || process == :process || process == :qprocess || process == :report)
     chapter_list ||= get_chapters_data(group)
     (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
-    LOG.info "Getting '#{group}'"
+
+    process_type = (process == :get || process == :qget) ? :get : :process
+    process_save = (process == :qget || process == :qprocess || process == :report) ? :quick : :normal
+
+    LOG.info "#{(process_type == :get) ? 'Getting' : 'Processing'} '#{group}'" + (process == :report ? ' (daily report)' : '')
     LOG.info "Chapter count: #{chapter_list.length}"
 
-    unhandled_chapters = []
     instance_handlers = {}
-    chapter_count = chapter_list.count
+    chapter_count = chapter_list.length
+    unhandled_chapters = []
     has_changed = false
     diff = true
     begin
@@ -292,76 +296,41 @@ def main(*args)
           next
         end
 
-        instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
+        instance_handlers[site_handler] ||= site_handler.new(group: group, chapters: chapter_list)
         handler = instance_handlers[site_handler]
 
-        diff = false
-        handler.get_updated(chapter, notify: true) do |msg|
-          LOG.info "(#{i+1}/#{chapter_count}) " + msg
-          diff = msg.start_with?('New') || msg.start_with?('Updated')
+        if process_type == :process
+          if chapter.pages.blank?
+            LOG.error "No pages for #{chapter.title}!"
+            next
+          end
+
+          diff = true
+          only_attrs = (process == :report ? [:time, :edittime] : nil)
+          handler.get_replies(chapter, notify: true, only_attrs: only_attrs) do |msg|
+            LOG.info "(#{i+1}/#{chapter_count}) " + msg
+            diff = false if msg[": unchanged, cached"]
+          end
+        else
+          diff = false
+          handler.get_updated(chapter, notify: true) do |msg|
+            LOG.info "(#{i+1}/#{chapter_count}) " + msg
+            diff = msg.start_with?('New') || msg.start_with?('Updated')
+          end
         end
+
         has_changed = true if diff
 
-        set_chapters_data(chapter_list, group) if diff && process != :qget
+        set_chapters_data(chapter_list, group) if diff && process_save == :quick
       end
     rescue StandardError, Interrupt => e
-      if process == :qget && has_changed
+      if process_save == :quick && has_changed
         puts "Encountered an error. Saving changed data then re-raising."
         set_chapters_data(chapter_list, group)
       end
       raise e
     end
-    set_chapters_data(chapter_list, group) if process == :qget || !diff
-    return chapter_list
-  elsif (process == :process || process == :qprocess || process == :report)
-    chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
-    LOG.info "Processing '#{group}'" + (process == :report ? " (daily report)" : "")
-    LOG.info "Chapter count: #{chapter_list.length}"
-
-    site_handlers = GlowficSiteHandlers.constants.map {|c| GlowficSiteHandlers.const_get(c) }
-    site_handlers.select! {|c| c.is_a? Class && c < GlowficSiteHandlers::SiteHandler }
-
-    instance_handlers = {}
-    chapter_count = chapter_list.count
-    begin
-      chapter_list.each_with_index do |chapter, i|
-        diff = true
-        site_handler = site_handlers.select {|c| c.handles? chapter}
-
-        if site_handler.nil? || site_handler.length != 1
-          LOG.error "ERROR: No site handler for #{chapter.title}!" if site_handler.nil? || site_handler.empty?
-          LOG.error "ERROR: Too many site handlers for #{chapter.title}! [#{group_handler * ', '}]" if site_handler.length > 1
-          next
-        end
-
-        if chapter.pages.nil? || chapter.pages.empty?
-          LOG.error "No pages for #{chapter.title}!"
-          next
-        end
-
-        site_handler = site_handler.first
-        instance_handlers[site_handler] = site_handler.new(group: group, chapters: chapter_list) unless instance_handlers.key?(site_handler)
-        handler = instance_handlers[site_handler]
-
-        only_attrs = (process == :report ? [:time, :edittime] : nil)
-
-        diff = true
-        handler.get_replies(chapter, notify: true, only_attrs: only_attrs) do |msg|
-          LOG.info "(#{i+1}/#{chapter_count}) " + msg
-          diff = false if msg[": unchanged, cached"]
-        end
-
-        set_chapters_data(chapter_list, group) if diff && process != :report && process != :qprocess
-      end
-    rescue StandardError, Interrupt => e
-      if process == :report || process == :qprocess
-        puts "Encountered an error. Saving changed data then re-raising."
-        set_chapters_data(chapter_list, group)
-      end
-      raise e
-    end
-    set_chapters_data(chapter_list, group) if process == :report || process == :qprocess || !diff
+    set_chapters_data(chapter_list, group) if process_save == :quick || !diff
     return chapter_list
   elsif (process == :output_epub || process == :output_html)
     chapter_list ||= get_chapters_data(group)
