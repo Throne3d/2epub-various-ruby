@@ -48,11 +48,12 @@
       @message_attributes = message_attributes
     end
     def already_processed(chapter, options = {})
-      return false unless chapter.processed.try(:is_a?, Array) && chapter.processed.contains_all?(message_attributes(options))
+      message_attributes(options)
+      return unless chapter.processed.try(:is_a?, Array) && chapter.processed.contains_all?(message_attributes)
 
       if chapter.replies.empty?
         LOG.error "#{chapter.title}: cached data contains no replies; not using"
-        return false
+        return
       end
 
       msg_str = "#{chapter.title}: unchanged, cached data used"
