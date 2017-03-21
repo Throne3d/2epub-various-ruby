@@ -48,11 +48,12 @@
       @message_attributes = message_attributes
     end
     def already_processed(chapter, options = {})
-      return false unless chapter.processed.try(:is_a?, Array) && chapter.processed.contains_all?(message_attributes(options))
+      message_attributes(options)
+      return unless chapter.processed.try(:is_a?, Array) && chapter.processed.contains_all?(message_attributes)
 
       if chapter.replies.empty?
         LOG.error "#{chapter.title}: cached data contains no replies; not using"
-        return false
+        return
       end
 
       msg_str = "#{chapter.title}: unchanged, cached data used"
@@ -241,8 +242,8 @@
 
         upper_comment = prev_chain.first
         @cont = false
-        comm_link = get_comment_link(upper_comment) do |partial, full, comm_link|
-          unless comm_link
+        comm_link = get_comment_link(upper_comment) do |partial, full, c_link|
+          unless c_link
             LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
             @cont = true
           end
