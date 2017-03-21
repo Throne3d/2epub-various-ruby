@@ -188,7 +188,8 @@
           var_sym = var_str.to_sym
         end
         next if var_str == 'dirty' || var_str == 'old_hash' || var_str == 'skip_list'
-        hash[var_sym] = self.instance_variable_get(var) unless serialize_ignore?(var_sym)
+        next if serialize_ignore?(var_sym)
+        hash[var_sym] = self.instance_variable_get(var)
       end
       hash
     end
@@ -199,7 +200,6 @@
 
     def from_json! string
       json_hash = json_hash_from_arg(string)
-
       json_hash.each do |var, val|
         var = var.to_s unless var.is_a?(String)
         self.instance_variable_set('@'+var, val)
