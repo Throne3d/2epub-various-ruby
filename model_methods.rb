@@ -161,25 +161,16 @@
   FIC_AUTHORSTRINGS.default = "Unknown"
 
   FIC_NAMESTRINGS = {
-    effulgence: "Effulgence",
-    incandescence: "Incandescence",
-    pixiethreads: "Pixiethreads",
     radon: "Radon Absinthe",
-    opalescence: "Opalescence",
-    zodiac: "Zodiac",
-    silmaril: "Silmaril",
-    lighthouse: "Lighthouse",
     rapid_nova: "Rapid Nova",
 
     glowfic: "Glowfic Community",
-    constellation: "Constellation",
 
     mwf_leaf: "Leafy Glowfic",
     mwf_lioncourt: "Lioncourt Party",
 
     sandbox: "Alicorn's Sandboxes",
     marri: "Marri's Sandboxes",
-    peterverse: "Peterverse",
     maggie: "Maggie's Sandboxes",
     throne: "Throne3d's Sandboxes",
     lintamande: "Lintamande's Sandboxes",
@@ -474,7 +465,7 @@
     chapters.each do |chapter|
       prev_detail[chapter.url] = chapter.try(detail)
     end
-    prev_detail.select! {|key, value| value.present?} if only_present
+    prev_detail.select! {|_key, value| value.present?} if only_present
     prev_detail
   end
   def get_prev_chapter_details(group, others={})
