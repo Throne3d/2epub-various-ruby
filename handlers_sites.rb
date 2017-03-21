@@ -17,7 +17,7 @@
     include GlowficEpub
     attr_reader :group, :chapter_list
 
-    def self.handles?(chapter); false; end
+    def self.handles?(_chapter); false; end
 
     def initialize(options = {})
       @group = options[:group]
@@ -31,7 +31,7 @@
     end
 
     def handles?(chapter); self.class.handles?(chapter); end
-    def get_updated(chapter); nil; end
+    def get_updated(_chapter); nil; end
     def message_attributes(options = {})
       return @message_attributes unless options.present?
       only_attrs = options[:attributes] || options[:only] || options[:only_attrs]
@@ -242,7 +242,7 @@
 
         upper_comment = prev_chain.first
         @cont = false
-        comm_link = get_comment_link(upper_comment) do |partial, full, c_link|
+        comm_link = get_comment_link(upper_comment) do |_partial, _full, c_link|
           unless c_link
             LOG.error "Error: failed upper comment link (for depth #{comm_depth})"
             @cont = true
@@ -260,7 +260,7 @@
       comment_count
     end
 
-    def get_full(chapter, options = {})
+    def get_full(chapter, _options = {})
       if chapter.is_a?(GlowficEpub::Chapter)
         params = {style: :site}
         params[:thread] = chapter.thread if chapter.thread
@@ -433,12 +433,8 @@
       end
 
       page_count = (comment_count < 50) ? 1 : (comment_count / 25.0).ceil
-      msg_str = if @success
-        "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{page_count} page#{page_count != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})"
-      else
-        "ERROR: #{chapter.title}: #{@error}"
-      end
       if @success
+        msg_str = "#{is_new ? 'New:' : 'Updated:'} #{chapter.title}: #{page_count} page#{page_count != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})"
         if block_given?
           yield msg_str
         elsif notify
@@ -447,6 +443,7 @@
         return chapter
       end
 
+      msg_str = "ERROR: #{chapter.title}: #{@error}"
       LOG.error msg_str
       return chapter
     end
@@ -985,8 +982,7 @@
           return chapter
         end
 
-        is_new = false
-        chapter.pages = pages = [chapter.url]
+        chapter.pages = [chapter.url]
       end
 
       chapter.processed = false
@@ -1049,7 +1045,6 @@
 
       if character_id && @char_page_cache.key?(character_id)
         @char_page_cache[character_id][icon_id] = face
-        icon_id = face.unique_id.sub("#{character_id}#", '')
       end
       face
     end
@@ -1059,7 +1054,7 @@
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
 
       icon_id = face_id.split('#').last
-      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id) and face_id.split('#').first.strip.empty?
+      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id) && face_id.split('#').first.strip.empty?
       character_id = face_id.sub("##{icon_id}", '')
 
       if try_chapterface
@@ -1349,10 +1344,8 @@
       character_element = post_info_text.at_css('.post-character').try(:at_css, 'a')
       if character_element
         character_id = character_element["href"].split("characters/").last
-        character_name = character_element.text.strip
       else
         character_id = "user##{author_id}"
-        character_name = author_name
       end
 
       date_element = message_element.at_css('> .post-footer')

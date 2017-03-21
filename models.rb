@@ -175,7 +175,7 @@
       end
     end
 
-    def as_json_meta(_options={}) #, skip_list=[]
+    def as_json_meta(_options={})
       hash = {}
       self.instance_variables.each do |var|
         var_str = var.to_s
@@ -188,7 +188,6 @@
           var_sym = var_str.to_sym
         end
         next if var_str == 'dirty' || var_str == 'old_hash' || var_str == 'skip_list'
-        # TODO: implement skip_list when used
         hash[var_sym] = self.instance_variable_get(var) unless serialize_ignore?(var_sym)
       end
       hash
