@@ -227,16 +227,17 @@ def main(*args)
     chapter_list = main('tocs', group)
     chapter_list = main('get', group, chapter_list)
     chapter_list = main('process', group, chapter_list)
+    return chapter_list
   elsif (process == :epubdo)
     chapter_list = main('tocs', group)
     chapter_list = main('qget', group, chapter_list)
     chapter_list = main('qprocess', group, chapter_list)
-    main('output_epub', group, chapter_list)
+    return main('output_epub', group, chapter_list)
   elsif (process == :repdo)
     chapter_list = main('tocs', group)
     chapter_list = main('qget', group, chapter_list)
     chapter_list = main('report', group, chapter_list)
-    main('output_report', group, chapter_list)
+    return main('output_report', group, chapter_list)
   elsif (process == :trash)
     LOG.info "Trashing (oldifying) #{group}"
 
@@ -246,7 +247,9 @@ def main(*args)
     set_chapters_data(data, group)
     LOG.info "Done."
     return data
-  elsif (process == :tocs)
+  end
+
+  if (process == :tocs)
     chapter_list ||= GlowficEpub::Chapters.new(group: group)
 
     fic_toc_url = FIC_TOCS[group]
@@ -270,10 +273,12 @@ def main(*args)
     set_chapters_data(chapter_list, group)
     clear_old_data
     return chapter_list
-  elsif (process == :get || process == :qget || process == :process || process == :qprocess || process == :report)
-    chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
+  end
 
+  chapter_list ||= get_chapters_data(group)
+  (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
+
+  if (process == :get || process == :qget || process == :process || process == :qprocess || process == :report)
     process_type = (process == :get || process == :qget) ? :get : :process
     process_save = (process == :qget || process == :qprocess || process == :report) ? :quick : :normal
 
@@ -331,24 +336,22 @@ def main(*args)
       raise e
     end
     set_chapters_data(chapter_list, group) if process_save == :quick || !diff
-    return chapter_list
   elsif (process == :output_epub || process == :output_html)
-    chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
-    LOG.info "Outputting an EPUB for '#{group}'" if process == :output_epub
-    LOG.info "Outputting an HTML copy of '#{group}'" if process == :output_html
-    (LOG.fatal "Invalid output mode #{process}"; abort) unless process == :output_epub || process == :output_html
+    LOG.info "Outputting #{process == :output_epub ? 'an EPUB for' : 'an HTML copy of'} '#{group}'"
 
     no_split = option[/no[_\s\-]split/]
 
     handler = GlowficOutputHandlers::EpubHandler
-    mode = (process == :output_epub ? :epub : process == :output_html ? :html : :unknown)
+    mode = process.to_s.sub('output_','').to_sym
     params = {chapter_list: chapter_list, group: group, mode: mode}
     params[:no_split] = true if no_split
+
     handler = handler.new(params)
     changed = handler.output
     set_chapters_data(chapter_list, group) if changed
   elsif (process == :output_report)
+    LOG.info "Outputting a report for '#{group}'"
+
     params = {}
 
     if date_bit = option[/(\d+)((-|\s)?\d+)?{2}/]
@@ -366,39 +369,28 @@ def main(*args)
       option = option.sub(early_bit, '').strip
     end
 
-    chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
-    LOG.info "Outputting a report for '#{group}'"
-
     # TODO: "number" (number of posts in the past day) or whatever as an option
 
     handler = GlowficOutputHandlers::ReportHandler
     handler = handler.new(chapter_list: chapter_list, group: group)
     handler.output(params)
   elsif (process == :output_rails)
-    chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
     LOG.info "Outputting Rails stuff for '#{group}'"
 
     handler = GlowficOutputHandlers::RailsHandler
     handler = handler.new(chapter_list: chapter_list, group: group)
     handler.output
-  elsif (process == :test1)
-    chapter_list = get_chapters_data(group)
-  elsif (process == :test2)
-    chapter_list = get_chapters_data(group)
-    5.times { set_chapters_data(chapter_list, group) }
   elsif (process == :stats)
-    chapter_list ||= get_chapters_data(group)
-    (LOG.fatal "No chapters for #{group} - run TOC first"; abort) if chapter_list.nil? || chapter_list.empty?
     LOG.info "Doing stats for '#{group}'"
 
-    #replies by author, replies by character, icon uses
-    #total and per-month?
-    #maybe track per continuity thing on the constellation, too.
-    #things started by author
+    # list:
+    # replies by author, replies by character, icon uses
+    # total and per-month?
+    # maybe track per continuity thing on the constellation, too.
+    # things started by author
 
-    blank_hash = {entry_moiety: Hash.new(0), msg_moiety: Hash.new(0), msg_character: Hash.new(0), msg_icons: Hash.new(0), moiety_words: Hash.new(0), char_words: Hash.new(0), icons_words: Hash.new(0)}
+    blank_hash = Hash.new { Hash.new(0) }
+    # entry_moiety:, msg_moiety:, msg_character:, msg_icons:, moiety_words:, char_words:, icons_words:
     stats = {}
     stats[:_] = blank_hash.clone
 
@@ -414,17 +406,18 @@ def main(*args)
 
       msgs = [chapter.entry] + chapter.replies
       LOG.info "Processing chapter #{chapter}: #{msgs.length} message#{('s' unless msgs.length == 1)}"
+
       msgs.each do |msg|
         msg_date = msg.time
         msg_mo_str = "#{msg_date.year}-#{msg_date.month}"
 
-        stats[msg_mo_str] = blank_hash.clone unless stats[msg_mo_str]
+        stats[msg_mo_str] ||= blank_hash.clone
 
         msg_moiety = msg.author.moiety
         msg_char = msg.author.to_s
         msg_icon = msg.face.try(:to_s)
 
-        msg_text = msg.content.gsub(html_match, " ")
+        msg_text = msg.content.gsub(html_match, ' ')
         msg_wordcount = msg_text.scan(word_match).length
 
         if msg.post_type == PostType::ENTRY
@@ -452,9 +445,9 @@ def main(*args)
     end
 
     LOG.info stats.inspect
-  else
-    LOG.info "Not yet implemented."
   end
+
+  return chapter_list
 end
 
 if __FILE__ == $0
