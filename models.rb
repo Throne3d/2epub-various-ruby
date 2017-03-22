@@ -345,6 +345,19 @@
     def each(&block); chapters.each(&block); end
     def each_with_index(&block); chapters.each_with_index(&block); end
 
+    def as_json(options={})
+      hash = as_json_meta(options)
+      chapters = hash[:chapters]
+      chaptercount = chapters.length
+      hash[:chapters] = []
+      LOG.progress("Saving chapters for #{group}", 0, chaptercount)
+      chapters.each_with_index do |chapter, i|
+        hash[:chapters] << chapter.as_json(options)
+        LOG.progress("Saving chapters for #{group}", i+1, chaptercount)
+      end
+      LOG.progress("Generating JSON for and saving #{group}.")
+      hash
+    end
     def from_json! string
       json_hash = json_hash_from_arg(string)
 
@@ -378,12 +391,16 @@
       end
 
       @chapters = []
-      chapters.each do |chapter_hash|
+      chaptercount = chapters.length
+      LOG.progress("Loading chapters", 0, chaptercount)
+      chapters.each_with_index do |chapter_hash, i|
         chapter_hash['chapter_list'] = self
         chapter = Chapter.new(trash_messages: trash_messages)
         chapter.from_json! chapter_hash
         @chapters << chapter
+        LOG.progress("Loading chapters", i+1, chaptercount)
       end
+      LOG.progress("Loaded chapters.")
     end
   end
 

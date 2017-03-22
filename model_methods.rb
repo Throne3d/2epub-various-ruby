@@ -59,6 +59,18 @@
     CONSOLE.fatal(str)
     FILELOG.fatal(str)
   end
+  def LOG.progress(message=nil, progress=-1, count=-1)
+    # e.g. "Saving chapters", 0, 300
+    if progress < 0
+      # end the progress!
+      CONSOLE << "\n"
+      LOG.info(message)
+      return
+    end
+
+    perc = progress / count.to_f * 100
+    CONSOLE << CONSOLE.formatter.call(Logger::Severity::INFO, Time.now, CONSOLE.progname, "\r#{message}… [#{progress}/#{count}] #{perc.round}%").chomp if CONSOLE.info?
+  end
 
   COLLECTION_LIST_URL = 'https://raw.githubusercontent.com/Throne3d/databox/master/collection_pages.txt'
   MOIETY_LIST_URL = 'https://raw.githubusercontent.com/Throne3d/databox/master/moiety_list.json'
