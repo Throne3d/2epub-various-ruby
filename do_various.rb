@@ -281,7 +281,7 @@ def main(*args)
     process_type = (process == :get || process == :qget) ? :get : :process
     process_save = (process == :qget || process == :qprocess || process == :report) ? :quick : :normal
 
-    LOG.info "#{(process_type == :get) ? 'Getting' : 'Processing'} '#{group}'" + (process == :report ? ' (daily report)' : '')
+    LOG.info "#{(process_type == :get) ? 'Getting' : 'Processing'} '#{group}'" + (process == :report ? ' (daily report)' : '') + (process_save == :quick ? ' (quick)' : '')
     LOG.info "Chapter count: #{chapter_list.length}"
 
     instance_handlers = {}
@@ -325,7 +325,7 @@ def main(*args)
 
         has_changed = true if diff
 
-        set_chapters_data(chapter_list, group) if diff && process_save == :quick
+        set_chapters_data(chapter_list, group) if diff && process_save != :quick
       end
     rescue StandardError, Interrupt => e
       if process_save == :quick && has_changed
