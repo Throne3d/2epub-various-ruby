@@ -447,7 +447,7 @@
     def processed_output?(thing)
       processed_output.include?(thing.to_s)
     end
-    def processed_output(thing)
+    def processed_output(thing=nil)
       return processed_output?(thing) unless thing.nil?
       @processed_output ||= []
     end
