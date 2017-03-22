@@ -722,6 +722,8 @@
 
       today_time = DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0)
 
+      chaptercount = chapter_list.length
+      LOG.progress("Organizing chapters for report", 0, chaptercount)
       done = []
       upd_chapter_col = {}
       day_list = [1,2,3,4,5,6,7,-1]
@@ -754,6 +756,7 @@
             # skip if it's later than today
             @errors << "Updated more recently than specified day: #{chapter}"
             done << chapter
+            LOG.progress("Organizing chapters for report", done.length, chaptercount)
             next
           end
 
@@ -778,14 +781,17 @@
           if first_update
             upd_chapters << {chapter: chapter, first_update: first_update, last_update: last_update, latest_update: latest_update}
             done << chapter
+            LOG.progress("Organizing chapters for report", done.length, chaptercount)
           elsif days_ago < 1
             upd_chapters << {chapter: chapter, latest_update: latest_update}
             done << chapter
+            LOG.progress("Organizing chapters for report", done.length, chaptercount)
           end
         end
 
         upd_chapter_col[days_ago] = upd_chapters
       end
+      LOG.progress("Organized chapters for report.\n" + '-' * 60)
 
       day_list.each do |days_ago|
         early_time = today_time - days_ago
