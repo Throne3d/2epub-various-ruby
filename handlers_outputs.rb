@@ -107,7 +107,7 @@
       return comment_url unless comment_url.start_with?('http://') or comment_url.start_with?('https://')
       return comment_url unless comment_url['.dreamwidth.org/'] or comment_url['vast-journey-9935.herokuapp.com/'] or comment_url['glowfic.com/']
       comment_url = comment_url.gsub('&amp;', '&')
-      short_url = Chapter.shortenURL(comment_url)
+      short_url = shortenURL(comment_url)
       fragment = (comment_url['#'] ? comment_url.split('#').last : '')
       if comment_url['.dreamwidth.org/']
         thread_thing = short_url.split('?').first.split('#').first
