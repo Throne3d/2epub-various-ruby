@@ -66,7 +66,7 @@
   class Model
     attr_accessor :dirty, :serialize_ignore
 
-    def initialize(options={})
+    def initialize(params={})
       return if params.empty?
       params = standardize_params(params)
 
@@ -75,7 +75,7 @@
           raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
         end
       end
-      allowed_params.each do |symbol|
+      params.each_key do |symbol|
         public_send("#{symbol}=", params[symbol])
       end
     end
@@ -232,6 +232,10 @@
     end
 
     def add_character(arg)
+      unless arg.is_a?(Character)
+        puts "add_character(#{arg.class})"
+        puts caller
+      end
       characters << arg unless characters.include?(arg)
     end
     def replace_character(arg)
@@ -409,15 +413,13 @@
     serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :characters, :moieties, :smallURL, :report_flags_processed
 
     def initialize(params={})
-      super(params)
-
       @trash_messages = params.delete(:trash_messages)
-
-      @pages = []
-      @check_pages = []
-      @replies = []
-      @sections = []
-      @characters = []
+      @pages ||= []
+      @check_pages ||= []
+      @replies ||= []
+      @sections ||= []
+      @characters ||= []
+      super(params)
     end
 
     def self.allowed_params
@@ -428,6 +430,8 @@
       entry.unpack! if entry
       replies.each(&:unpack!) if replies
     end
+
+    def entry_title; @entry_title || @title; end
 
     def processed=(val)
       dirty!
@@ -533,7 +537,7 @@
 
     def replies=(newval)
       dirty!
-      @replies = newval
+      @replies = newval || []
       @characters = []
       @replies.each do |reply|
         reply.chapter = self
@@ -669,9 +673,6 @@
       self.characters = [] if @trash_messages
       self.characters
 
-      @entry_title ||= @title
-      @title = nil
-
       unless @trash_messages
         entry = json_hash['entry']
         replies = json_hash['replies']
@@ -755,11 +756,12 @@
 
     def initialize(params={})
       return if params.empty?
-      super(params)
 
       @push_title = false
       @push_character = false
       @children = []
+
+      super(params)
 
       raise(ArgumentError, "Content must be given") unless params.key?(:content)
       raise(ArgumentError, "Chapter must be given") unless params.key?(:chapter)

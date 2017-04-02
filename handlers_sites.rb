@@ -143,7 +143,7 @@
       # When retrieved in get_face_by_id
       @face_url_cache = {}
       @face_param_cache = {}
-      @face_issue_cache = []
+      @face_update_failures = []
       @character_id_cache = {}
       @character_param_cache = {}
 
@@ -575,13 +575,11 @@
       face_hash = @face_param_cache[(done_face || face).unique_id]
       if face_hash.present?
         face.from_json! face_hash
-      elsif done_face.present? && !@face_issue_cache.include?(face.unique_id)
+      elsif done_face.present? && !@face_update_failures.include?(face.unique_id)
         LOG.error "Face was created, param cache was not set. Face not updating despite being supposed to. #{face}"
-        @face_issue_cache << face.unique_id
+        @face_update_failures << face.unique_id
       end
       set_face_cache(face)
-
-      face
     end
 
     def set_character_cache(character)
@@ -829,16 +827,21 @@
     end
     def initialize(options = {})
       super options
+      # maps face_id or icon_id to face (without any "constellation#")
       @face_id_cache = {} # {"6951" => "[is a face: ahein, imgur..., etc.]"}
+      # stores params used to generate faces, used in a from_json to update (map as above)
       @face_param_cache = {}
-      @face_issue_cache = [] #these helpful names ikr
+      # lists IDs that failed to update in get_updated_face
+      @face_update_failures = []
+
       @character_id_cache = {}
       @character_param_cache = {}
       @char_page_cache = {}
       # When retrieved in get_face_by_id
       @moiety_cache = {}
-      @char_user_map = {}
-      @char_page_errors = []
+      @char_user_map = {} # maps face_id => user_id
+      @char_page_errors = [] # characters that have no icons
+      @icon_errors = []
     end
 
     def get_permalink_for(message)
@@ -852,19 +855,21 @@
     def get_full(chapter, options = {})
       get_some(chapter, options)
     end
+
     def get_some(chapter, options = {})
-      if chapter.is_a?(GlowficEpub::Chapter)
-        params = {per_page: 500}
-        chapter_url = set_url_params(clear_url_params(chapter.url), params)
+      params = {per_page: 500}
+      chapter_url = if chapter.is_a?(GlowficEpub::Chapter)
+        chapter.url
       else
-        chapter_url = chapter
+        chapter
       end
+      chapter_url = set_url_params(clear_url_params(chapter_url), params)
       return unless self.handles?(chapter_url)
 
       page_urls = []
       start_page = options[:start_page] || 1
-      params = {per_page: 500, page: start_page}
-      first_page = set_url_params(clear_url_params(chapter.url), params)
+      params = params.merge(page: start_page)
+      first_page = set_url_params(clear_url_params(chapter_url), params)
       first_page_stuff = giri_or_cache(first_page, where: @group_folder)
       first_page_content = first_page_stuff.at_css('#content')
 
@@ -873,79 +878,89 @@
         page_count = (reply_count.to_f / params[:per_page]).ceil
         page_count = 1 if page_count < 1
       else
+        LOG.error "Could not find number of replies for #{chapter_url}"
         page_count = 1
         params[:per_page] = :all
       end
 
       1.upto(page_count).each do |num|
         params[:page] = num
-        this_page = set_url_params(clear_url_params(chapter.url), params)
-        down_or_cache(this_page, where: @group_folder) if num >= start_page
+        this_page = set_url_params(clear_url_params(chapter_url), params)
         page_urls << this_page
+        next unless num >= start_page
+        down_or_cache(this_page, where: @group_folder)
       end
 
       chapter.processed = false if chapter.is_a?(GlowficEpub::Chapter)
 
+      # page_url contains all pages 1..page_count, not just start_page..page_count
       return page_urls
     end
+
     def get_updated(chapter, options = {})
       return unless self.handles?(chapter)
-      notify = options.key?(:notify) ? options[:notify] : true
+      notify = options.fetch(:notify, true)
+      chapter.url = standardize_chapter_url(chapter.url)
 
-      chapter.url = set_url_params(clear_url_params(chapter.url), {per_page: :all}) unless chapter.url["per_page=all"]
-
+      @download_count = 0
       is_new = true
       prev_pages = chapter.pages
       check_pages = chapter.check_pages
-      if prev_pages && !prev_pages.empty?
+      if prev_pages.present?
+        # check the check_pages for a difference
         is_new = false
-
-        @download_count = 0
         changed = false
         check_pages.each_with_index do |check_page, i|
           page_location = get_page_location(check_page, where: @group_folder)
-          was_file = File.file?(page_location)
+          existed = File.file?(page_location)
 
           page_old_data = get_page_data(check_page, replace: false, where: @group_folder)
-          unless was_file
+          unless existed
             LOG.debug "check page #{i}, #{check_page}, didn't exist in the group folder"
             changed = true
             break
           end
-          page_new = giri_or_cache(check_page, where: 'temp')
 
+          cache_exists = chapter.check_page_data.key?(check_page)
+
+          page_new = giri_or_cache(check_page, where: 'temp')
           page_old = Nokogiri::HTML(page_old_data)
           page_cache = chapter.check_page_data[check_page]
-          page_cache = Nokogiri::HTML(page_cache) if page_cache
+          page_cache = Nokogiri::HTML(page_cache) if cache_exists
           LOG.debug "nokogiri'd"
-          chapter.check_page_data_set(check_page, page_old_data) unless page_cache
+
+          # FIXME: check necessary?
+          chapter.check_page_data_set(check_page, page_old_data) unless cache_exists
 
           old_content = page_old.at_css('#content')
           new_content = page_new.at_css('#content')
-          cache_content = page_cache.at_css('#content') if page_cache
+          cache_content = page_cache.at_css('#content') if cache_exists
 
+          # remove time_loaded so as to check just the content
           old_content.at_css(".time-loaded").try(:remove)
           new_content.at_css(".time-loaded").try(:remove)
-          cache_content.at_css(".time-loaded").try(:remove) if page_cache
+          cache_content.at_css(".time-loaded").try(:remove) if cache_exists
 
           changed = (old_content.inner_html != new_content.inner_html)
           if changed
             LOG.debug "check page #{i}, #{check_page}, was different"
             break
           end
-          if page_cache && !changed
-            changed2 = (old_content.inner_html != cache_content.inner_html)
-            if changed2
+
+          if cache_exists
+            changed = (old_content.inner_html != cache_content.inner_html)
+            if changed
               LOG.info "check page cache in JSON (#{i}, #{check_page}) was different. other cache wasn't. fixing."
-              changed = changed2
               break
             end
           end
+
           LOG.debug "check page #{i} was not different"
         end
 
-        LOG.debug "#{(!changed) ? 'not ': ''}changed!"
+        LOG.debug "#{'not ' unless changed}changed!"
 
+        # check also if all the regular pages exist, in case someone deleted them
         pages_exist = true
         prev_pages.each_with_index do |page_url, i|
           page_loc = get_page_location(page_url, where: @group_folder)
@@ -953,11 +968,12 @@
           pages_exist = false
           LOG.error "Failed to find a file (page #{i}) for chapter #{chapter}. Will get again."
           break
-        end #Check if all the pages exist, in case someone deleted them
+        end
 
-        start_page = 1 unless pages_exist
-
-        if pages_exist && changed && chapter.replies.length > 1000
+        if !pages_exist
+          start_page = 1 # start at the beginning, get them all
+        elsif changed && chapter.replies.length > 1000
+          # check the first page for a difference (large chapter) so as to get the whole thing if necessary
           first_page = chapter.pages.first
           page_old_data = get_page_data(first_page, replace: false, where: @group_folder)
           page_new = giri_or_cache(first_page, where: 'temp')
@@ -965,17 +981,25 @@
 
           old_content = page_old.at_css('#content')
           new_content = page_new.at_css('#content')
-          changed = (old_content.inner_html != new_content.inner_html)
-          if changed
+          # remove time_loaded to check just the content
+          old_content.at_css(".time-loaded").try(:remove)
+          new_content.at_css(".time-loaded").try(:remove)
+          # and remove the paginator to ignore reply counts (tracked by 'changed')
+          old_content.css('.paginator').each(&:remove)
+          new_content.css('.paginator').each(&:remove)
+
+          changed2 = (old_content.inner_html != new_content.inner_html)
+          if changed2
             LOG.debug "getting whole thing again; first page was different & check pages were different & many replies"
-            start_page = 1
+            start_page = 1 # instead of just last & 2nd-last pages
           end
         end
 
+        # output if different & return if appropriate
         if changed
           LOG.debug "Content is different for #{chapter}"
-        elsif pages_exist # and not changed
-          msg_str = "#{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (checked #{@download_count} page#{@download_count != 1 ? 's' : ''})"
+        elsif pages_exist # (and not changed)
+          msg_str = "#{chapter.title}: #{chapter.pages.length} page#{'s' unless chapter.pages.length == 1} (checked #{@download_count} page#{'s' unless @download_count == 1})"
           if block_given?
             yield msg_str
           elsif notify
@@ -983,32 +1007,36 @@
           end
           return chapter
         end
-
-        chapter.pages = [chapter.url]
       end
+
+      # Needs to be updated / hasn't been got
 
       chapter.processed = false
 
-      #Needs to be updated / hasn't been got
-      @download_count = 0
-
+      # start at 2nd-last page (if page not yet picked)
       start_page ||= (chapter.replies.count / 500.0).ceil - 1
       start_page = 1 if start_page < 1
+
+      # get the relevant pages (and get all the page URLs, 1..page_count)
       pages = get_some(chapter, options.merge({new: !changed, start_page: start_page}))
 
       chapter.pages = pages
+      # reset chapter cache
       chapter.check_page_data = {}
       chapter.check_pages.each do |check_page|
+        # use cached data (for speed) if already gathered this session:
         if has_cache?(check_page, where: 'temp')
           temp_data = down_or_cache(check_page, where: 'temp')
           save_down(check_page, temp_data, where: @group_folder)
         else
           down_or_cache(check_page, where: @group_folder)
         end
+        # set check_page_data for future
         chapter.check_page_data_set(check_page, down_or_cache(check_page, where: @group_folder))
       end
 
-      msg_str = "#{is_new ? 'New' : 'Updated'}: #{chapter.title}: #{chapter.pages.length} page#{chapter.pages.length != 1 ? 's' : ''} (Got #{@download_count} page#{@download_count != 1 ? 's' : ''})"
+      # output as appropriate
+      msg_str = "#{is_new ? 'New' : 'Updated'}: #{chapter.title}: #{chapter.pages.length} page#{'s' unless chapter.pages.length == 1} (Got #{@download_count} page#{'s' unless @download_count == 1})"
       if block_given?
         yield msg_str
       elsif notify
@@ -1033,16 +1061,36 @@
       [username]
     end
 
-    def set_face_cache(face)
-      face_id = face.unique_id
-      face_id = face_id.sub("constellation#", "") if face_id.start_with?("constellation#")
+    # returns face_id, icon_id, character_id bits from a face / face_id
+    def fetch_face_id_parts(face)
+      # TODO: make face ID standards clearer
+      # starts with constellation# maybe?
+      # can contain character ID
+      # ends with icon ID (numeric or 'none')
+      # e.g. {user#…}#none (user icon with no URL?)
+      # e.g. {character_id}#{icon_id} (character's icon)
+      # e.g. constellation#{icon_id} (not attached to a character)
+
+      # TODO: also character ID standards
+      # can have "user#" within? (at start?)
+      # can start with "constellation#" but this is often stripped? … but also added.
+      # *should* start with constellation#? but not for the cache? … but yes for the cache.
+      # otherwise is numeric
+
+      face_id = face.unique_id unless face.is_a?(String)
+      face_id ||= face
+      face_id = face_id.sub('constellation#', '') if face_id.start_with?('constellation#')
       icon_id = face_id.split('#').last
       character_id = face_id.sub("##{icon_id}", '')
       character_id = nil if character_id == face_id || character_id.blank?
-      @face_id_cache[icon_id] = face
+      [face_id, icon_id, character_id]
+    end
 
+    def set_face_cache(face)
+      face_id, icon_id, character_id = fetch_face_id_parts(face)
       @chapter_list.replace_face(face)
-      @face_id_cache[face_id] = face if icon_id == 'none' && character_id.try(:start_with?, 'user#')
+
+      @face_id_cache[icon_id] = face if face_id == icon_id
       @face_id_cache[face.unique_id] = face
 
       if character_id && @char_page_cache.key?(character_id)
@@ -1050,26 +1098,182 @@
       end
       face
     end
-    def get_face_by_id(face_id, options={})
-      try_chapterface = options.key?(:try_chapterface) ? options[:try_chapterface] : true
-      face_id = face_id.sub("constellation#", "") if face_id.start_with?("constellation#")
-      return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
 
-      icon_id = face_id.split('#').last
-      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id) && face_id.split('#').first.strip.empty?
-      character_id = face_id.sub("##{icon_id}", '')
+    # fetches the user ID and username for the giripage, from the breadcrumbs
+    def get_owner_from_breadcrumbs(giripage)
+      subber = giripage.at_css('.flash.subber')
+      breadcrumb = subber.at_css('a')
+      if breadcrumb
+        url = breadcrumb[:href]
+        if url['users/']
+          user_id = url.split('users/').last.split('/').first
+          username = breadcrumb.text.strip
+          return [user_id, username]
+        end
+      end
+      user_link = giripage.at_css('#user-info').at_css('a')
+      user_link.at_css('img').try(:remove)
+      user_id = user_link.split('users/').last.split('/').first
+      username = user_link.text.strip
+      [user_id, username]
+    end
+
+    # fetches all faces in galleries attached to a character_id
+    def get_faces_for_character(character_id)
+      # TODO: handle user# characters?
+      return if character_id.start_with?('user#')
+
+      # skip errored pages
+      return if @char_page_errors.include?(character_id)
+      # return already-got data
+      return @char_page_cache[character_id] if @char_page_cache.key?(character_id)
+
+      # icon is from a character that has not yet been got nor errored
+
+      char_page_url = "https://glowfic.com/characters/#{character_id}/"
+      char_page = giri_or_cache(char_page_url)
+
+      # fetch character's user ID
+      user_id, _username = get_owner_from_breadcrumbs(char_page)
+      unless user_id
+        LOG.error "No user ID found on char page for #{character_id}"
+      end
+      @char_user_map[character_id] = user_id
+
+      char_page_c = char_page.at_css("#content")
+      icons = char_page_c.css(".gallery-icon")
+
+      if icons.blank?
+        LOG.error "No icons for character ##{character_id}."
+        @char_page_errors << character_id
+        return
+      end
+
+      character = get_character_by_id(character_id)
+
+      icon_hash = {} # numeric_id => face
+      default_icon = char_page_c.at_css('.character-icon')
+      if default_icon
+        icons << default_icon
+      else
+        LOG.warn "No default icon for character ID #{character_id}"
+      end
+
+      icons.each do |icon_element|
+        icon_link = icon_element.at_css('a')
+        icon_url = icon_link.try(:[], :href)
+        icon_img = icon_link.at_css('img')
+        icon_src = icon_img.try(:[], :src)
+
+        (LOG.error "Failed to find an img URL on the icon page for character ##{character_id}"; next) if icon_src.blank?
+
+        icon_keyword = icon_img.try(:[], :title)
+        icon_id = icon_url.split("icons/").last if icon_url
+
+        unless icon_id
+          LOG.error "Failed to find an icon's numeric ID on character page ##{character_id}?"
+          icon_id = "unknown"
+        end
+
+        params = {}
+        params[:imageURL] = icon_src
+        params[:character] = character
+        params[:keyword] = icon_keyword
+        params[:unique_id] = "#{character_id}##{icon_id}"
+        params[:chapter_list] = @chapter_list
+        face = Face.new(params)
+        icon_hash[icon_id] = face
+        @chapter_list.replace_face(face)
+        if default_icon == icon_element
+          icon_hash[:default] = face
+          params[:character].default_face = face if params[:character] && !params[:character].default_face_id.present?
+        end
+
+        @face_id_cache[face.unique_id] = face
+        @face_param_cache[face.unique_id] = params
+      end
+      LOG.debug "got #{icon_hash.keys.length} icon(s)"
+      @char_page_cache[character_id] = icon_hash
+    end
+
+    # fetches a face for face_id from user_id's galleries for character_id (for ex-gallery icons)
+    def get_face_for_user(desired_icon_id, user_id, character_id)
+      usergal_page_url = "https://glowfic.com/users/#{user_id}/galleries/"
+      usergal_page = giri_or_cache(usergal_page_url)
+      LOG.debug "nokogiri'd"
+
+      # TODO: could be made more efficient (find icons including the ID)
+      character = get_character_by_id(character_id)
+      icons = usergal_page.at_css('#content').css('.gallery-icon')
+      face = nil
+      icons.each do |icon_element|
+        icon_link = icon_element.at_css('a')
+        icon_url = icon_link.try(:[], :href)
+        next unless icon_url
+        icon_id = icon_url.split("icons/").last if icon_url
+        next unless icon_id == desired_icon_id
+
+        icon_img = icon_link.at_css('img')
+        next unless icon_img
+        icon_src = icon_img[:src]
+
+        (LOG.error "Failed to find an img URL on the icon page for user ##{user_id}"; next) if icon_src.blank?
+
+        icon_keyword = icon_img[:title]
+
+        params = {}
+        params[:imageURL] = icon_src
+        params[:character] = character
+        params[:keyword] = icon_keyword
+        params[:unique_id] = "#{character_id}##{icon_id}"
+        params[:chapter_list] = @chapter_list
+        face = Face.new(params)
+
+        @chapter_list.replace_face(face)
+        @face_id_cache[face.unique_id] = face
+        @face_param_cache[face.unique_id] = params
+
+        LOG.debug "Found an icon for character #{character_id}: ID ##{icon_id} (on userpage ##{user_id})"
+      end
+      face
+    end
+
+    # fetches a face for icon_id from the icon itself (lacks character info)
+    def get_face_for_icon(icon_id)
+      icon_page = giri_or_cache("https://glowfic.com/icons/#{icon_id}/")
+      LOG.debug "nokogiri'd"
+
+      icon_img = icon_page.at_css('#content').at_css('.icon-icon').try(:at_css, 'img')
+      params = {}
+      params[:imageURL] = icon_img.try(:[], :src)
+      params[:keyword] = icon_img.try(:[], :title)
+      params[:unique_id] = "constellation##{icon_id}"
+      params[:chapter_list] = @chapter_list
+      face = Face.new(params)
+      @chapter_list.replace_face(face)
+      @face_id_cache[icon_id] = face
+      @face_param_cache[face.unique_id] = params
+    end
+
+    # fetches a face by ID
+    def get_face_by_id(face_id, options={})
+      try_chapterface = options.fetch(:try_chapterface, true)
+      face_id, icon_id, character_id = fetch_face_id_parts(face_id)
+      return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
+      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id) && character_id.blank?
 
       if try_chapterface
         chapter_face = @chapter_list.try(:get_face_by_id, face_id)
         if chapter_face.present?
           @face_id_cache[face_id] = chapter_face
-          @face_id_cache[icon_id] = chapter_face unless @face_id_cache.key?(icon_id)
+          @face_id_cache[icon_id] ||= chapter_face
           return chapter_face
         end
       end
 
       character_id = nil if character_id == face_id || character_id.blank?
 
+      # empty face for user
       if icon_id == "none" && character_id.try(:start_with?, 'user#')
         face_params = {}
         face_params[:imageURL] = nil
@@ -1083,228 +1287,136 @@
         return face
       end
 
-      @icon_errors = [] unless @icon_errors
-
-      if character_id && !character_id.start_with?("user#") && !@char_page_cache.key?(character_id) && !@char_page_errors.include?(character_id)
-        char_page_url = "https://glowfic.com/characters/#{character_id}/"
-        char_page = giri_or_cache(char_page_url)
-        LOG.debug "nokogiri'd"
-        char_page_c = char_page.at_css("#content")
-        icons = char_page_c.css(".gallery-icon")
-
-        breadcrumb1 = char_page.at_css('.flash.subber a')
-        if breadcrumb1 && breadcrumb1.text.strip == "Characters"
-          user_info = char_page.at_css('#header #user-info')
-          user_url = user_info.at_css('a')["href"]
-          user_id = user_url.split('users/').last
-        elsif breadcrumb1
-          user_id = breadcrumb1["href"].split('users/').last.split('/characters').first
-        else
-          LOG.error "No breadcrumb on char page for #{character_id}"
-        end
-        @char_user_map[character_id] = user_id
-
-        character = get_character_by_id(character_id)
-
-        if icons.nil? or icons.empty?
-          LOG.error "No icons for character ##{character_id}."
-          @char_page_errors << character_id
-        else
-          icon_hash = {}
-          default_icon = char_page_c.at_css('.character-icon')
-          if default_icon
-            icons << default_icon
-          else
-            LOG.warn "No default icon for #{character_id}"
-          end
-          icons.each do |icon_element|
-            icon_link = icon_element.at_css('a')
-            icon_url = icon_link.try(:[], :href)
-            icon_img = icon_link.at_css('img')
-            icon_src = icon_img.try(:[], :src)
-
-            (LOG.error "Failed to find an img URL on the icon page for character ##{character_id}"; next) if icon_src.nil? || icon_src.empty?
-
-            icon_keyword = icon_img.try(:[], :title)
-            icon_numid = icon_url.split("icons/").last if icon_url
-
-            unless icon_numid
-              LOG.error "Failed to find an icon's numeric ID on character page ##{character_id}?"
-              icon_numid = "unknown"
-            end
-
-            params = {}
-            params[:imageURL] = icon_src
-            params[:character] = character
-            params[:keyword] = icon_keyword
-            params[:unique_id] = "#{character_id}##{icon_numid}"
-            params[:chapter_list] = @chapter_list
-            face = Face.new(params)
-            icon_hash[icon_numid] = face
-            @chapter_list.replace_face(face)
-            if default_icon == icon_element
-              icon_hash[:default] = face
-              params[:character].default_face = face if params[:character] && !params[:character].default_face_id.present?
-            end
-
-            @face_id_cache[face.unique_id] = face
-            @face_param_cache[face.unique_id] = params
-          end
-          LOG.debug "got #{icon_hash.keys.length} icon(s)"
-          @char_page_cache[character_id] = icon_hash
-        end
+      # get_icons_for_character
+      if character_id && !character_id.start_with?("user#")
+        get_faces_for_character(character_id)
       end
-
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
-      return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
 
+      # get icons for user
       if character_id && @char_user_map.key?(character_id)
-        user_id = @char_user_map[character_id]
-        usergal_page_url = "https://glowfic.com/users/#{user_id}/galleries/"
-        usergal_page = giri_or_cache(usergal_page_url)
-        LOG.debug "nokogiri'd"
-
-        icons = usergal_page.at_css('#content').css('.gallery-icon')
-        icons.each do |icon_element|
-          icon_link = icon_element.at_css('a')
-          icon_url = icon_link.try(:[], :href)
-          next unless icon_url
-          icon_numid = icon_url.split("icons/").last if icon_url
-          next unless icon_numid == icon_id
-
-          icon_img = icon_link.at_css('img')
-          icon_src = icon_img.try(:[], :src)
-
-          (LOG.error "Failed to find an img URL on the icon page for user ##{user_id}" and next) if icon_src.nil? or icon_src.empty?
-
-          icon_keyword = icon_img.try(:[], :title)
-
-          unless icon_numid
-            LOG.error "Failed to find an icon's numeric ID on user gallery page ##{user_id}?"
-            icon_numid = "unknown"
-          end
-
-          params = {}
-          params[:imageURL] = icon_src
-          params[:character] = character
-          params[:keyword] = icon_keyword
-          params[:unique_id] = "#{character_id}##{icon_numid}"
-          params[:chapter_list] = @chapter_list
-          face = Face.new(params)
-
-          @chapter_list.replace_face(face)
-          @face_id_cache[face.unique_id] = face
-          @face_param_cache[face.unique_id] = params
-
-          LOG.debug "Found an icon for character #{character_id}: ID ##{icon_numid} (on userpage ##{user_id})"
-        end
+        get_face_for_user(icon_id, @char_user_map[character_id], character_id)
       end
-
       return @face_id_cache[face_id] if @face_id_cache.key?(face_id)
 
-      icon_page = giri_or_cache("https://glowfic.com/icons/#{icon_id}/")
-      LOG.debug "nokogiri'd"
-
-      icon_img = icon_page.at_css('#content img')
-      params = {}
-      params[:imageURL] = icon_img.try(:[], :src)
-      params[:keyword] = icon_img.try(:[], :title)
-      params[:unique_id] = "constellation##{icon_id}"
-      params[:chapter_list] = @chapter_list
-      face = Face.new(params)
-      @chapter_list.replace_face(face)
-      @face_id_cache[icon_id] = face
-      @face_param_cache[face.unique_id] = params
-
+      get_face_for_icon(icon_id)
       return @face_id_cache[icon_id] if @face_id_cache.key?(icon_id)
 
-      #Shouldn't ever occur? We just loaded the icon page; it's probably going to error before this
-      #if there's no icon, or Face.new will complain about nil params?
-      LOG.error "Failed to find a face for character: #{character_id} and face: #{icon_id}" unless @icon_errors.include?(face_id)
-      @icon_errors << face_id unless @icon_errors.include?(face_id)
-      return default
+      # Shouldn't ever occur? We just loaded the icon page;
+      # it's probably going to error before this if there's no icon
+      # or Face.new will complain about nil params?
+      unless @icon_errors.include?(face_id)
+        LOG.error "Failed to find a face for character: ##{character_id} and icon: ##{icon_id}"
+        @icon_errors << face_id
+      end
     end
+
+    # updates a face using a param_cache hash from the above methods
     def get_updated_face(face)
       return unless face
       return get_face_by_id(face.unique_id) if @face_param_cache.key?(face.unique_id)
 
       done_face = get_face_by_id(face.unique_id, try_chapterface: false)
 
-      face_hash = @face_param_cache[(done_face || face).unique_id] || @face_param_cache[(done_face || face).unique_id.sub('constellation#', '')]
+      id = (done_face || face).unique_id
+      face_hash = @face_param_cache[id] || @face_param_cache[id.sub('constellation#', '')]
       if face_hash.present?
         face.from_json! face_hash
-      elsif done_face.present? && !@face_issue_cache.include?(face.unique_id)
+      elsif done_face.present? && !@face_update_failures.include?(face.unique_id)
         LOG.error "Face was created, param cache was not set. Face not updating despite being supposed to. #{face}"
-        @face_issue_cache << face.unique_id
+        @face_update_failures << face.unique_id
       end
       set_face_cache(face)
-
-      face
     end
 
+    # ID cache uses:
+    # constellation#user#{user_id} => character
+    # constellation#{character_id} => character
+    # i.e. character.unique_id => character
     def set_character_cache(character)
-      character_id = character.unique_id
-      character_id = character_id.sub("constellation#", "") if character_id.start_with?("constellation#")
-      @character_id_cache[character_id] = character
+      @character_id_cache[character.unique_id] = character
+    end
+
+    # in each method below, user/character_id tries to be the numeric bit
+    # and cache_id tries to be the unique_id as for the cache
+
+    # get the character object for a user account
+    def get_character_for_user(user_id)
+      user_id = user_id.sub('constellation#', '') if user_id.start_with?('constellation#')
+      user_id = user_id.sub('user#', '') if user_id.start_with?('user#')
+      cache_id = "constellation#user##{user_id}"
+      return @character_id_cache[cache_id] if @character_id_cache.key?(cache_id)
+
+      user_page_url = "https://glowfic.com/users/#{user_id}/"
+      user_page = giri_or_cache(user_page_url)
+      LOG.debug "nokogiri'd"
+      user_page_c = user_page.at_css('#content')
+      char_name = user_page_c.at_css('th.centered').try(:text).try(:strip)
+
+      params = {}
+      params[:moiety] = char_name
+      params[:name] = char_name
+      params[:display] = char_name
+      params[:unique_id] = cache_id
+
+      character = Character.new(params)
+      @character_id_cache[character.unique_id] = character
+      @character_param_cache[character.unique_id] = params
       character
     end
+
+    # get the character object for a constellation character
+    def get_character_for_char(character_id)
+      character_id = character_id.sub('constellation#', '') if character_id.start_with?('constellation#')
+      cache_id = "constellation##{character_id}"
+      return @character_id_cache[cache_id] if @character_id_cache.key?(cache_id)
+      char_page_url = "https://glowfic.com/characters/#{character_id}/"
+      char_page = giri_or_cache(char_page_url)
+      LOG.debug "nokogiri'd"
+      char_page_c = char_page.at_css('#content')
+
+      char_screen = char_page_c.at_css(".character-screenname").try(:text).try(:strip)
+      char_name = char_page_c.at_css(".character-name").try(:text).try(:strip)
+      char_display = char_name
+      char_display += " (#{char_screen})" unless char_screen.nil? || char_screen.downcase == char_name.downcase
+
+      params = {}
+      params[:moiety] = get_moiety_by_id(character_id)
+      params[:name] = char_name
+      params[:screenname] = char_screen
+      params[:display] = char_display
+      params[:unique_id] = cache_id
+
+      character = Character.new(params)
+      @character_id_cache[character.unique_id] = character
+      @character_param_cache[character.unique_id] = params
+      character
+    end
+
+    # get a constellation character by its ID (user/character account)
     def get_character_by_id(character_id, options={})
+      # is given: user#{user_id} or {character_id} (by "make_message")
       character_id = character_id.sub("constellation#", "") if character_id.start_with?("constellation#")
-      return @character_id_cache[character_id] if @character_id_cache.key?(character_id)
+      cache_id = "constellation##{character_id}"
+      return @character_id_cache[cache_id] if @character_id_cache.key?(cache_id)
 
-      try_chaptercharacter = options.key?(:try_chaptercharacter) ? options[:try_chaptercharacter] : true
-
+      try_chaptercharacter = options.fetch(:try_chaptercharacter, true)
       if try_chaptercharacter
-        chapter_character = @chapter_list.try(:get_character_by_id, "constellation##{character_id}")
+        chapter_character = @chapter_list.try(:get_character_by_id, cache_id)
         if chapter_character.present?
-          @character_id_cache[character_id] = chapter_character
+          set_character_cache(chapter_character)
           return chapter_character
         end
       end
 
       if character_id.start_with?("user#")
-        user_id = character_id.sub("user#", "")
-
-        user_page_url = "https://glowfic.com/users/#{user_id}/"
-        user_page = giri_or_cache(user_page_url)
-        LOG.debug "nokogiri'd"
-        user_page_c = user_page.at_css('#content')
-
-        char_name = user_page_c.at_css('th.centered').try(:text).try(:strip)
-
-        params = {}
-        params[:moiety] = char_name
-        params[:name] = char_name
-        params[:display] = char_name
-        params[:unique_id] = "constellation#user##{user_id}"
-
-        character = Character.new(params)
-        @character_id_cache["user##{user_id}"] = character
-        @character_param_cache[character.unique_id] = params
-        return character
+        return get_character_for_user(character_id)
       else
-        char_page_url = "https://glowfic.com/characters/#{character_id}/"
-        char_page = giri_or_cache(char_page_url)
-        LOG.debug "nokogiri'd"
-        char_page_c = char_page.at_css('#content')
-
-        char_screen = char_page_c.at_css(".character-screenname").try(:text).try(:strip)
-        char_name = char_page_c.at_css(".character-name").try(:text).try(:strip)
-        char_display = char_name + ((char_screen.nil? or char_screen.downcase == char_name.downcase) ? "" : " (#{char_screen})")
-
-        params = {}
-        params[:moiety] = get_moiety_by_id(character_id)
-        params[:name] = char_name
-        params[:screenname] = char_screen
-        params[:display] = char_display
-        params[:unique_id] = "constellation##{character_id}"
-
-        character = Character.new(params)
-        @character_id_cache[character_id] = character
-        @character_param_cache[character.unique_id] = params
-        return character
+        return get_character_for_char(character_id)
       end
     end
+
+    # update a character by using a param_cache hash
     def get_updated_character(character)
       return unless character
       return get_character_by_id(character.unique_id) if @character_param_cache.key?(character.unique_id)
@@ -1313,12 +1425,10 @@
       character_hash = @character_param_cache[character.unique_id]
       character.from_json! character_hash
       set_character_cache(character)
-
-      character
     end
 
     def make_message(message_element, options = {})
-      #message_element is the ".post-container"
+      # message_element is the ".post-container"
       message_attributes = options[:message_attributes] || msg_attrs
 
       Time.zone = 'Eastern Time (US & Canada)'
@@ -1327,27 +1437,27 @@
       if message_anchor
         message_id = message_anchor[:id].split("reply-").last
         message_type = PostType::REPLY
+      elsif message_element[:class].try(:[], /\bpost-reply\b/)
+        LOG.error "Failed to find a reply's ID!"
       else
-        if message_element[:class].try(:split, ' ').map(&:downcase).detect{|i| i['post-reply']}
-          LOG.error "Failed to find a reply's ID!"
-        end
+        # TODO: fix unnecessary re-processing of entry_title (see @entry_title)
         entry_title = message_element.parent.at_css('#post-title').try(:at_css, 'a')
-        LOG.error "Couldn't find the post's title! Gah!" unless entry_title
+        LOG.error "Couldn't find the post's title." unless entry_title
 
         message_id = entry_title[:href].split('posts/').last
         message_type = PostType::ENTRY
       end
 
       post_info_text = message_element.at_css('.post-info-text')
-      character_element = post_info_text.at_css('.post-author').at_css('a')
-      character_name = character_element.text.strip
-      character_id = character_element["href"].split("users/").last
+      author_element = post_info_text.at_css('.post-author').at_css('a')
+      author_name = author_element.text.strip # FIXME: could be character alias
+      author_id = author_element["href"].split("users/").last
 
       character_element = post_info_text.at_css('.post-character').try(:at_css, 'a')
       if character_element
         character_id = character_element["href"].split("characters/").last
       else
-        character_id = "user##{character_id}"
+        character_id = "user##{author_id}"
       end
 
       date_element = message_element.at_css('> .post-footer')
@@ -1370,44 +1480,46 @@
 
       params[:content] = message_element.at_css('.post-content').inner_html.strip
       params[:character] = get_character_by_id(character_id) if message_attributes.include?(:character)
-      params[:author_str] = character_name unless message_attributes.include?(:character)
+      # TODO: add aliases
+      params[:author_str] = author_name unless message_attributes.include?(:character)
 
       params[:id] = message_id
       params[:chapter] = @chapter
 
       if message_attributes.include?(:face)
         userpic = message_element.at_css('.post-icon').try(:at_css, 'img')
-        face_url = ""
-        face_name = "none"
-        face_id = ""
+        icon_url = ''
+        icon_name = 'none'
+        icon_id = ''
+
         if userpic
-          face_id = userpic.parent["href"].split("icons/").last
-          face_url = userpic["src"]
-          face_name = userpic["title"]
-        end
-        face_uniqid = [character_id, face_id].reject{|thing| thing.nil?} * '#'
-        face_uniqid = "#{face_id}" if character_id == "user##{character_id}"
-        params[:face] = get_face_by_id(face_uniqid) unless face_uniqid.empty?
-        params[:face].character = params[:character] if params[:face]
-        params[:face] = @chapter_list.get_face_by_id(face_uniqid) if params[:face].nil?
-
-        if params[:face].nil? and not face_url.empty?
-          face_params = {}
-          face_params[:imageURL] = face_url
-          face_params[:keyword] = face_name
-          face_params[:unique_id] = face_id
-          face_params[:character] = get_character_by_id(character_id)
-          face = Face.new(face_params)
-          @chapter_list.add_face(face)
-          params[:face] = face
+          icon_id = userpic.parent[:href].split("icons/").last
+          icon_url = userpic[:src]
+          icon_name = userpic[:title]
         end
 
-        if params[:face].nil? and face_url.empty?
+        if character_id == "user##{author_id}"
+          face_id = "#{icon_id}"
+        else
+          face_id = "#{character_id}##{icon_id}"
+        end
+
+        if face_id.present?
+          params[:face] = get_face_by_id(face_id)
+          params[:face] ||= @chapter_list.get_face_by_id(face_id)
+        end
+
+        if params[:face].nil?
           face_params = {}
-          face_params[:imageURL] = nil
-          face_params[:keyword] = face_name
-          face_params[:unique_id] = "#{character_id}##{face_name}"
-          face_params[:character] = get_character_by_id(character_id)
+          face_params[:keyword] = icon_name
+          face_params[:character] = params[:character]
+          if icon_url.present?
+            face_params[:imageURL] = icon_url
+            face_params[:unique_id] = icon_id
+          else
+            face_params[:imageURL] = nil
+            face_params[:unique_id] = "#{character_id}##{icon_name}"
+          end
           face = Face.new(face_params)
           @chapter_list.add_face(face)
           params[:face] = face
@@ -1419,17 +1531,18 @@
         return @previous_message = Entry.new(params)
       end
 
-      params[:parent] = @previous_message if @previous_message
+      params[:parent] = @previous_message
       @previous_message = Comment.new(params)
     end
+
     def get_replies(chapter, options = {}, &block)
       return unless self.handles?(chapter)
-      notify = options.key?(:notify) ? options[:notify] : true
+      notify = options.fetch(:notify, true)
 
       return chapter.replies if already_processed(chapter, options, &block)
 
       pages = chapter.pages
-      (LOG.error "Chapter (#{chapter.title}) has no pages"; return) if pages.nil? || pages.empty?
+      (LOG.error "Chapter (#{chapter.title}) has no pages"; return) if pages.blank?
 
       @entry_title = nil
       @chapter = chapter
@@ -1443,45 +1556,47 @@
         if error
           error_text = error.text
           if error_text["do not have permission"]
-            (LOG.error("Chapter '#{chapter.title}': Error. Page was private!") and break)
+            (LOG.error("Chapter '#{chapter.title}': Error. Page was private!"); break)
           elsif error_text["not be found"]
-            (LOG.error("Chapter '#{chapter.title}': Error. Post does not exist!") and break)
+            (LOG.error("Chapter '#{chapter.title}': Error. Post does not exist!"); break)
           elsif error_text["content warning"]
-            # is a content warning; ignore
+            # is a content warning; save to ignore
           else
-            (LOG.error("Chapter '#{chapter.title}': Error. Unknown post error: '#{error_text}'") and break)
+            (LOG.error("Chapter '#{chapter.title}': Error. Unknown post error: '#{error_text}'"); break)
           end
         end
 
         page_content = page.at_css('#content')
         post_title = page.at_css('#post-title')
-        (LOG.error("No post title; probably not a post") and break) unless post_title
+        (LOG.error("No post title; probably not a post"); break) unless post_title
         @entry_title = post_title.text.strip unless @entry_title
 
-        @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip) if @chapter.title_extras.nil? || @chapter.title_extras.empty?
+        @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip) if @chapter.title_extras.blank?
 
+        # process entry if replies blank
         if @replies.empty?
           @entry_element = page_content.at_css('.post-container.post-post')
           entry = make_message(@entry_element, message_attributes: message_attributes)
           chapter.entry = entry
         end
 
-        if page_url == pages.last
-          if chapter.sections.blank? && chapter.get_sections?
-            section_links = page.at_css('.flash.subber').css('a')
-            sections = []
-            section_links.each do |section_link|
-              link_href = section_link[:href]
-              next if link_href.blank? || link_href[/\/boards(\/3)?\/?$/]
-              section_id = ''
-              link_href = link_href[0..-2] if link_href.end_with?('/')
-              section_id = 'AAAA-' + link_href.split('boards/').last if link_href['boards/']
-              section_id = 'AAAB-' + link_href.split('board_sections/').last if link_href['board_sections/']
-              section_id ||= 'AAAC-' + link_href.split('/').last
-              sections << section_id + '-' + section_link.text.strip
-            end
-            chapter.sections = sections
+        # automatically fetch chapter sections if appropriate
+        if page_url == pages.last && chapter.get_sections? && chapter.sections.blank?
+          section_links = page.at_css('.flash.subber').css('a')
+          sections = []
+          section_links.each do |section_link|
+            link_href = section_link[:href]
+            # skip if blank, sandboxes, or "continuities"
+            next if link_href.blank? || link_href[/\/boards(\/3)?\/?$/]
+            # implement complex auto-gathering of IDs and sorting (later stripped)
+            section_id = ''
+            link_href = link_href[0..-2] if link_href.end_with?('/')
+            section_id = 'AAAA-' + link_href.split('boards/').last if link_href['boards/']
+            section_id = 'AAAB-' + link_href.split('board_sections/').last if link_href['board_sections/']
+            section_id ||= 'AAAC-' + link_href.split('/').last
+            sections << section_id + '-' + section_link.text.strip
           end
+          chapter.sections = sections
         end
 
         comments = page_content.css('> .post-container.post-reply')
@@ -1496,34 +1611,44 @@
             things = [chapter.entry] + @replies
             last_time = things.last.try(:time)
             ender_text = post_ender.text.downcase
+            # TODO: sanity check if the "old_time &&" is necessary
+            # TODO: sanity check if time_hiatus should override time_abandoned like time_completed, vice versa
             if !last_time
-              LOG.error "#{chapter.title}: ended but cannot get last_time. (???)"
+              LOG.error "#{chapter.title}: ended but cannot get last_time."
             elsif ender_text['ends'] || ender_text['complete']
               old_time = chapter.time_completed
               chapter.time_completed = last_time
 
-              @notify_extras << "completed on '#{date_display(chapter.time_completed)}'" + ((old_time && old_time != chapter.time_completed) ? " (old time: #{date_display(old_time)})" : "")
+              str = "completed on '#{date_display(chapter.time_completed)}'"
+              str += " (old time: #{date_display(old_time)})" if old_time && old_time != chapter.time_completed
+              @notify_extras << str
             elsif ender_text['hiatus']
               old_time = chapter.time_hiatus
+              # reset time_completed, save time_hiatus (if newer or only existent)
               if chapter.time_completed.nil? || last_time >= chapter.time_completed
                 chapter.time_hiatus = last_time
                 chapter.time_completed = nil
               end
 
-              @notify_extras << "hiatus on #{date_display(chapter.time_hiatus)}" + ((old_time && old_time != chapter.time_hiatus) ? " (old time: #{date_display(old_time)})" : "")
+              str = "hiatus on #{date_display(chapter.time_hiatus)}"
+              str += " (old time: #{date_display(old_time)})" if old_time && old_time != chapter.time_hiatus
+              @notify_extras << str
             elsif ender_text['abandon']
               old_time = chapter.time_abandoned
+              # reset time_completed, save time_abandoned (if newer or only existent)
               if chapter.time_completed.nil? || last_time >= chapter.time_completed
                 chapter.time_abandoned = last_time
                 chapter.time_completed = nil
               end
 
-              @notify_extras << "abandoned on #{date_display(chapter.time_abandoned)}" + ((old_time && old_time != chapter.time_abandoned) ? " (old time: #{date_display(old_time)})" : "")
+              str = "abandoned on #{date_display(chapter.time_abandoned)}"
+              str += " (old time: #{date_display(old_time)})" if old_time && old_time != chapter.time_abandoned
+              @notify_extras << str
             else
               LOG.error "#{chapter.title}: ended non-hiatus non-complete non-abandoned on #{date_display(last_time)} (???)"
             end
           elsif chapter.time_completed || chapter.time_hiatus || chapter.time_abandoned
-            @notify_extras << "no ender; wiping" +
+            @notify_extras << "no ender; wiping time_* statuses." +
               (chapter.time_completed ? " completed #{date_display(chapter.time_completed)}" : '') +
               (chapter.time_hiatus ? " hiatus #{date_display(chapter.time_hiatus)}" : '') +
               (chapter.time_abandoned ? " abandoned #{date_display(chapter.time_abandoned)}" : '')
@@ -1537,7 +1662,8 @@
       pages_effectual = (@replies.length / 25.0).ceil
       pages_effectual = 1 if pages_effectual < 1
 
-      msg_str = "#{chapter.title}: parsed #{pages_effectual} page#{pages_effectual == 1 ? '' : 's'}" + (@notify_extras.present? ? ", #{@notify_extras * ', '}" : '')
+      msg_str = "#{chapter.title}: parsed #{pages_effectual} page#{'s' unless pages_effectual == 1}"
+      msg_str += ", #{@notify_extras * ', '}" if @notify_extras.present?
       if block_given?
         yield msg_str
       elsif notify

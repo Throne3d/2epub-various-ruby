@@ -334,8 +334,7 @@
       params[:thread] = thread unless thread.blank?
       return set_url_params(clear_url_params(uri.to_s), params)
     elsif uri.host.end_with?('vast-journey-9935.herokuapp.com') || uri.host.end_with?('glowfic.com')
-      params = {per_page: :all}
-      return set_url_params(clear_url_params(uri.to_s), params)
+      return clear_url_params(uri.to_s)
     else
       url
     end
