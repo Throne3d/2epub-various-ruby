@@ -885,70 +885,70 @@
       @confirm_dupes = (options.key?(:confirm_dupes) ? options[:confirm_dupes] : DEBUGGING)
     end
 
-    def character_for_author(author)
-      return @char_cache[author.unique_id] if @char_cache.key?(author.unique_id)
-      return nil unless author.unique_id
-      user = user_for_author(author)
+    def character_for_journal(journal)
+      return @char_cache[journal.unique_id] if @char_cache.key?(journal.unique_id)
+      return nil unless journal.unique_id
+      user = user_for_journal(journal)
       chars = nil
-      author.screenname = author.unique_id.sub('dreamwidth#', '') if !author.screenname.present? && author.unique_id.start_with?('dreamwidth#')
+      journal.screenname = journal.unique_id.sub('dreamwidth#', '') if !journal.screenname.present? && journal.unique_id.start_with?('dreamwidth#')
 
-      chars = Character.where(user_id: user.id, screenname: author.screenname) if author.screenname.present?
-      chars = Character.where(user_id: user.id, name: author.name) if author.name.present? && !chars.present?
+      chars = Character.where(user_id: user.id, screenname: journal.screenname) if journal.screenname.present?
+      chars = Character.where(user_id: user.id, name: journal.name) if journal.name.present? && !chars.present?
       unless chars.present?
         # unique_ids:
-        # dreamwidth#{author_id}
+        # dreamwidth#{journal_id}
         # constellation#user#{user_id}
         # constellation#{character_id}
         skip_creation = false
-        if author.unique_id.start_with?('constellation#user#')
+        if journal.unique_id.start_with?('constellation#user#')
           chars = [] # character is nil if it's a user post
           skip_creation = true
-        elsif author.unique_id.start_with?('constellation#')
-          char_id = author.unique_id.sub('constellation#', '')
+        elsif journal.unique_id.start_with?('constellation#')
+          char_id = journal.unique_id.sub('constellation#', '')
           chars = Character.where(user_id: user.id, id: char_id)
         end
 
         unless skip_creation or chars.present?
-          char = Character.create!(user: user, name: author.name, screenname: author.screenname)
-          LOG.info "- Created character '#{author.name}' for author '#{user.username}'."
+          char = Character.create!(user: user, name: journal.name, screenname: journal.screenname)
+          LOG.info "- Created character '#{journal.name}' for author '#{user.username}'."
         end
       end
       char ||= chars.first
-      @char_cache[author.unique_id] = char
-      if author.default_face.present?
-        default_icon = icon_for_face(author.default_face)
+      @char_cache[journal.unique_id] = char
+      if journal.default_face.present?
+        default_icon = icon_for_face(journal.default_face)
         if char.present? && default_icon.present?
           char.update_attributes(default_icon: default_icon)
           LOG.debug "- Set a default icon for #{char.name}: #{default_icon.id}"
         end
       else
-        LOG.warn("- Character has no default face: #{author}")
+        LOG.warn("- Character has no default face: #{journal}")
       end
       char
     end
-    def gallery_for_author(author)
-      return @gallery_cache[author.unique_id] if @gallery_cache.key?(author.unique_id)
-      char = character_for_author(author)
+    def gallery_for_journal(journal)
+      return @gallery_cache[journal.unique_id] if @gallery_cache.key?(journal.unique_id)
+      char = character_for_journal(journal)
       return nil unless char
       if char.galleries.empty?
-        LOG.debug "- Created gallery for #{author.name}"
-        char.galleries.build(user: char.user, name: author.name)
+        LOG.debug "- Created gallery for #{journal.name}"
+        char.galleries.build(user: char.user, name: journal.name)
         char.save!
       else
-        LOG.debug "- #{author.name} has an uncached gallery; using it. (ID #{char.galleries.first.id})"
+        LOG.debug "- #{journal.name} has an uncached gallery; using it. (ID #{char.galleries.first.id})"
       end
-      @gallery_cache[author.unique_id] = char.galleries.first
+      @gallery_cache[journal.unique_id] = char.galleries.first
     end
-    def user_for_author(author, options={})
-      return @user_cache[author.unique_id] if @user_cache.key?(author.unique_id)
-      return nil unless author.unique_id
+    def user_for_journal(journal, options={})
+      return @user_cache[journal.unique_id] if @user_cache.key?(journal.unique_id)
+      return nil unless journal.unique_id
       set_coauthors = options.key?(:set_coauthors) ? options[:set_coauthors] : @set_coauthors
-      moieties = author.moieties
+      moieties = journal.moieties
       moieties = ['Unknown Author'] unless moieties.present?
       moiety = moieties.first
       cached_moiety = moieties.find {|moiety_val| @usermoiety_cache.key?(moiety_val) }
       return @usermoiety_cache[cached_moiety] if cached_moiety
-      LOG.warn("- Character has many moieties (#{author.moiety})") if moieties.length > 1
+      LOG.warn("- Character has many moieties (#{journal.moiety})") if moieties.length > 1
 
       users = User.where('lower(username) = ?', moieties.map(&:downcase))
       unless users.present?
@@ -993,21 +993,21 @@
           LOG.info "- Added coauthor to board: #{user.id}"
         end
       end
-      @user_cache[author.unique_id] = user
+      @user_cache[journal.unique_id] = user
       @usermoiety_cache[user.try(:username).try(:downcase)] = user
     end
     def icon_for_face(face)
       return nil unless face.present? and face.imageURL.present?
       return @icon_cache[face.unique_id] if @icon_cache.key?(face.unique_id)
-      user = user_for_author(face.author)
-      gallery = gallery_for_author(face.author)
+      user = user_for_journal(face.journal)
+      gallery = gallery_for_journal(face.journal)
       icon = Icon.where(url: face.imageURL, user_id: user.id).includes(:galleries).select{|icon_i| icon_i.galleries.include?(gallery)}.first
       unless icon.present?
         icon = Icon.where(url: face.imageURL, user_id: user.id).first
         gallery.icons << icon if gallery && icon.present?
       end
       unless icon.present?
-        gallery = gallery_for_author(face.author)
+        gallery = gallery_for_journal(face.journal)
         icon = Icon.create!(user: user, url: face.imageURL, keyword: face.keyword)
         gallery.icons << icon if gallery
       end
@@ -1020,7 +1020,7 @@
       board_name = FIC_NAMESTRINGS[chapter_list.group]
       boards = Board.where('lower(name) = ?', board_name.downcase)
       unless boards.present?
-        first_user = user_for_author(chapter_list.authors.first, set_coauthors: false)
+        first_user = user_for_journal(chapter_list.characters.first, set_coauthors: false)
         board = Board.create!(name: board_name, creator: first_user)
         LOG.info "- Created board for chapterlist, name '#{board_name}' with creator ID #{first_user.id}"
         @set_coauthors = true if @set_coauthors == :if_new_board
@@ -1051,8 +1051,8 @@
       postgroup
     end
     def do_writables_from_message(writable, message)
-      writable.user = user_for_author(message.author)
-      writable.character = character_for_author(message.author)
+      writable.user = user_for_journal(message.journal)
+      writable.character = character_for_journal(message.journal)
       writable.icon = icon_for_face(message.face)
       writable.content = message.content.strip
       writable.created_at = message.time

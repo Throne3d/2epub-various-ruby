@@ -120,7 +120,7 @@
     end
 
     def msg_attrs
-      @msg_attrs ||= [:time, :edittime, :author, :face]
+      @msg_attrs ||= [:time, :edittime, :character, :face]
     end
   end
 
@@ -128,7 +128,7 @@
     attr_reader :download_count
     def self.handles?(thing)
       return if thing.nil?
-      return thing.unique_id.start_with?('dreamwidth#') if thing.is_a?(GlowficEpub::Author)
+      return thing.unique_id.start_with?('dreamwidth#') if thing.is_a?(GlowficEpub::Character)
 
       chapter_url = thing
       chapter_url = thing.url if thing.is_a?(GlowficEpub::Chapter)
@@ -146,8 +146,8 @@
       @face_url_cache = {}
       @face_param_cache = {}
       @face_issue_cache = []
-      @author_id_cache = {}
-      @author_param_cache = {}
+      @character_id_cache = {}
+      @character_param_cache = {}
 
       @page_list = []
       @repeated_page_cache = {}
@@ -525,7 +525,7 @@
 
           params = {}
           params[:imageURL] = icon_src
-          params[:author] = get_author_by_id(user_profile)
+          params[:character] = get_character_by_id(user_profile)
 
           icon_keywords.each do |keyword_element|
             keyword = keyword_element.text.strip
@@ -537,7 +537,7 @@
             @chapter_list.replace_face(face)
             if icon_element == default_icon
               icon_hash[:default] = face
-              params[:author].default_face = face if params[:author] && !params[:author].default_face_id.present?
+              params[:character].default_face = face if params[:character] && !params[:character].default_face_id.present?
             end
             @face_param_cache[face.unique_id] = params
             @face_url_cache[icon_src.sub(/https?:\/\//, '')] = face
@@ -583,31 +583,31 @@
       face
     end
 
-    def set_author_cache(author)
-      author_id = author.unique_id.gsub('_', '-')
-      author_id = author_id.sub("dreamwidth#", "") if author_id.start_with?("dreamwidth#")
-      @author_id_cache[author_id] = author
+    def set_character_cache(character)
+      character_id = character.unique_id.gsub('_', '-')
+      character_id = character_id.sub("dreamwidth#", "") if character_id.start_with?("dreamwidth#")
+      @character_id_cache[character_id] = character
     end
-    def get_author_by_id(author_id, options={})
-      author_id = author_id.gsub('_', '-')
-      author_id = author_id.sub("dreamwidth#", "") if author_id.start_with?("dreamwidth#")
-      return @author_id_cache[author_id] if @author_id_cache.key?(author_id)
+    def get_character_by_id(character_id, options={})
+      character_id = character_id.gsub('_', '-')
+      character_id = character_id.sub("dreamwidth#", "") if character_id.start_with?("dreamwidth#")
+      return @character_id_cache[character_id] if @character_id_cache.key?(character_id)
 
-      try_chapterauthor = options.key?(:try_chapterauthor) ? options[:try_chapterauthor] : true
+      try_chaptercharacter = options.key?(:try_chaptercharacter) ? options[:try_chaptercharacter] : true
 
-      if try_chapterauthor
-        chapter_author = @chapter_list.try(:get_author_by_id, "dreamwidth##{author_id}")
-        if chapter_author.present?
-          @author_id_cache[author_id] = chapter_author
-          return chapter_author
+      if try_chaptercharacter
+        chapter_character = @chapter_list.try(:get_character_by_id, "dreamwidth##{character_id}")
+        if chapter_character.present?
+          @character_id_cache[character_id] = chapter_character
+          return chapter_character
         end
       end
 
-      char_page = giri_or_cache("http://#{author_id}.dreamwidth.org/profile")
+      char_page = giri_or_cache("http://#{character_id}.dreamwidth.org/profile")
       LOG.debug "nokogiri'd profile page"
 
       params = {}
-      params[:moiety] = get_moiety_by_profile(author_id)
+      params[:moiety] = get_moiety_by_profile(character_id)
 
       profile_summary = char_page.at_css('.profile table')
       profile_summary.css('th').each do |th_element|
@@ -615,25 +615,25 @@
           params[:name] = th_element.next_element.text.strip
         end
       end
-      params[:screenname] = author_id
+      params[:screenname] = character_id
       params[:display] = (params.key?(:name) and params[:name].downcase != params[:screenname].downcase) ? "#{params[:name]} (#{params[:screenname]})" : "#{params[:screenname]}"
-      params[:unique_id] = "dreamwidth##{author_id}"
+      params[:unique_id] = "dreamwidth##{character_id}"
 
 
-      author = Author.new(params)
-      @author_param_cache[author.unique_id] = params
-      @author_id_cache[author_id] = author
+      character = Character.new(params)
+      @character_param_cache[character.unique_id] = params
+      @character_id_cache[character_id] = character
     end
-    def get_updated_author(author)
-      return unless author
-      return get_author_by_id(author.unique_id) if @author_param_cache.key?(author.unique_id)
+    def get_updated_character(character)
+      return unless character
+      return get_character_by_id(character.unique_id) if @character_param_cache.key?(character.unique_id)
 
-      get_author_by_id(author.unique_id, try_chapterauthor: false)
-      author_hash = @author_param_cache[author.unique_id]
-      author.from_json! author_hash
-      set_author_cache(author)
+      get_character_by_id(character.unique_id, try_chaptercharacter: false)
+      character_hash = @character_param_cache[character.unique_id]
+      character.from_json! character_hash
+      set_character_cache(character)
 
-      author
+      character
     end
 
     def make_message(message_element, options = {})
@@ -645,7 +645,7 @@
       message_id = message_element['id'].sub('comment-', '').sub('entry-', '')
       message_type = message_element['id']['entry'] ? PostType::ENTRY : PostType::REPLY
 
-      author_id = message_element.at_css('span.ljuser').try(:[], "lj:user")
+      character_id = message_element.at_css('span.ljuser').try(:[], "lj:user")
 
       params = {}
       if message_attributes.include?(:edittime)
@@ -659,7 +659,7 @@
 
       message_content = message_element.at_css('.comment-content, .entry-content')
       params[:content] = message_content.inner_html
-      params[:author] = get_author_by_id(author_id) if message_attributes.include?(:author)
+      params[:character] = get_character_by_id(character_id) if message_attributes.include?(:character)
       params[:id] = message_id
       params[:chapter] = @chapter
 
@@ -668,22 +668,22 @@
         face_url = ""
         face_name = "default"
         if userpic and userpic["title"]
-          if userpic["title"] != author_id
-            face_name = userpic["title"].sub("#{author_id}: ", "").split(" (").first
+          if userpic["title"] != character_id
+            face_name = userpic["title"].sub("#{character_id}: ", "").split(" (").first
           end
           if userpic["src"]
             face_url = userpic["src"]
           end
         end
 
-        face_id = "#{author_id}##{face_name}"
+        face_id = "#{character_id}##{face_name}"
         params[:face] = get_face_by_id(face_id, face_url: face_url)
         params[:face] = @chapter_list.get_face_by_id(face_id) if params[:face].nil?
 
         if params[:face].nil? and not face_url.empty?
           face_params = {}
           face_params[:imageURL] = face_url
-          face_params[:author] = get_author_by_id(author_id) if message_attributes.include?(:author)
+          face_params[:character] = get_character_by_id(character_id) if message_attributes.include?(:character)
           face_params[:keyword] = face_name
           face_params[:unique_id] = face_id
           face = Face.new(face_params)
@@ -817,7 +817,7 @@
     attr_reader :download_count
     def self.handles?(thing)
       return if thing.nil?
-      return thing.unique_id.start_with?('constellation#') if thing.is_a?(GlowficEpub::Author)
+      return thing.unique_id.start_with?('constellation#') if thing.is_a?(GlowficEpub::Character)
 
       chapter_url = thing
       chapter_url = thing.url if thing.is_a?(GlowficEpub::Chapter)
@@ -831,8 +831,8 @@
       @face_id_cache = {} # {"6951" => "[is a face: ahein, imgur..., etc.]"}
       @face_param_cache = {}
       @face_issue_cache = [] #these helpful names ikr
-      @author_id_cache = {}
-      @author_param_cache = {}
+      @character_id_cache = {}
+      @character_param_cache = {}
       @char_page_cache = {}
       # When retrieved in get_face_by_id
       @moiety_cache = {}
@@ -1073,7 +1073,7 @@
         face_params[:imageURL] = nil
         face_params[:keyword] = "none"
         face_params[:unique_id] = "#{character_id}#none"
-        face_params[:author] = get_author_by_id(character_id)
+        face_params[:character] = get_character_by_id(character_id)
         face = Face.new(face_params)
         @chapter_list.replace_face(face)
         @face_param_cache[face.unique_id] = face_params
@@ -1102,7 +1102,7 @@
         end
         @char_user_map[character_id] = user_id
 
-        character = get_author_by_id(character_id)
+        character = get_character_by_id(character_id)
 
         if icons.nil? or icons.empty?
           LOG.error "No icons for character ##{character_id}."
@@ -1133,7 +1133,7 @@
 
             params = {}
             params[:imageURL] = icon_src
-            params[:author] = character
+            params[:character] = character
             params[:keyword] = icon_keyword
             params[:unique_id] = "#{character_id}##{icon_numid}"
             params[:chapter_list] = @chapter_list
@@ -1142,7 +1142,7 @@
             @chapter_list.replace_face(face)
             if default_icon == icon_element
               icon_hash[:default] = face
-              params[:author].default_face = face if params[:author] && !params[:author].default_face_id.present?
+              params[:character].default_face = face if params[:character] && !params[:character].default_face_id.present?
             end
 
             @face_id_cache[face.unique_id] = face
@@ -1184,7 +1184,7 @@
 
           params = {}
           params[:imageURL] = icon_src
-          params[:author] = character
+          params[:character] = character
           params[:keyword] = icon_keyword
           params[:unique_id] = "#{character_id}##{icon_numid}"
           params[:chapter_list] = @chapter_list
@@ -1240,23 +1240,23 @@
       face
     end
 
-    def set_author_cache(author)
-      character_id = author.unique_id
+    def set_character_cache(character)
+      character_id = character.unique_id
       character_id = character_id.sub("constellation#", "") if character_id.start_with?("constellation#")
-      @author_id_cache[character_id] = author
-      author
+      @character_id_cache[character_id] = character
+      character
     end
-    def get_author_by_id(character_id, options={})
+    def get_character_by_id(character_id, options={})
       character_id = character_id.sub("constellation#", "") if character_id.start_with?("constellation#")
-      return @author_id_cache[character_id] if @author_id_cache.key?(character_id)
+      return @character_id_cache[character_id] if @character_id_cache.key?(character_id)
 
-      try_chapterauthor = options.key?(:try_chapterauthor) ? options[:try_chapterauthor] : true
+      try_chaptercharacter = options.key?(:try_chaptercharacter) ? options[:try_chaptercharacter] : true
 
-      if try_chapterauthor
-        chapter_author = @chapter_list.try(:get_author_by_id, "constellation##{character_id}")
-        if chapter_author.present?
-          @author_id_cache[character_id] = chapter_author
-          return chapter_author
+      if try_chaptercharacter
+        chapter_character = @chapter_list.try(:get_character_by_id, "constellation##{character_id}")
+        if chapter_character.present?
+          @character_id_cache[character_id] = chapter_character
+          return chapter_character
         end
       end
 
@@ -1276,10 +1276,10 @@
         params[:display] = char_name
         params[:unique_id] = "constellation#user##{user_id}"
 
-        author = Author.new(params)
-        @author_id_cache["user##{user_id}"] = author
-        @author_param_cache[author.unique_id] = params
-        return author
+        character = Character.new(params)
+        @character_id_cache["user##{user_id}"] = character
+        @character_param_cache[character.unique_id] = params
+        return character
       else
         char_page_url = "https://glowfic.com/characters/#{character_id}/"
         char_page = giri_or_cache(char_page_url)
@@ -1297,22 +1297,22 @@
         params[:display] = char_display
         params[:unique_id] = "constellation##{character_id}"
 
-        author = Author.new(params)
-        @author_id_cache[character_id] = author
-        @author_param_cache[author.unique_id] = params
-        return author
+        character = Character.new(params)
+        @character_id_cache[character_id] = character
+        @character_param_cache[character.unique_id] = params
+        return character
       end
     end
-    def get_updated_author(author)
-      return unless author
-      return get_author_by_id(author.unique_id) if @author_param_cache.key?(author.unique_id)
+    def get_updated_character(character)
+      return unless character
+      return get_character_by_id(character.unique_id) if @character_param_cache.key?(character.unique_id)
 
-      get_author_by_id(author.unique_id, try_chapterauthor: false)
-      author_hash = @author_param_cache[author.unique_id]
-      author.from_json! author_hash
-      set_author_cache(author)
+      get_character_by_id(character.unique_id, try_chaptercharacter: false)
+      character_hash = @character_param_cache[character.unique_id]
+      character.from_json! character_hash
+      set_character_cache(character)
 
-      author
+      character
     end
 
     def make_message(message_element, options = {})
@@ -1337,15 +1337,15 @@
       end
 
       post_info_text = message_element.at_css('.post-info-text')
-      author_element = post_info_text.at_css('.post-author').at_css('a')
-      author_name = author_element.text.strip
-      author_id = author_element["href"].split("users/").last
+      character_element = post_info_text.at_css('.post-author').at_css('a')
+      character_name = character_element.text.strip
+      character_id = character_element["href"].split("users/").last
 
       character_element = post_info_text.at_css('.post-character').try(:at_css, 'a')
       if character_element
         character_id = character_element["href"].split("characters/").last
       else
-        character_id = "user##{author_id}"
+        character_id = "user##{character_id}"
       end
 
       date_element = message_element.at_css('> .post-footer')
@@ -1367,8 +1367,8 @@
       end
 
       params[:content] = message_element.at_css('.post-content').inner_html.strip
-      params[:author] = get_author_by_id(character_id) if message_attributes.include?(:author)
-      params[:author_str] = author_name unless message_attributes.include?(:author)
+      params[:character] = get_character_by_id(character_id) if message_attributes.include?(:character)
+      params[:character_str] = character_name unless message_attributes.include?(:character)
 
       params[:id] = message_id
       params[:chapter] = @chapter
@@ -1384,9 +1384,9 @@
           face_name = userpic["title"]
         end
         face_uniqid = [character_id, face_id].reject{|thing| thing.nil?} * '#'
-        face_uniqid = "#{face_id}" if character_id == "user##{author_id}"
+        face_uniqid = "#{face_id}" if character_id == "user##{character_id}"
         params[:face] = get_face_by_id(face_uniqid) unless face_uniqid.empty?
-        params[:face].author = params[:author] if params[:face]
+        params[:face].character = params[:character] if params[:face]
         params[:face] = @chapter_list.get_face_by_id(face_uniqid) if params[:face].nil?
 
         if params[:face].nil? and not face_url.empty?
@@ -1394,7 +1394,7 @@
           face_params[:imageURL] = face_url
           face_params[:keyword] = face_name
           face_params[:unique_id] = face_id
-          face_params[:author] = get_author_by_id(character_id)
+          face_params[:character] = get_character_by_id(character_id)
           face = Face.new(face_params)
           @chapter_list.add_face(face)
           params[:face] = face
@@ -1405,7 +1405,7 @@
           face_params[:imageURL] = nil
           face_params[:keyword] = face_name
           face_params[:unique_id] = "#{character_id}##{face_name}"
-          face_params[:author] = get_author_by_id(character_id)
+          face_params[:character] = get_character_by_id(character_id)
           face = Face.new(face_params)
           @chapter_list.add_face(face)
           params[:face] = face

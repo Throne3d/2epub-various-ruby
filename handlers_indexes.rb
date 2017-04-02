@@ -139,7 +139,7 @@ module GlowficIndexHandlers
         {thing: :processed},
         {thing: :entry, :if => :processed},
         {thing: :replies, :if => :processed},
-        {thing: :authors, :if => :processed},
+        {thing: :characters, :if => :processed},
         {thing: :entry_title, :if => :processed},
         {thing: :time_completed, :if => :processed},
         {thing: :time_hiatus, :if => :processed},
