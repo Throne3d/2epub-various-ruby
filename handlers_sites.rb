@@ -81,14 +81,14 @@
     def giri_or_cache(page, options = {})
       LOG.debug "giri_or_cache(\"#{page}\"" + (options.empty? ? "" : ", #{options}") + ")"
       where = options[:where]
-      replace = options.key?(:replace) ? options[:replace] : true
+      replace = options.fetch(:replace, true)
       @giricache[where] ||= {}
       return @giricache[where][page] if @giricache[where].key?(page)
 
       predone = has_cache?(page, options)
 
       options[:headers] ||= {"Accept" => "text/html"}
-      data = (replace ? down_or_cache(page, options) : get_page_data(page, options))
+      data = replace ? down_or_cache(page, options) : get_page_data(page, options)
       giri = Nokogiri::HTML(data)
       @giricache[where][page] = giri if predone
       giri
@@ -97,9 +97,7 @@
       @downcache[options[:where]].try(:delete, page)
     end
     def remove_giri_cache(page, options = {})
-      where = options[:where]
-      return unless @giricache[where].try(:key?, page)
-      @giricache[where].delete(page)
+      @giricache[options[:where]].try(:delete, page)
     end
     alias_method :nokogiri_or_cache, :giri_or_cache
 
@@ -130,9 +128,9 @@
       return if thing.nil?
       return thing.unique_id.start_with?('dreamwidth#') if thing.is_a?(GlowficEpub::Character)
 
-      chapter_url = thing
       chapter_url = thing.url if thing.is_a?(GlowficEpub::Chapter)
-      return if chapter_url.nil? || chapter_url.empty?
+      chapter_url ||= thing
+      return if chapter_url.blank?
 
       uri = URI.parse(chapter_url)
       uri.host.end_with?('dreamwidth.org')
@@ -178,8 +176,11 @@
       return comm_link
     end
     def get_permalink_for(message)
+      # x.dreamwidth.org/1234.html?view=flat
       return set_url_params(clear_url_params(message.chapter.url), {view: :flat}) if message.post_type == "PostType::ENTRY"
+      # x.dreamwidth.org/1234.html?page=5&view=flat#comment-67890
       return set_url_params(clear_url_params(message.chapter.url), {view: :flat, page: message.page_no}) + "#comment-#{message.id}" if message.page_no
+      # x.dreamwidth.org/1234.html?thread=67890#comment-67890
       set_url_params(clear_url_params(message.chapter.url), {thread: message.id}) + "#comment-#{message.id}"
     end
     def get_undiscretioned(url, options = {})
@@ -300,7 +301,7 @@
     end
     def get_updated(chapter, options = {})
       return unless self.handles?(chapter)
-      notify = options.key?(:notify) ? options[:notify] : true
+      notify = options.fetch(:notify, true)
 
       is_new = true
       prev_pages = chapter.pages
@@ -725,12 +726,12 @@
     end
     def get_replies(chapter, options = {}, &block)
       return unless self.handles?(chapter)
-      notify = options.key?(:notify) ? options[:notify] : true
+      notify = options.fetch(:notify, true)
 
       return chapter.replies if already_processed(chapter, options, &block)
 
       pages = chapter.pages
-      (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.nil? || pages.empty?
+      (LOG.error "Chapter (#{chapter.title}) has no pages" and return) if pages.blank?
 
       @chapter = chapter
       @replies = []
@@ -819,8 +820,8 @@
       return if thing.nil?
       return thing.unique_id.start_with?('constellation#') if thing.is_a?(GlowficEpub::Character)
 
-      chapter_url = thing
       chapter_url = thing.url if thing.is_a?(GlowficEpub::Chapter)
+      chapter_url ||= thing
       return if chapter_url.blank?
 
       uri = URI.parse(chapter_url)
@@ -847,6 +848,7 @@
         "https://glowfic.com/replies/#{message.id}#reply-#{message.id}"
       end
     end
+
     def get_full(chapter, options = {})
       get_some(chapter, options)
     end

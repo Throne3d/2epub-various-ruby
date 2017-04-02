@@ -10,10 +10,9 @@
     include GlowficEpub
     include ScraperUtils
     def initialize(options={})
-      @chapters = options[:chapters] if options.key?(:chapters)
-      @chapters = options[:chapter_list] if options.key?(:chapter_list)
+      @chapters = options[:chapters] || options[:chapter_list]
       @chapters.sort_chapters! if @chapters.is_a?(GlowficEpub::Chapters) && @chapters.sort_chapters
-      @group = options[:group] if options.key?(:group)
+      @group = options[:group]
     end
   end
 
