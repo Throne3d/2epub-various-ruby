@@ -26,8 +26,8 @@
 
       @skipnavmodes = [:epub, :epub_nosplit]
 
-      @mode = (options.key?(:mode) ? options[:mode] : :epub)
-      @no_split = options.key?(:no_split) && options[:no_split]
+      @mode = options.fetch(:mode, :epub)
+      @no_split = options.fetch(:no_split, false)
       @mode = (@mode.to_s + '_nosplit').to_sym if @no_split
       @folder_name = @group.to_s
 
@@ -40,9 +40,9 @@
       FileUtils::mkdir_p @html_folder
       FileUtils::mkdir_p @images_folder
 
-      @replies_per_split = (options.key?(:replies_per_split) ? options[:replies_per_split] : 200)
+      @replies_per_split = options.fetch(:replies_per_split, 200)
       @replies_per_split = 99999 if @no_split
-      @min_replies_in_split = (options.key?(:min_replies_in_split) ? options[:min_replies_in_split] : 50)
+      @min_replies_in_split = options.fetch(:min_replies_in_split, 50)
 
       @face_path_cache = {}
       @paths_used = []
@@ -51,7 +51,7 @@
 
     def add_cachedimg_path(face_path)
       return true if @cachedimgs_added.include?(face_path)
-      (LOG.error "face_path doesn't start with '../' – is probably not local" and return) unless face_path.start_with?('../')
+      (LOG.error "face_path doesn't start with '../' – is probably not local"; return) unless face_path.start_with?('../')
       relative_file = face_path.sub('../', '')
       @files << {File.join(@group_folder, relative_file) => File.join('EPUB', File.dirname(relative_file))}
       @cachedimgs_added << face_path
@@ -60,7 +60,7 @@
     def get_face_path(face)
       face_url = face if face.is_a?(String)
       face_url = face.imageURL if face.is_a?(Face)
-      return "" if face_url.nil? or face_url.empty?
+      return '' if face_url.blank?
       return @face_path_cache[face_url] if @face_path_cache.key?(face_url)
       LOG.debug "get_face_path('#{face_url}')"
 
@@ -83,7 +83,7 @@
 
       test_ext = filename.split('.').last
       test_ext = "png" if test_ext == filename
-      test_ext = "." + test_ext if test_ext and not test_ext.empty?
+      test_ext = "." + test_ext if test_ext.present?
       test_filename = 'img-' + filename.sub("#{test_ext}", "").gsub(/[^a-zA-Z0-9_\-]+/, "_")
       i = 0
       relative_file = sanitize_local_path(File.join('images', uri.host, test_filename + test_ext))
@@ -95,7 +95,7 @@
       end
       try_down = get_page(face_url, save_path: File.join(save_path, relative_file), replace: false)
       unless try_down
-        @face_path_cache[face_url] = "" #So it doesn't error multiple times for a single icon
+        @face_path_cache[face_url] = "" # So it doesn't error multiple times for a single icon
         return ""
       end
       @paths_used << relative_file
@@ -104,20 +104,23 @@
       @face_path_cache[face_url] = File.join("..", relative_file)
     end
     def get_comment_path(comment_url)
-      return comment_url unless comment_url.start_with?('http://') or comment_url.start_with?('https://')
-      return comment_url unless comment_url['.dreamwidth.org/'] or comment_url['vast-journey-9935.herokuapp.com/'] or comment_url['glowfic.com/']
+      return comment_url unless comment_url.start_with?('http://') || comment_url.start_with?('https://')
+      return comment_url unless comment_url['.dreamwidth.org/'] || comment_url['vast-journey-9935.herokuapp.com/'] || comment_url['glowfic.com/']
       comment_url = comment_url.gsub('&amp;', '&')
-      short_url = shortenURL(comment_url)
-      fragment = (comment_url['#'] ? comment_url.split('#').last : '')
-      if comment_url['.dreamwidth.org/']
-        thread_thing = short_url.split('?').first.split('#').first
-        comment_id = fragment[/(comment|cmt)-?(\d+)/].try(:split, /t-?/).try(:last)
-        comment_id ||= short_url.split('thread=').last.split('&').first.split('#').first if short_url[/(\?|&)thread=(\d+)/]
-        comment_id = "cmt" + comment_id if comment_id
-      elsif comment_url['vast-journey-9935.herokuapp.com/'] or comment_url['glowfic.com/']
-        thread_thing = short_url.split('/').first
-        comment_id = fragment[/reply-(\d+)/].try(:split, '-').try(:last)
-        comment_id ||= short_url.split('/replies/').last.split('?').first.split('#').first if short_url[/\/replies\/\d+/]
+      comment_uri = URI.parse(comment_url)
+      fragment = comment_uri.fragment
+
+      site = nil
+      post_id = nil
+      if comment_uri.host['.dreamwidth.org/']
+        comment_id = /(comment|cmt)-?(\d+)/.match(fragment).try(:[], 2) ||  get_url_param(comment_uri, 'thread')
+        comment_id = 'cmt' + comment_id if comment_id
+        post_id = /\/(\d+)(.html)?$/.match(comment_uri.path).try(:[], 1)
+        site = :dreamwidth
+      elsif comment_uri.host['vast-journey-9935.herokuapp.com/'] || comment_uri.host['glowfic.com/']
+        comment_id = /reply-(\d+)/.match(fragment).try(:[], 1) || /\/replies\/(\d+)/.match(comment_uri.path).try(:[], 1)
+        post_id = /posts\/(\d+)/.match(comment_uri.path).try(:[], 1)
+        site = :constellation
       else
         LOG.error "chapter was not from dreamwidth or constellation? #{comment_url}"
         return comment_url
@@ -125,58 +128,50 @@
 
       comment_path = nil
       @chapters.each do |chapter|
-        next unless chapter.shortURL.start_with?(thread_thing)
-        next if chapter.thread.present? && !comment_id.present?
+        next if chapter.thread.present? && comment_id.blank? # skip if pointing to a post and chapter is a specific thread
+        next if chapter.shortURL.start_with?('constellation') && site != :constellation
+        next if !chapter.shortURL.start_with?('constellation') && site == :constellation
+        next if post_id && !chapter.shortURL.split('/').include?(post_id)
         if comment_id
-          reply = chapter.replies.detect {|i| i.id == comment_id}
-          if reply
-            page = get_message_page(reply)
-            if reply == chapter.replies.first
-              comment_path = get_chapter_path_bit(chapter: chapter, page: page)
-            else
-              comment_path = get_chapter_path_bit(chapter: chapter, page: page) + "#comment-#{reply.id}"
-            end
-          else
-            next
-          end
-        end
-        unless comment_path
+          reply = chapter.replies.detect { |i| i.id.to_s == comment_id }
+          next unless reply
+          page = get_message_page(reply)
+          comment_path = get_chapter_path_bit(chapter: chapter, page: page) + "#comment-#{reply.id}"
+        else
           comment_path = get_chapter_path_bit(chapter: chapter)
         end
         break if comment_path
       end
       comment_path || comment_url
     end
-    def get_chapter_path(options = {})
-      chapter = options.is_a?(Chapter) ? options : (options.is_a?(Hash) && options.key?(:chapter) ? options[:chapter] : nil)
-      chapter_url = chapter.url if chapter
-      chapter_url ||= options.is_a?(String) ? options : (options.is_a?(Hash) && options.key?(:chapter_url) ? options[:chapter_url] : nil)
 
+    def get_chapter_path(options = {})
       File.join(@html_folder, get_chapter_path_bit(options))
     end
     def get_relative_chapter_path(options = {})
-      chapter = options.is_a?(Chapter) ? options : (options.is_a?(Hash) && options.key?(:chapter) ? options[:chapter] : nil)
-      chapter_url = chapter.url if chapter
-      chapter_url ||= options.is_a?(String) ? options : (options.is_a?(Hash) && options.key?(:chapter_url) ? options[:chapter_url] : nil)
-
       File.join('EPUB', 'html', get_chapter_path_bit(options))
     end
     def get_chapter_path_bit(options = {})
-      chapter = options.is_a?(Chapter) ? options : (options.is_a?(Hash) && options.key?(:chapter) ? options[:chapter] : nil)
-      chapter_url = chapter.url if chapter
-      chapter_url ||= options.is_a?(String) ? options : (options.is_a?(Hash) && options.key?(:chapter_url) ? options[:chapter_url] : nil)
+      chapter = options if options.is_a?(Chapter)
+      chapter ||= options[:chapter] if options.is_a?(Hash)
+
+      chapter_url = chapter.try(:url)
+      chapter_url ||= options if options.is_a?(String)
+      chapter_url ||= options[:chapter_url] if options.is_a?(Hash)
 
       thread = get_url_param(chapter_url, 'thread')
-      thread = nil if thread.nil? or thread.empty?
-      page = options.is_a?(Hash) && (options.key?(:split) || options.key?(:page)) ? (options[:split] || options[:page]) : 1 # 1-based.
+
+      page = options[:split] || options[:page] if options.is_a?(Hash)
+      page ||= 1 # 1-based pagination.
 
       uri = URI.parse(chapter_url)
       save_file = uri.host.sub('.dreamwidth.org', '').sub('vast-journey-9935.herokuapp.com', 'constellation').sub('www.glowfic.com', 'constellation').sub('glowfic.com', 'constellation')
       uri_path = uri.path
       uri_path = uri_path[1..-1] if uri_path.start_with?('/')
-      save_file += '-' + uri_path.sub('.html', '') + (thread ? "-#{thread}" : '') + (page > 1 ? '-split%03d' % page : '') + '.html'
-      save_path = save_file.gsub('/', '-')
-      File.join(save_path)
+      save_file += '-' + uri_path.sub('.html', '')
+      save_file += "-#{thread}" if thread.present?
+      save_file += '-split%03d' if page > 1
+      save_file.gsub('/', '-') + '.html' # save_path
     end
 
     def navify_navbits(navbits)
@@ -219,7 +214,9 @@
       html
     end
 
-    def get_message_orders(chapter) # [0] is the 0th, [1] is the 2nd pos, value is -1 if entry else position in chapter.replies
+    def get_message_orders(chapter)
+      # Orders the messages for the chapter (0 is 0th, 1 is next, etc)
+      # Value of -1 means entry, else it's position in chapter.replies
       @message_orders ||= {}
       chapter_pathbit = get_chapter_path_bit(chapter)
       return @message_orders[chapter_pathbit] if @message_orders.key?(chapter_pathbit)
@@ -227,18 +224,13 @@
       chapter_order = []
       message = chapter.entry
       while message
-        message_num = (message == chapter.entry ? -1 : chapter.replies.index(message))
+        message_num = (message == chapter.entry) ? -1 : chapter.replies.index(message)
         chapter_order << message_num unless chapter_order.include?(message_num)
-        new_msg = nil
 
-        message.children.each do |child|
-          next if chapter_order.include?(chapter.replies.index(child))
-          new_msg = child
-          break
+        new_msg = message.children.detect do |child|
+          !chapter_order.include?(chapter.replies.index(child))
         end
-        unless new_msg
-          new_msg = message.parent
-        end
+        new_msg ||= message.parent
 
         message = new_msg
       end
@@ -246,11 +238,11 @@
       warned = false
       chapter.replies.each do |reply|
         message_num = chapter.replies.index(reply)
-        unless chapter_order.include?(message_num)
-          chapter_order << message_num
-          LOG.error "Chapter #{chapter} didn't get all messages via depth traversal." unless warned
-          warned = true
-        end
+        next if chapter_order.include?(message_num)
+        chapter_order << message_num
+        next if warned
+        LOG.error "Chapter #{chapter} didn't get all messages via depth traversal."
+        warned = true
       end
 
       @message_orders[chapter_pathbit] = chapter_order
@@ -258,33 +250,28 @@
     end
     def get_message_page(message)
       orders = get_message_orders(message.chapter)
-      val = (message == message.chapter.entry ? -1 : message.chapter.replies.index(message))
+      val = (message == message.chapter.entry) ? -1 : message.chapter.replies.index(message)
       orderval = orders.index(val) + 1 # => entry is '1'
       get_page_from_order_and_total(orderval, orders.length)
     end
-    def get_page_from_order_and_total(order, total) #1-based order
-      if order <= @replies_per_split
-        1
-      elsif order <= (total.to_f / @replies_per_split).floor * @replies_per_split
-        # between 201 and the lowest multiple of 200 less than max, 400, 600, 800
-        (order.to_f / @replies_per_split).ceil
-      else
-        temp = (order.to_f / @replies_per_split).ceil # gives 2 for 399 and 400, give 3 for 599 and 600
-        if total % @replies_per_split < @min_replies_in_split # if we squish the last page
-          temp = temp - 1 # reduce the num
-        end
-        temp
+    def get_page_from_order_and_total(order, total) # 1-based order
+      return 1 if order <= @replies_per_split
+      temp = (order / @replies_per_split.to_f).ceil # gives 2 for 399 and 400, gives 3 for 599 and 600 (1…200, 201…400, etc.)
+      return temp if order <= (total / @replies_per_split.to_f).floor * @replies_per_split # between 201 and lowest multiple of 200 less than max
+
+      # in last page
+      if total % @replies_per_split < @min_replies_in_split
+        # if we squish the last page, reduce the num:
+        temp = temp - 1
       end
+      temp
     end
 
     def output(chapter_list=nil)
-      chapter_list = @chapters if chapter_list.nil? and @chapters
-      (LOG.fatal "No chapters given!" and return) unless chapter_list
+      chapter_list ||= @chapters
+      (LOG.fatal "No chapters given!"; return) unless chapter_list
 
-      template_message = ''
-      open('template_message.erb') do |file|
-        template_message = file.read
-      end
+      template_message = open('template_message.erb') { |file| file.read }
 
       style_path = File.join(@style_folder, 'default.css')
       open('style.css', 'r') do |style|
@@ -293,6 +280,7 @@
         end
       end
 
+      # local_file => epub_folder
       @files = [{style_path => 'EPUB/style'}]
 
       @show_authors = FIC_SHOW_AUTHORS.include?(@group)
@@ -303,17 +291,17 @@
       chapter_count = chapter_list.count
       chapter_list.each_with_index do |chapter, i|
         @chapter = chapter
-        (LOG.error "(#{i+1}/#{chapter_count}) #{chapter}: No entry for chapter." and next) unless chapter.entry
-        (LOG.info "#{chapter}: Chapter is entry-only.") if chapter.replies.nil? or chapter.replies.empty?
+        (LOG.error "(#{i+1}/#{chapter_count}) #{chapter}: No entry for chapter."; next) unless chapter.entry
+        (LOG.info "#{chapter}: Chapter is entry-only.") if chapter.replies.blank?
         save_path = get_chapter_path(chapter: chapter, group: @group)
-        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: Duplicate chapter not added again" and next) if @save_paths_used.include?(save_path)
+        (LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: Duplicate chapter not added again"; next) if @save_paths_used.include?(save_path)
         rel_path = get_relative_chapter_path(chapter: chapter)
 
         @save_paths_used << save_path
         @rel_paths_used << rel_path
 
         if chapter.processed_output?(@mode)
-          message_count = chapter.replies.count+1
+          message_count = chapter.replies.count + 1
           splits = get_page_from_order_and_total(message_count, message_count)
           1.upto(splits) do |page_num|
             temp_path = get_chapter_path(chapter: chapter, group: @group, page: page_num)
@@ -336,17 +324,16 @@
 
             LOG.info "(#{i+1}/#{chapter_count}) #{chapter}: cached data used."
             next
-          else
-            LOG.error "#{chapter}: cached data was not found." unless chapter.processed_output?(@mode)
           end
+          LOG.error "#{chapter}: cached data was not found."
         end
 
 
-        @messages = get_message_orders(chapter).map{|count| (count >= 0 ? chapter.replies[count] : chapter.entry)}
+        @messages = get_message_orders(chapter).map { |count| (count >= 0) ? chapter.replies[count] : chapter.entry }
 
+        erb = ERB.new(template_message, 0, '-')
         @message_htmls = @messages.map do |message|
           @message = message
-          erb = ERB.new(template_message, 0, '-')
           b = binding
           erb.result b
         end
@@ -363,7 +350,7 @@
         @message_htmls.each_with_index do |message_html, y|
           message = @messages[y]
           page = get_message_page(message)
-          if prev_page != page
+          unless prev_page == page
             if temp_html.present? && temp_html != html_start
               temp_html += "<a class='navlink nextlink splitlink' href='#{get_chapter_path_bit(chapter: chapter, page: prev_page+1)}'>Next page of chapter &raquo;</a>\n" if !@skipnavmodes.include?(@mode) && prev_page < page_count
               temp_html << html_end
@@ -375,12 +362,13 @@
             temp_html += "<a class='navlink prevlink splitlink' href='#{get_chapter_path_bit(chapter: chapter, page: page-1)}'>&laquo; Previous page of chapter</a>\n" if !@skipnavmodes.include?(@mode) && page > 1
             prev_page = page
           end
+
           unless done_headers
             temp_html += "<div class=\"chapter-header\">\n"
             temp_html << "<h2 class=\"section-title\">#{h(chapter.sections * ', ')}</h2>\n" if chapter.sections.present?
             temp_html << "<h3 class=\"entry-title\">#{h(chapter.title)}</h3>\n"
             temp_html << "<strong class=\"entry-subtitle\">#{h(chapter.title_extras)}</strong><br />\n" if chapter.title_extras
-            temp_html << "<strong class=\"entry-authors\">Authors: #{h(chapter.moieties * ', ')}</strong><br />\n" if @show_authors and @chapter.moieties.present?
+            temp_html << "<strong class=\"entry-authors\">Authors: #{h(chapter.moieties * ', ')}</strong><br />\n" if @show_authors && @chapter.moieties.present?
             temp_html << "</div>\n"
             done_headers = true
           end
@@ -407,7 +395,7 @@
           page.css('img').each do |img_element|
             img_src = img_element.try(:[], :src)
             next unless img_src
-            next unless img_src.start_with?('http://') or img_src.start_with?('https://')
+            next unless img_src.start_with?('http://') || img_src.start_with?('https://')
             img_element[:src] = get_face_path(img_src)
           end
           page.css('a').each do |a_element|
@@ -470,8 +458,7 @@
       @files.each do |thing|
         thing.keys.each do |key|
           next if key.start_with?('/')
-          thing[File.join(Dir.pwd, key)] = thing[key]
-          thing.delete(key)
+          thing[File.join(Dir.pwd, key)] = thing.delete(key)
         end
       end
 
@@ -508,73 +495,12 @@
       @flag_sec_scan = Regexp.new(/\[color=#([A-F0-9]+)\](█|███)\[\/color\]/)
       @hex = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
     end
-    def csscol_to_rgb(csscol)
-      csscol = csscol.strip.upcase
-      csscol = csscol[1..-1] if csscol.start_with?('#')
-      if csscol.length == 3
-        css_r = csscol[0]
-        css_g = csscol[1]
-        css_b = csscol[2]
-      elsif csscol.length == 6
-        css_r = csscol[0..1]
-        css_g = csscol[2..3]
-        css_b = csscol[4..5]
-      else
-        raise(ArgumentError, "csscol is not a CSS hex color")
-      end
-      r = @hex.index(css_r[0]) * 16 + @hex.index(css_r[-1])
-      g = @hex.index(css_g[0]) * 16 + @hex.index(css_g[-1])
-      b = @hex.index(css_b[0]) * 16 + @hex.index(css_b[-1])
-      [r,g,b]
-    end
-    def rgb_to_hsl(r, g=nil, b=nil)
-      if r.is_a?(Array)
-        g = r[1]
-        b = r[2]
-        r = r[0]
-      end
 
-      r = r.to_f / 255
-      g = g.to_f / 255
-      b = b.to_f / 255
-      max = [r,g,b].max
-      min = [r,g,b].min
-      l = s = h = (max + min) / 2.0
-
-      if (max == min)
-        h = s = 1.0 #hack so gray gets sent to the end
-      else
-        d = max - min
-        s = (l > 0.5) ? d / (2.0 - max - min) : d / (max + min)
-        case (max)
-        when r
-          h = (g - b) / d + (g < b ? 6.0 : 0.0)
-        when g
-          h = (b - r) / d + 2.0
-        when b
-          h = (r - g) / d + 4.0
-        end
-        h = h / 6.0
-      end
-
-      [h,s,l]
-    end
-    def hsl_comp(hsl1, hsl2)
-      if hsl1[0] == hsl2[0]
-        hsl1[2] <=> hsl2[2]
-      else
-        hsl1[0] <=> hsl2[0]
-      end
-    end
     def rainbow_comp(thing1, thing2)
-      @thing1_pri = thing1.match(@flag_pri_scan)[1] if thing1[@flag_pri_scan]
-      @thing1_sec = thing1.match(@flag_sec_scan)[1] if thing1[@flag_sec_scan]
-      @thing2_pri = thing2.match(@flag_pri_scan)[1] if thing2[@flag_pri_scan]
-      @thing2_sec = thing2.match(@flag_sec_scan)[1] if thing2[@flag_sec_scan]
-      @thing1_pri ||= thing1
-      @thing1_sec ||= thing1
-      @thing2_pri ||= thing2
-      @thing2_sec ||= thing2
+      @thing1_pri = thing1.match(@flag_pri_scan).try(:[], 1) || thing1
+      @thing1_sec = thing1.match(@flag_sec_scan).try(:[], 1) || thing1
+      @thing2_pri = thing2.match(@flag_pri_scan).try(:[], 1) || thing2
+      @thing2_sec = thing2.match(@flag_sec_scan).try(:[], 1) || thing2
 
       #puts "#{thing1} #{thing2}"
       #puts "#{@thing1_pri} #{@thing1_sec} #{@thing2_pri} #{@thing2_sec}"
@@ -593,30 +519,46 @@
       #puts "Compared #{thing1} and #{thing2} and got #{comp}"
       comp
     end
+
     def chapterthing_displaytext(chapterthing, options = {})
-      first_last = options.key?(:first) ? (options[:first] != false ? :first : :last) : (options.key?(:last) ? (options[:last] != false ? :last : :first) : (options.key?(:first_last) ? options[:first_last] : :first))
-      show_completed_before = options.key?(:completed) ? options[:completed] : (options.key?(:completed_before) ? options[:completed_before] : (DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0) - 1))
-      show_completed_before = 0 unless show_completed_before
+      first_last = if options.key?(:first)
+        options[:first] != false ? :first : :last
+      elsif options.key?(:last)
+        options[:last] != false ? :last : :first
+      elsif options.key?(:first_last)
+        options[:first_last]
+      else
+        :first
+      end
+      show_completed_before = options[:completed] || options[:completed_before] || (DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0) - 1)
+      show_completed_before ||= 0
       show_hiatus_before = show_completed_before
-      show_new_after = options.key?(:early) ? options[:early] : (options.key?(:new_after) ? options[:new_after] : (DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0) - 1))
-      show_last_update_time = options.key?(:show_last_update_time) ? options[:show_last_update_time] : false
-      show_sections = options.key?(:show_sections) ? options[:show_sections] : false
-      show_last_author = options.key?(:show_last_author) ? options[:show_last_author] : false
-      show_unread_link = options.key?(:show_unread_link) ? options[:show_unread_link] : false
+      show_new_after = options[:early] || options[:new_after] || (DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0) - 1)
+      show_last_update_time = options[:show_last_update_time]
+      show_sections = options[:show_sections]
+      show_last_author = options[:show_last_author]
+      show_unread_link = options[:show_unread_link]
 
       chapter = chapterthing[:chapter]
       first_update = chapterthing[:first_update]
       last_update = chapterthing[:last_update]
       latest_update = chapterthing[:latest_update]
-      completed = (chapter.time_completed and chapter.time_completed <= show_completed_before)
-      hiatus = (chapter.time_hiatus and chapter.time_hiatus <= show_hiatus_before)
-      url_thing = (first_last == :first ? first_update : (first_last == :last ? last_update : latest_update))
+      completed = (chapter.time_completed && chapter.time_completed <= show_completed_before)
+      hiatus = (chapter.time_hiatus && chapter.time_hiatus <= show_hiatus_before)
+      url_thing = if first_last == :first
+        first_update
+      elsif first_last == :last
+        last_update
+      else
+        latest_update
+      end
       @errors << "#{chapter} has no url_thing! (first_last: #{first_last})" unless url_thing
 
       show_last_author = !completed if show_last_author == :unless_completed
 
-      if chapter.report_flags and not chapter.report_flags_processed?
-        chapter.report_flags = chapter.report_flags.scan(@col_scan).map{|thing| thing[0] }.uniq.map do |thing|
+      if chapter.report_flags && !chapter.report_flags_processed?
+        flag_matches = chapter.report_flags.scan(@col_scan).map {|thing| thing[0]}.uniq
+        flag_strings = flag_matches.map do |thing|
           thing = thing[1..-1] if thing.start_with?('#')
           things = thing.split('#')
           if things.length == 1
@@ -628,20 +570,21 @@
             things.each {|col| temp << "[color=##{col}]█[/color]"}
             temp
           end
-        end.sort{|thing1, thing2| rainbow_comp(thing1, thing2) }.join(' ').strip.gsub(/[\(\)]/, '')
+        end
+        chapter.report_flags = flag_strings.sort{|thing1, thing2| rainbow_comp(thing1, thing2) }.join(' ').tr('()', '').strip
         chapter.report_flags_processed = true
       end
 
-      if (!chapter.title_extras.nil? && !chapter.title_extras.empty?) and not chapter.report_flags.present?
-        chapter.report_flags = chapter.title_extras.scan(@flag_scan).map{|thing| thing[0] }.uniq.sort{|thing1, thing2| rainbow_comp(thing1, thing2) }.join(' ').strip.gsub(/[\(\)]/, '')
+      if chapter.title_extras.present? && !chapter.report_flags.present?
+        flag_matches = chapter.title_extras.scan(@flag_scan).map{|thing| thing[0] }.uniq
+        chapter.report_flags = flag_matches.sort{|thing1, thing2| rainbow_comp(thing1, thing2) }.join(' ').tr('()', '').strip
         chapter.title_extras = chapter.title_extras.gsub(@flag_scan, '')
       end
 
-      chapter.report_flags = "" unless chapter.report_flags
-
+      chapter.report_flags ||= ''
       show_last_author = false unless latest_update.author_str
 
-      @errors << "#{chapter}: both completed and hiatused" if completed and hiatus
+      @errors << "#{chapter}: both completed and hiatused" if completed && hiatus
 
       section_string = ''
       if show_sections && chapter.sections.present?
@@ -649,6 +592,7 @@
         @cont_replace.each {|key, val| str = str.sub(key, val)}
         section_string = '(' + str + ') '
       end
+
       str = "[*]"
       str << '[size=85]' + chapter.report_flags.strip + '[/size] ' unless chapter.report_flags.blank?
       if chapter.time_new >= show_new_after
@@ -664,14 +608,14 @@
       str << '[/color]' if completed
       str << '[/color]' if hiatus
       str << '[/url]' if url_thing
-      str << ',' unless chapter.entry_title and chapter.entry_title[/[?,.!;…\-–—]$/] #ends with punctuation (therefore 'don't add a comma')
+      str << ',' unless chapter.entry_title && chapter.entry_title[/[?,.!;…\-–—]$/] #ends with punctuation (therefore 'don't add a comma')
       str << ' '
       str << "#{chapter.title_extras || '(no extras)'}"
-      str << ' (' if show_last_author or show_last_update_time
+      str << ' (' if show_last_author || show_last_update_time
       str << "last post by #{latest_update.author_str}" if show_last_author
-      str << ', ' if show_last_author and show_last_update_time
+      str << ', ' if show_last_author && show_last_update_time
       str << 'last updated ' + latest_update.time.strftime((latest_update.time.year != @date.year ? '%Y-' : '') + '%m-%d %H:%M') if show_last_update_time
-      str << ')' if show_last_author or show_last_update_time
+      str << ')' if show_last_author || show_last_update_time
       return str
     end
     def sort_by_time(upd_chapters, value)
@@ -690,15 +634,15 @@
       end
     end
     def report_output(thing)
-      @report_output ||= ""
+      @report_output ||= ''
       @report_output += thing + "\n"
     end
     def report_output!
       LOG.info @report_output.strip
     end
     def report_list(chapters, options={})
-      spoiler_box = options.key?(:spoiler_box) ? options.delete(:spoiler_box) : false
-      list_style = options.key?(:list_style) ? options.delete(:list_style) : false
+      spoiler_box = options.delete(:spoiler_box)
+      list_style = options.delete(:list_style)
       message = options.delete(:message)
 
       report_output "[spoiler-box=#{spoiler_box}]" if spoiler_box
@@ -712,12 +656,12 @@
     end
 
     def output(options = {})
-      chapter_list = options.include?(:chapter_list) ? options[:chapter_list] : @chapters
-      show_earlier = options.include?(:show_earlier) ? options[:show_earlier] : false
-      @cont_replace = options.include?(:cont_replace) ? options[:cont_replace] : {/^ZZ+\d+-/ => ''}
-      date = options.include?(:date) ? options[:date] : DateTime.now.to_date
+      chapter_list = options.fetch(:chapter_list, @chapters)
+      show_earlier = options[:show_earlier]
+      @cont_replace = options.fetch(:cont_replace, {/^ZZ+\d+-/ => ''})
+      date = options.fetch(:date, DateTime.now.to_date)
       @date = date
-      (LOG.fatal "No chapters given!" and return) unless chapter_list
+      (LOG.fatal "No chapters given!"; return) unless chapter_list
       @errors = []
 
       today_time = DateTime.new(@date.year, @date.month, @date.day, 10, 0, 0)
@@ -725,26 +669,36 @@
       chaptercount = chapter_list.length
       LOG.progress("Organizing chapters for report", 0, chaptercount)
       done = []
-      upd_chapter_col = {}
+      upd_chapter_col = {} # save each "upd_chapters", indexed by days_ago
       day_list = [1,2,3,4,5,6,7,-1]
       day_list.each do |days_ago|
         early_time = today_time - days_ago
         late_time = early_time + 1
 
+        # special case the "Today, Not Yesterday"
         if days_ago == 2
-          if upd_chapter_col[1]
-            upd_chapter_col[1].each do |chapter_thing|
-              chapter = chapter_thing[:chapter]
+          upd_chapter_col[1].each do |chapter_thing|
+            chapter = chapter_thing[:chapter]
 
-              was_yesterday = chapter.time_new.between?(early_time, late_time)
-              messages = chapter.replies
-              messages.each do |message|
-                was_yesterday = true if message.time.between?(early_time, late_time)
-              end
-              was_yesterday = false if chapter.time_new_set? && chapter.time_new > late_time
+            # check if entry/time_new was yesterday
+            was_yesterday = chapter.time_new.between?(early_time, late_time)
 
+            # if time_new is >= yesterday, skip the next check
+            # (i.e. if time_new is yesterday, it updated yesterday; else it was not)
+            # (also used for when time_new is manually set)
+            if chapter.time_new > early_time
               chapter_thing[:yesterday] = was_yesterday
+              next
             end
+
+            # check each reply to see if chapter was updated yesterday
+            chapter.replies.reverse_each do |message|
+              break if was_yesterday
+              next unless message.time.between?(early_time, late_time)
+              was_yesterday = true
+            end
+
+            chapter_thing[:yesterday] = was_yesterday
           end
         end
 
@@ -768,12 +722,13 @@
             last_update = chapter.entry
             latest_update = chapter.entry
           end
+
           messages = chapter.replies
+          # messages are probably in chronological order (oldest first); ignore cases where this is not true
           messages.each do |message|
             latest_update = message if message.time < today_time
-            next unless days_ago > 0
-            in_period = message.time.between?(early_time, late_time)
-            next unless in_period
+            next unless days_ago > 0 # skip "earlier" extra checks
+            next unless message.time.between?(early_time, late_time) # only apply to relevant messages
             first_update = message unless first_update
             last_update = message
           end
@@ -798,52 +753,74 @@
         late_time = early_time + 1
 
         upd_chapters = upd_chapter_col[days_ago]
-        if days_ago >= 1 and not upd_chapters.empty?
-          if days_ago == 1
-            sort_by_time(upd_chapters, :first_update)
-            first_last = :first
-            new_after = early_time
-            show_last_author = false
-            colon_message = "New updates #{early_time.strftime('%m-%d')}:"
-            list_style = '1'
-            show_unread_link = true
-          else
-            sort_by_time(upd_chapters, :last_update)
-            first_last = :last
-            new_after = today_time + 3
-            show_last_author = :unless_completed
-            colon_message = "Last updated #{early_time.strftime('%m-%d')}:"
-            list_style = false
-            show_unread_link = false
-          end
+        next if upd_chapters.empty?
 
-          report_list(upd_chapters, first_last: first_last, completed_before: late_time, new_after: new_after, show_last_author: show_last_author, show_unread_link: show_unread_link, spoiler_box: false, list_style: list_style, message: colon_message)
-
-          if days_ago == 1
-            new_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].time_new >= early_time}
-            report_list(new_chapters, first_last: :first, completed_before: late_time, new_after: early_time, spoiler_box: 'New threads', message: colon_message) if new_chapters.present?
-
-            dw_upd_chapters = upd_chapters.select {|chapter_thing| GlowficSiteHandlers::DreamwidthHandler.handles?(chapter_thing[:chapter]) }
-            report_list(dw_upd_chapters, first_last: :first, completed_before: late_time, new_after: early_time, spoiler_box: 'Dreamwidth threads', message: colon_message) if dw_upd_chapters.present?
-
-            not_yesterdays = upd_chapters.select {|chapter_thing| chapter_thing[:yesterday] == false}
-            report_list(not_yesterdays, first_last: :first, completed_before: late_time, new_after: early_time, spoiler_box: 'Today, not yesterday', message: colon_message) if not_yesterdays.present?
-
-            sec_upd_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].sections.present? }
-            sec_upd_chapters.sort! do |chapter_thing1, chapter_thing2|
-              sect_diff = chapter_thing1[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)} <=> chapter_thing2[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)}
-              next sect_diff unless sect_diff == 0
-              update_time2 = chapter_thing2[:chapter].time_new if chapter_thing2[:first_update] == chapter_thing2[:chapter].entry
-              update_time1 = chapter_thing1[:chapter].time_new if chapter_thing1[:first_update] == chapter_thing1[:chapter].entry
-              update_time2 ||= chapter_thing2[:first_update].time
-              update_time1 ||= chapter_thing1[:first_update].time
-              next update_time2 <=> update_time1
-            end
-            report_list(sec_upd_chapters, first_last: :first, completed_before: late_time, new_after: early_time, show_sections: true, spoiler_box: 'Continuities', message: colon_message) if sec_upd_chapters.present?
-          end
-        elsif show_earlier && !upd_chapters.empty?
+        # Do the optional "Earlier:" section (at the end)
+        if show_earlier && days_ago < 1
           sort_by_time(upd_chapters, :latest_update)
-          report_list(upd_chapters, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true, show_last_author: :unless_completed, message: 'Earlier:') if upd_chapters.present?
+          if upd_chapters.present?
+            report_list(upd_chapters, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true, show_last_author: :unless_completed, message: 'Earlier:')
+          end
+          next
+        end
+
+        # special-case "today"
+        if days_ago == 1
+          sort_by_time(upd_chapters, :first_update)
+          first_last = :first
+          new_after = early_time
+          show_last_author = false
+          colon_message = "New updates #{early_time.strftime('%m-%d')}:"
+          list_style = '1'
+          show_unread_link = true
+        else
+          sort_by_time(upd_chapters, :last_update)
+          first_last = :last
+          new_after = today_time + 3
+          show_last_author = :unless_completed
+          colon_message = "Last updated #{early_time.strftime('%m-%d')}:"
+          list_style = false
+          show_unread_link = false
+        end
+
+        # output the relevant day's sreport list
+        report_list(upd_chapters, first_last: first_last, completed_before: late_time, new_after: new_after, show_last_author: show_last_author, show_unread_link: show_unread_link, spoiler_box: false, list_style: list_style, message: colon_message)
+
+        # add "today" spoiler boxes
+        next unless days_ago == 1
+
+        # New threads
+        new_chapters = upd_chapters.select { |chapter_thing| chapter_thing[:chapter].time_new >= early_time }
+        if new_chapters.present?
+          report_list(new_chapters, first_last: :first, completed_before: late_time, new_after: early_time, spoiler_box: 'New threads', message: colon_message)
+        end
+
+        # Dreamwidth threads
+        dw_upd_chapters = upd_chapters.select { |chapter_thing| GlowficSiteHandlers::DreamwidthHandler.handles?(chapter_thing[:chapter]) }
+        if dw_upd_chapters.present?
+          report_list(dw_upd_chapters, first_last: :first, completed_before: late_time, new_after: early_time, spoiler_box: 'Dreamwidth threads', message: colon_message)
+        end
+
+        # Today, not yesterday
+        not_yesterdays = upd_chapters.select { |chapter_thing| !chapter_thing[:yesterday] }
+        if not_yesterdays.present?
+          report_list(not_yesterdays, first_last: :first, completed_before: late_time, new_after: early_time, spoiler_box: 'Today, not yesterday', message: colon_message)
+        end
+
+        # Continuities
+        sec_upd_chapters = upd_chapters.select {|chapter_thing| chapter_thing[:chapter].sections.present? }
+        sec_upd_chapters.sort! do |chapter_thing1, chapter_thing2|
+          sect_diff = chapter_thing1[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)} <=> chapter_thing2[:chapter].sections.map {|thing| (thing.is_a?(String) ? thing.downcase : thing)}
+          next sect_diff unless sect_diff == 0
+
+          update_time2 = chapter_thing2[:chapter].time_new if chapter_thing2[:first_update] == chapter_thing2[:chapter].entry
+          update_time1 = chapter_thing1[:chapter].time_new if chapter_thing1[:first_update] == chapter_thing1[:chapter].entry
+          update_time2 ||= chapter_thing2[:first_update].time
+          update_time1 ||= chapter_thing1[:first_update].time
+          next update_time2 <=> update_time1
+        end
+        if sec_upd_chapters.present?
+          report_list(sec_upd_chapters, first_last: :first, completed_before: late_time, new_after: early_time, show_sections: true, spoiler_box: 'Continuities', message: colon_message)
         end
       end
       report_output "[url=http://alicorn.elcenia.com/board/viewtopic.php?f=10&t=498#p25059]Official moiety list[/url] ([url=http://alicorn.elcenia.com/board/viewtopic.php?f=10&t=498#p25060]rainbow[/url])"
@@ -882,7 +859,7 @@
       @reply_cache = {}
       @post_not_skips = {}
       @user_moiety_rewrite = {}
-      @confirm_dupes = (options.key?(:confirm_dupes) ? options[:confirm_dupes] : DEBUGGING)
+      @confirm_dupes = options.fetch(:confirm_dupes, DEBUGGING)
     end
 
     def character_for_journal(journal)

@@ -506,4 +506,63 @@
     uri.host = uri.host.sub(/\.dreamwidth\.org$/, '.dreamwidth').sub('vast-journey-9935.herokuapp.com', 'constellation').sub('www.glowfic.com', 'constellation').sub('glowfic.com', 'constellation')
     uri.to_s.sub(/^https?\:\/\//, '').sub(/\.html($|(?=\?))/, '')
   end
+
+  def csscol_to_rgb(csscol)
+    csscol = csscol.strip.upcase
+    csscol = csscol[1..-1] if csscol.start_with?('#')
+    if csscol.length == 3
+      css_r = csscol[0]
+      css_g = csscol[1]
+      css_b = csscol[2]
+    elsif csscol.length == 6
+      css_r = csscol[0..1]
+      css_g = csscol[2..3]
+      css_b = csscol[4..5]
+    else
+      raise(ArgumentError, "csscol is not a CSS hex color")
+    end
+    r = @hex.index(css_r[0]) * 16 + @hex.index(css_r[-1])
+    g = @hex.index(css_g[0]) * 16 + @hex.index(css_g[-1])
+    b = @hex.index(css_b[0]) * 16 + @hex.index(css_b[-1])
+    [r,g,b]
+  end
+  def rgb_to_hsl(r, g=nil, b=nil)
+    if r.is_a?(Array)
+      g = r[1]
+      b = r[2]
+      r = r[0]
+    end
+
+    r = r.to_f / 255
+    g = g.to_f / 255
+    b = b.to_f / 255
+    max = [r,g,b].max
+    min = [r,g,b].min
+    l = s = h = (max + min) / 2.0
+
+    if (max == min)
+      h = s = 1.0 #hack so gray gets sent to the end
+    else
+      d = max - min
+      s = (l > 0.5) ? d / (2.0 - max - min) : d / (max + min)
+      case (max)
+      when r
+        h = (g - b) / d + (g < b ? 6.0 : 0.0)
+      when g
+        h = (b - r) / d + 2.0
+      when b
+        h = (r - g) / d + 4.0
+      end
+      h = h / 6.0
+    end
+
+    [h,s,l]
+  end
+  def hsl_comp(hsl1, hsl2)
+    if hsl1[0] == hsl2[0]
+      hsl1[2] <=> hsl2[2]
+    else
+      hsl1[0] <=> hsl2[0]
+    end
+  end
 end
