@@ -58,8 +58,30 @@
     @moieties
   end
 
+  module PostType
+    ENTRY = 0
+    REPLY = 1
+  end
+
   class Model
     attr_accessor :dirty, :serialize_ignore
+
+    def initialize(options={})
+      return if params.empty?
+      params = standardize_params(params)
+
+      params.reject! do |param|
+        unless allowed_params.include?(param)
+          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
+        end
+      end
+      allowed_params.each do |symbol|
+        public_send("#{symbol}=", params[symbol])
+      end
+    end
+
+    def allowed_params; self.class.allowed_params; end
+
     def standardize_params(params = {})
       params.keys.each do |param|
         if param.is_a?(String)
@@ -127,24 +149,22 @@
       self.serialize_ignore!(*things)
     end
     def self.serialize_ignore!(*things)
-      things = things.first if things.length == 1 && things.first.is_a?(Array)
       things = things.map do |thing|
         (thing.is_a? String) ? thing.to_sym : thing
       end
       @serialize_ignore ||= []
-      things.each { |thing| @serialize_ignore << thing }
+      @serialize_ignore += things
     end
     def serialize_ignore?(thing); self.class.serialize_ignore?(thing); end
 
     def self.param_transform(**things)
-      return @param_transform || {} if things.length == 0
+      return @param_transform || {} if things.empty?
       things.keys.each do |param|
-        if param.is_a? String
-          things[param.to_sym] = things[param]
-          things.delete param
+        if param.is_a?(String)
+          things[param.to_sym] = things.delete(param)
           param = param.to_sym
         end
-        if things[param].is_a? String
+        if things[param].is_a?(String)
           things[param] = things[param].to_sym
         end
       end
@@ -161,18 +181,10 @@
     def as_json_meta(_options={})
       hash = {}
       self.instance_variables.each do |var|
-        var_str = var.to_s
-        if var_str[0] == '@' && var_str[1] != '@'
-          var_str = var_str[1..-1]
-          var_sym = var_str.to_sym
-        elsif var.is_a?(Symbol)
-          var_sym = var
-        else
-          var_sym = var_str.to_sym
-        end
-        next if var_str == 'dirty' || var_str == 'old_hash' || var_str == 'skip_list'
-        next if serialize_ignore?(var_sym)
-        hash[var_sym] = self.instance_variable_get(var)
+        var_name = var.to_s[1..-1].to_sym # remove "@" from start
+        next if var_name == :dirty || var_name == :old_hash || var_name == :skip_list
+        next if serialize_ignore?(var_name)
+        hash[var_name] = self.instance_variable_get(var)
       end
       hash
     end
@@ -184,29 +196,26 @@
     def from_json! string
       json_hash = json_hash_from_arg(string)
       json_hash.each do |var, val|
-        var = var.to_s unless var.is_a?(String)
-        self.instance_variable_set('@'+var, val)
+        self.instance_variable_set('@'+var.to_s, val)
       end
     end
   end
 
   class Chapters < Model
-    attr_reader :chapters, :faces, :authors, :group, :trash_messages
-    attr_accessor :group, :old_authors, :old_faces, :sort_chapters
+    attr_accessor :group, :old_characters, :old_faces, :sort_chapters
+    attr_reader :chapters, :faces, :characters, :trash_messages, :site_handlers
     attr_writer :get_sections
-    serialize_ignore :site_handlers, :trash_messages, :old_authors, :old_faces, :kept_authors, :kept_faces, :failed_authors, :failed_faces, :unpacked
+    serialize_ignore :site_handlers, :trash_messages, :old_characters, :old_faces, :kept_characters, :kept_faces, :failed_characters, :failed_faces, :unpacked
     def initialize(options = {})
+      options[:sort_chapters] ||= options[:sort]
+      @group = options[:group]
+      @sort_chapters = options[:sort_chapters]
+      @trash_messages = options[:trash_messages]
+
       @chapters = []
       @faces = []
-      @authors = []
-      @group = (options.key?(:group)) ? options[:group] : nil
-      @sort_chapters = (options.key?(:sort_chapters) ? options[:sort_chapters] : (options.key?(:sort) ? options[:sort] : false))
-      @trash_messages = (options.key?(:trash_messages)) ? options[:trash_messages] : false
-      @unpacked = false
-    end
-
-    def site_handlers
-      @site_handlers ||= {}
+      @characters = []
+      @site_handlers = {}
     end
 
     def get_sections?
@@ -222,43 +231,44 @@
       @unpacked ||= false
     end
 
-    def add_author(arg)
-      authors << arg unless authors.include?(arg)
+    def add_character(arg)
+      characters << arg unless characters.include?(arg)
     end
-    def replace_author(arg)
-      return arg if authors.include?(arg)
-      authors.delete_if { |author| author.unique_id == arg.unique_id }
-      add_author(arg)
+    def replace_character(arg)
+      return arg if characters.include?(arg)
+      characters.delete_if { |character| character.unique_id == arg.unique_id }
+      add_character(arg)
       arg
     end
-    def get_author_by_id(author_id)
-      found_author = authors.find { |author| author.unique_id == author_id}
-      if old_authors.present? && found_author.blank?
-        found_author = old_authors.find { |author| author.unique_id == author_id}
-        add_author(found_author) if found_author
+    def get_character_by_id(character_id)
+      found_character = characters.find { |character| character.unique_id == character_id }
+      if old_characters.present? && found_character.nil?
+        found_character = old_characters.find { |character| character.unique_id == character_id }
+        add_character(found_character) if found_character
       end
-      if found_author.blank?
-        LOG.debug "chapterlist(#{self}).get_author_by_id(#{author_id.inspect}) ⇒ not present"
-        LOG.debug "authors.length == #{authors.length}; " + (old_authors.present? ? "old_authors.length == #{old_authors.length}" : "No old authors")
-      end
-      found_author
+      return found_character if found_character
+
+      LOG.debug "chapterlist(#{self}).get_character_by_id(#{character_id.inspect}) ⇒ not present"
     end
-    def keep_old_author(author_id)
-      return if old_authors.blank?
-      @kept_authors ||= {}
-      @failed_authors ||= []
-      return @kept_authors[author_id] if @kept_authors.key?(author_id)
-      return if @failed_authors.include?(author_id)
-      found_author = old_authors.find { |author| author.unique_id == author_id}
-      if found_author.present?
-        add_author(found_author)
-        @kept_authors[author_id] = found_author
-      else
-        LOG.error "Failed to find an old author for ID #{author_id}"
-        @failed_authors << author_id
+
+    def keep_old_character(character_id)
+      return if old_characters.blank?
+      @kept_characters ||= {}
+      @failed_characters ||= []
+      return @kept_characters[character_id] if @kept_characters.key?(character_id)
+      return if @failed_characters.include?(character_id)
+
+      found_character = old_characters.find { |character| character.unique_id == character_id }
+      if found_character
+        add_character(found_character)
+        @kept_characters[character_id] = found_character
+        return found_character
       end
-      found_author
+      LOG.error "Failed to find an old character for ID #{character_id}"
+      @failed_characters << character_id
+      nil
     end
+
     def add_face(arg)
       faces << arg unless faces.include?(arg)
     end
@@ -269,28 +279,30 @@
       arg
     end
     def get_face_by_id(face_id)
-      found_face = faces.find { |face| face.unique_id == face_id}
-      if old_faces.present? && found_face.blank?
-        old_faces.find { |face| face.unique_id == face_id}
+      found_face = faces.find { |face| face.unique_id == face_id }
+      if old_faces.present? && found_face.nil?
+        old_faces.find { |face| face.unique_id == face_id }
         add_face(found_face) if found_face
       end
       found_face
     end
+
     def keep_old_face(face_id)
       return if old_faces.blank?
       @kept_faces ||= {}
       @failed_faces ||= []
       return @kept_faces[face_id] if @kept_faces.key?(face_id)
       return if @failed_faces.include?(face_id)
-      found_face = old_faces.find { |face| face.unique_id == face_id}
+
+      found_face = old_faces.find { |face| face.unique_id == face_id }
       if found_face.present?
         add_face(found_face)
         @kept_faces[face_id] = found_face
-      else
-        LOG.error "Failed to find an old face for ID #{face_id}"
-        @failed_faces << face_id
+        return found_face
       end
-      found_face
+      LOG.error "Failed to find an old face for ID #{face_id}"
+      @failed_faces << face_id
+      nil
     end
 
     def add_chapter(arg)
@@ -314,8 +326,8 @@
     def <<(arg)
       if (arg.is_a?(Face))
         self.add_face(arg)
-      elsif (arg.is_a?(Author))
-        self.add_author(arg)
+      elsif (arg.is_a?(Character))
+        self.add_character(arg)
       else
         self.add_chapter(arg)
       end
@@ -341,28 +353,29 @@
       LOG.progress("Generating JSON for and saving #{group}.")
       hash
     end
+
     def from_json! string
       json_hash = json_hash_from_arg(string)
 
       json_hash.each do |var, val|
-        var = var.to_s unless var.is_a?(String)
-        self.instance_variable_set('@'+var, val)
+        self.instance_variable_set('@'+var.to_s, val)
       end
 
       LOG.debug "Chapters.from_json! (group: #{group})"
 
-      authors = json_hash['authors']
+      characters = json_hash['characters'] || json_hash['authors']
       faces = json_hash['faces']
       chapters = json_hash['chapters']
+      @authors = nil unless @authors.nil?
 
-      @authors = []
+      @characters = []
       @faces = []
       unless trash_messages
-        authors.each do |author_hash|
-          author_hash['chapter_list'] = self
-          author = Author.new
-          author.from_json! author_hash
-          add_author(author)
+        characters.each do |character_hash|
+          character_hash['chapter_list'] = self
+          character = Character.new
+          character.from_json! character_hash
+          add_character(character)
         end
 
         faces.each do |face_hash|
@@ -388,58 +401,40 @@
   end
 
   class Chapter < Model
-    dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :authors, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output, :check_page_data, :marked_complete
+    dirty_accessors :title, :title_extras, :thread, :entry_title, :pages, :check_pages, :replies, :characters, :url, :report_flags, :processed, :report_flags_processed, :chapter_list, :processed_output, :check_page_data, :marked_complete
     attr_reader :entry
     dirty_datetime_accessors :time_completed, :time_abandoned, :time_hiatus, :time_new
 
     param_transform name: :title, name_extras: :title_extras, processed_epub: :processed_output
-    serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :authors, :moieties, :smallURL, :report_flags_processed
+    serialize_ignore :allowed_params, :site_handler, :chapter_list, :trash_messages, :characters, :moieties, :smallURL, :report_flags_processed
 
     def initialize(params={})
-      if params.key?(:trash_messages)
-        @trash_messages = params[:trash_messages]
-        params.delete(:trash_messages)
-      end
-      return if params.empty?
-      params = standardize_params(params)
+      super(params)
 
-      params.reject! do |param|
-        unless allowed_params.include?(param)
-          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
-        end
-      end
+      @trash_messages = params.delete(:trash_messages)
 
       @pages = []
       @check_pages = []
       @replies = []
       @sections = []
-      @authors = []
-
-      allowed_params.each do |symbol|
-        public_send("#{symbol}=", params[symbol]) if params[symbol]
-      end
+      @characters = []
     end
 
-    def allowed_params
-      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :authors, :time_completed, :time_hiatus, :time_abandoned, :time_new, :report_flags, :processed, :processed_output, :check_page_data, :get_sections, :section_sorts, :marked_complete]
+    def self.allowed_params
+      @allowed_params ||= [:title, :title_extras, :thread, :sections, :entry_title, :entry, :replies, :url, :pages, :check_pages, :characters, :time_completed, :time_hiatus, :time_abandoned, :time_new, :report_flags, :processed, :processed_output, :check_page_data, :get_sections, :section_sorts, :marked_complete]
     end
 
     def unpack!
       entry.unpack! if entry
-      replies.each { |reply| reply.unpack! } if replies
+      replies.each(&:unpack!) if replies
     end
-
-    def entry_title; @entry_title || @title; end
 
     def processed=(val)
       dirty!
       @processed_output = []
       @processed=val
     end
-    def processed?
-     @processed ||= false
-    end
-    def processed; processed?; end
+    def processed?; processed; end;
 
     def processed_epub?; processed_output?(:epub); end
     def processed_epub; processed_epub?; end
@@ -457,13 +452,12 @@
     end
     def processed_output_delete(thing)
       dirty!
-      processed_output.delete_if{|val| val == thing.to_s}
+      processed_output.delete_if { |val| val == thing.to_s }
     end
 
     def get_sections?
       return @get_sections unless @get_sections.nil?
-      return chapter_list.get_sections? if chapter_list
-      false
+      chapter_list.try(:get_sections?)
     end
     def get_sections=(val)
       return val if @get_sections == val
@@ -494,8 +488,7 @@
     end
 
     def section_sorts
-      @section_sorts ||= @sections
-      @section_sorts ||= []
+      @section_sorts ||= @sections || []
     end
     def section_sorts=(val)
       return val if @section_sorts == val
@@ -515,41 +508,33 @@
       @check_page_data[index] = val
     end
 
-    def group; @chapter_list.group; end
+    def group; chapter_list.group; end
     def site_handler
       return @site_handler unless @site_handler.nil?
       handler_type = GlowficSiteHandlers.get_handler_for(self)
       chapter_list.site_handlers[handler_type] ||= handler_type.new(group: group, chapters: chapter_list)
       @site_handler ||= chapter_list.site_handlers[handler_type]
     end
-    def pages
-      @pages ||= []
-    end
+
     def check_pages
-      @check_pages ||= []
-      if @check_pages.empty? and not self.pages.empty?
-        if self.url[/\.dreamwidth\.org/]
-          if self.pages.length > 1
-            [self.pages.last, self.pages.first]
-          else
-            self.pages
-          end
-        elsif self.url['vast-journey-9935.herokuapp.com'] || self.url['glowfic.com']
-          [set_url_params(clear_url_params(self.url), {page: :last, per_page: 25})]
+      return @check_pages if @check_pages.present? || pages.blank?
+      if url[/\.dreamwidth\.org/]
+        if pages.length > 1
+          [pages.last, pages.first]
         else
-          self.pages
+          pages
         end
+      elsif url['vast-journey-9935.herokuapp.com'] || url['glowfic.com']
+        [set_url_params(clear_url_params(url), {page: :last, per_page: 25})]
       else
-        @check_pages
+        pages
       end
     end
-    def replies
-      @replies ||= []
-    end
+
     def replies=(newval)
       dirty!
-      @replies=newval
-      @authors=[]
+      @replies = newval
+      @characters = []
       @replies.each do |reply|
         reply.chapter = self
       end
@@ -557,98 +542,82 @@
     end
     def entry=(newval)
       dirty!
-      @entry=newval
+      @entry = newval
       @entry.chapter = self
       @entry
     end
 
-    def authors
-      @authors ||= []
-      if @authors.detect{|thing| thing.is_a?(String)}
-        dirty!
-        premap = @authors
-        @authors = @authors.map {|author| (author.is_a?(String) ? chapter_list.get_author_by_id(author) : author)}
-        if @authors.select{|thing| thing.nil?}.present?
-          LOG.error "#{self} has a nil author post-mapping.\n#{premap * ', '}\n⇒ #{@authors * ', '}"
-        end
+    def characters
+      @characters ||= []
+      return @characters unless @characters.detect { |thing| thing.is_a?(String) }
+
+      dirty!
+      premap = @characters
+      @characters = @characters.map { |character| (character.is_a?(String)) ? chapter_list.get_character_by_id(character) : character }
+      if @characters.select { |thing| thing.nil? }.present?
+        LOG.error "#{self} has a nil character post-mapping.\n#{premap * ', '}\n⇒ #{@characters * ', '}"
       end
-      @authors
+      @characters
     end
 
     def chapter_list=(newval)
-      @chapter_list=newval
-      replies.each do |reply|
-        reply.keep_old_stuff
-      end
-      entry.keep_old_stuff if entry.present?
+      @chapter_list = newval
+      replies.each(&:keep_old_stuff)
+      entry.try(:keep_old_stuff)
       newval
     end
 
     def time_new_set?; !@time_new.nil?; end
     def time_new
-      return entry.time if @time_new.nil? && entry.present?
-      to_datetime(@time_new)
+      to_datetime(@time_new) || entry.try(:time)
     end
 
     def moieties
-      @moieties if @moieties.present?
+      return @moieties if @moieties.present?
       @moieties = []
-      authors.each do |author|
-        (LOG.error "nil author for #{self}"; next) unless author
-        author.moieties.each do |moiety|
-          @moieties << moiety unless @moieties.include?(moiety)
-        end
+      characters.each do |character|
+        (LOG.error "nil character for #{self}"; next) unless character
+        @moieties += character.moieties
       end
+      @moieties.uniq!
       @moieties.sort!
       @moieties
     end
 
-    def add_author(newauthor)
-      unless newauthor
-        LOG.error "add_author(nil) for #{self}"
+    def add_character(newcharacter)
+      unless newcharacter
+        LOG.error "add_character(nil) for #{self}"
         puts caller
         return
       end
-      same_id = authors.detect { |author| (author.is_a?(Author) ? author.unique_id : author) == (newauthor.is_a?(Author) ? newauthor.unique_id : newauthor) }
-      if same_id && !authors.include?(newauthor)
-        LOG.debug "#{self}.add_author: author with same ID but not same object exists. Will be duped. Existing author: #{same_id}, is_a?(#{same_id.class}), newauthor(#{newauthor}), is_a?(#{newauthor.class})"
-        LOG.debug "Existing authors: #{authors.map{|author| author.to_s} * ', '}"
+      same_id = characters.detect { |character| (character.is_a?(Character) ? character.unique_id : character) == (newcharacter.is_a?(Character) ? newcharacter.unique_id : newcharacter) }
+      if same_id && !characters.include?(newcharacter)
+        LOG.debug "#{self}.add_character: distinct character with same ID exists. Will be duped. Existing character: #{same_id}, is_a?(#{same_id.class}), newcharacter(#{newcharacter}), is_a?(#{newcharacter.class})"
+        LOG.debug "Existing characters: #{characters.map(&:to_s) * ', '}"
       end
-      unless authors.include?(newauthor)
+      unless characters.include?(newcharacter)
         dirty!
-        authors << newauthor
+        characters << newcharacter
         @moieties = nil
-        LOG.debug "New author list: #{authors.map{|author| author.to_s} * ', '}" if same_id
+        LOG.debug "New character list: #{characters.map(&:to_s) * ', '}" if same_id
       end
-      chapter_list.add_author(newauthor)
+      chapter_list.add_character(newcharacter)
     end
 
     def smallURL
-      @smallURL ||= Chapter.shortenURL(@url)
+      @smallURL ||= shortenURL(@url)
     end
     def shortURL; smallURL; end
+
     def url=(val)
       dirty!
       @smallURL = nil
-      @url=val
+      @url = val
     end
-    def self.shortenURL(longURL)
-      return "" if longURL.nil? or longURL.empty?
-      uri = URI.parse(longURL)
-      if uri.query and not uri.query.empty?
-        query = CGI.parse(uri.query)
-        query.delete("style")
-        query.delete("view")
-        query.delete("per_page")
-        query = URI.encode_www_form(query)
-        uri.query = (query.empty?) ? nil : query
-      end
-      uri.host = uri.host.sub(/\.dreamwidth\.org$/, ".dreamwidth").sub('vast-journey-9935.herokuapp.com', 'constellation').sub('www.glowfic.com', 'constellation').sub('glowfic.com', 'constellation')
-      uri.to_s.sub(/^https?\:\/\//, "").sub(/\.html($|(?=\?))/, "")
-    end
+
     def to_s
       str = "\"#{title}\""
-      str += " #{title_extras}" unless title_extras.nil? or title_extras.empty?
+      str += " #{title_extras}" unless title_extras.blank?
       str += ": #{smallURL}"
       str
     end
@@ -676,8 +645,8 @@
       return @old_hash if dirtiable && @old_hash && !dirty?
       LOG.debug "Chapter.as_json (title: '#{title}', url: '#{url}')"
       hash = as_json_meta(options)
-      if @authors
-        hash[:authors] = @authors.map { |author| author.is_a?(Author) ? author.unique_id : author }
+      if @characters
+        hash[:characters] = @characters.map { |character| character.is_a?(Character) ? character.unique_id : character }
       end
       if dirtiable
         @old_hash = hash
@@ -689,18 +658,21 @@
       json_hash = json_hash_from_arg(string)
 
       json_hash.each do |var, val|
-        var = var.to_s unless var.is_a?(String)
-        self.instance_variable_set('@'+var, val) unless var == "replies" or var == "entry"
+        var = var.to_s
+        self.instance_variable_set('@'+var, val) unless var == "replies" || var == "entry"
       end
 
       LOG.debug "Chapter.from_json! (title: '#{title}', url: '#{url}')"
 
-      @processed.map! {|thing| thing.to_s.to_sym } if @processed and @processed.is_a?(Array)
+      @processed.map! {|thing| thing.to_s.to_sym } if @processed.is_a?(Array)
 
-      self.authors = [] if @trash_messages
-      self.authors
+      self.characters = [] if @trash_messages
+      self.characters
 
-      if not @trash_messages
+      @entry_title ||= @title
+      @title = nil
+
+      unless @trash_messages
         entry = json_hash['entry']
         replies = json_hash['replies']
         if entry
@@ -724,7 +696,7 @@
       end
 
       @processed_output = [] unless @processed_output.is_a?(Array)
-      @processed_output.uniq! if @processed_output.present?
+      @processed_output.uniq!
 
       @trash_messages = false
       dirty!
@@ -733,94 +705,72 @@
 
   class Face < Model
     attr_accessor :imageURL, :keyword, :unique_id, :chapter_list
-    attr_writer :author
-    serialize_ignore :allowed_params, :author, :chapter_list
-
-    def allowed_params
-      @allowed_params ||= [:chapter_list, :imageURL, :keyword, :unique_id, :author]
-    end
-
-    def user_display; author.display; end
-    def moiety; author.moiety; end
-
-    def imageURL=(newval)
-      @imageURL = newval.gsub(" ", "%20")
-    end
-    def author
-      return @author if @author and @author.is_a?(Author)
-      return unless @author
-      @author = chapter_list.get_author_by_id(@author) if chapter_list and not @author.is_a?(Author)
-      @author
-    end
+    attr_writer :character
+    serialize_ignore :allowed_params, :character, :chapter_list
 
     def initialize(params={})
       return if params.empty?
-      params = standardize_params(params)
+      super(params)
 
-      params.reject! do |param|
-        unless allowed_params.include?(param)
-          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
-        end
-      end
-
-      raise(ArgumentError, "Unique ID must be given") unless (params.key?(:unique_id) and not params[:unique_id].nil?)
-      allowed_params.each do |symbol|
-        public_send("#{symbol}=", params[symbol]) if params[symbol]
-      end
+      raise(ArgumentError, "Unique ID must be given") unless params[:unique_id]
     end
+
+    def self.allowed_params
+      @allowed_params ||= [:chapter_list, :imageURL, :keyword, :unique_id, :character]
+    end
+
+    def user_display; character.display; end
+    def moiety; character.moiety; end
+
+    def imageURL=(newval)
+      @imageURL = newval.gsub(' ', '%20')
+    end
+
+    def character
+      return @character if @character.nil? || @character.is_a?(Character)
+      @character = chapter_list.get_character_by_id(@character) if @chapter_list
+    end
+
     def to_s
       "#{user_display}: #{keyword}"
     end
 
     def as_json(options={})
       hash = as_json_meta(options)
-      if @author
-        hash[:author] = (author.is_a?(Author) ? author.unique_id : author)
+      if @character
+        hash[:character] = (character.is_a?(Character) ? character.unique_id : character)
       end
       hash
     end
   end
 
-  module PostType
-    ENTRY = 0
-    REPLY = 1
-  end
-
   class Message < Model #post or entry
     @@date_format = "%Y-%m-%d %H:%M"
 
-    dirty_accessors :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no
+    dirty_accessors :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no, :author_str
 
     def self.message_serialize_ignore
-      serialize_ignore :author, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_author, :post_type
+      serialize_ignore :character, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_character, :post_type
     end
 
     def initialize(params={})
       return if params.empty?
-      params = standardize_params(params)
-
-      params.reject! do |param|
-        unless allowed_params.include?(param)
-          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}") unless serialize_ignore?(param)
-          true
-        end
-      end
+      super(params)
 
       @push_title = false
+      @push_character = false
+      @children = []
 
       raise(ArgumentError, "Content must be given") unless params.key?(:content)
       raise(ArgumentError, "Chapter must be given") unless params.key?(:chapter)
-      allowed_params.each do |symbol|
-        public_send("#{symbol}=", params[symbol]) if params[symbol]
-      end
     end
 
-    def allowed_params
-      @allowed_params ||= [:author, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face, :entry_title, :page_no, :author_str]
+    def self.allowed_params
+      @allowed_params ||= [:character, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face, :entry_title, :page_no, :author_str]
     end
 
     def unpack!
-      author
+      character
       face
     end
 
@@ -845,11 +795,11 @@
     end
 
     def chapter=(newval)
-      newval.entry_title=@entry_title if @push_title
+      newval.entry_title = @entry_title if @push_title
       @push_title = false
       @chapter.dirty! if @chapter
-      newval.add_author(author) if @push_author
-      @push_author = false
+      newval.add_character(character) if @push_character
+      @push_character = false
       @chapter = newval
       keep_old_stuff
       dirty!
@@ -861,7 +811,7 @@
         LOG.error "(No chapter!)" unless chapter
         return
       end
-      chapter.chapter_list.keep_old_author(author_id) if author_id
+      chapter.chapter_list.keep_old_character(character_id) if character_id
       chapter.chapter_list.keep_old_face(face_id) if face_id
     end
 
@@ -886,9 +836,7 @@
       end
       @depth ||= 0
     end
-    def children
-      @children ||= []
-    end
+
     def add_child(val)
       children << val unless children.include?(val)
       val.parent = self unless val.parent == self
@@ -897,7 +845,8 @@
       children.delete(val)
       val.parent = nil if val.parent == self
     end
-    def moiety; author.try(:moiety) || ''; end
+
+    def moiety; character.try(:moiety) || ''; end
 
     def post_type_str
       if post_type == PostType::ENTRY
@@ -914,11 +863,13 @@
     def parent=(newparent)
       return newparent if @parent == newparent
       dirty!
+
       if @parent
-        parent = self.parent
+        oldparent = self.parent
         @parent = nil
-        parent.remove_child(self)
+        oldparent.remove_child(self)
       end
+
       if newparent.is_a?(Message)
         @parent = newparent
         self.parent.add_child(self)
@@ -929,29 +880,26 @@
       @parent
     end
     def parent
-      if @parent.is_a?(Array)
-        #from JSON
-        if @parent.length == 2
-          @parent = @chapter.entry
-        else
-          parent_id = @parent.last
-          LOG.error "Parent of post is nil! #{self}" unless parent_id
-          @chapter.replies.reverse_each do |reply|
-            if reply.id == parent_id
-              @parent = reply
-              break
-            end
+      return @parent unless @parent.is_a?(Array)
+
+      # load from JSON:
+      if @parent.length == 2
+        @parent = @chapter.entry
+      else
+        parent_id = @parent.last
+        LOG.error "Parent of post is nil! #{self}" unless parent_id
+        @chapter.replies.reverse_each do |reply|
+          if reply.id == parent_id
+            @parent = reply
+            break
           end
         end
-        @parent.children << self unless @parent.children.include?(self)
-        @depth = @parent.depth + 1
       end
-      @parent
+      self.parent = @parent
     end
 
     def face
-      return unless @face.present?
-      return @face if @face.is_a?(Face)
+      return @face if @face.nil? || @face.is_a?(Face)
 
       if chapter_list
         new_face = chapter_list.get_face_by_id(@face)
@@ -962,7 +910,7 @@
         end
       end
 
-      if site_handler and (not @face or @face.is_a?(String))
+      if site_handler && @face.is_a?(String)
         temp_face = site_handler.get_face_by_id(@face)
         if temp_face
           @face = temp_face
@@ -970,75 +918,55 @@
         end
       end
 
-      @face.author = author if author and @face and not @face.is_a?(String)
+      @face.character = character if character && @face.is_a?(Face)
       LOG.error "Failed to generate a face object, is still string (#{@face})" if @face.is_a?(String)
       @face
     end
     def face=(face)
+      return face if @face == face
+      raise(ArgumentError, "Invalid face type. Face: #{face}") if face && !face.is_a?(String) && !face.is_a?(Face)
+
       dirty!
-      if (face.is_a?(String) or face.is_a?(Face))
-        @face = face
-      else
-        raise(ArgumentError, "Invalid face type. Face: #{face}")
-      end
+      @face = face
     end
 
     def face_id
-      if @face.is_a?(Face)
-        @face.unique_id
-      else
-        @face
-      end
+      return @face unless @face.is_a?(Face)
+      @face.unique_id
     end
 
-    @push_author = false
-    def author
-      return @author if @author and @author.is_a?(Author)
-      return unless @author
-      if chapter_list and not @author.is_a?(Author)
-        temp_author = chapter_list.get_author_by_id(@author)
-        @author = temp_author if temp_author
-      end
-      if site_handler and not @author.is_a?(Author)
-        temp_author = site_handler.get_author_by_id(@author)
-        @author = temp_author if temp_author
-      end
-      @author
+    def character
+      return @character if @character.nil? || @character.is_a?(Character)
+      temp = chapter_list.try(:get_character_by_id, @character)
+      temp ||= site_handler.try(:get_character_by_id, @character)
+      @character = temp || @character
     end
-    def author=(author)
+    def character=(character)
       dirty!
-      @author = author
-      chapter.add_author(self.author) if chapter
-      @push_author = true unless chapter
+      @character = character
+      @push_character = true unless chapter
+      chapter.try(:add_character, self.character)
+      @character
     end
 
-    def author_id
-      if @author.is_a?(Author)
-        @author.unique_id
-      else
-        @author
-      end
+    def character_id
+      return @character unless @character.is_a?(Character)
+      @character.unique_id
     end
 
     def author_str
       return @author_str if @author_str.present?
-      return @author.moieties * ', ' if @author and @author.is_a?(Author)
-      return @author.to_s if @author
-    end
-    def author_str=(val)
-      dirty!
-      @author_str = val
+      return @character.moieties * ', ' if @character.is_a?(Character)
+      @character.try(:to_s)
     end
 
     def to_s
       if chapter.nil?
-        "#{author}##{id} @ #{time}"
-      elsif post_type
-        if post_type == PostType::ENTRY
-          "#{chapter.smallURL}##{id}"
-        elsif post_type == PostType::REPLY
-          "#{chapter.smallURL}##{chapter.entry.id}##{id}"
-        end
+        "#{character}##{id} @ #{time}"
+      elsif post_type == PostType::ENTRY
+        "#{chapter.smallURL}##{id}"
+      elsif post_type == PostType::REPLY
+        "#{chapter.smallURL}##{chapter.entry.id}##{id}"
       else
         "#{chapter.smallURL}##{id}"
       end
@@ -1061,11 +989,11 @@
         end
       end
 
-      if @author
-        if @author.is_a?(Author)
-          hash[:author] = @author.unique_id
+      if @character
+        if @character.is_a?(Character)
+          hash[:character] = @character.unique_id
         else
-          hash[:author] = @author
+          hash[:character] = @character
         end
       end
 
@@ -1088,8 +1016,8 @@
       json_hash = json_hash_from_arg(string)
 
       json_hash.each do |var, val|
-        var = var.to_s unless var.is_a?(String)
-        self.instance_variable_set('@'+var, val) unless var == 'parent' or var == 'face' or var == 'author'
+        var = var.to_s
+        self.instance_variable_set('@'+var, val) unless var == 'parent' or var == 'face' or var == 'character'
       end
 
       if post_type == PostType::ENTRY
@@ -1098,15 +1026,16 @@
       end
 
       parent = json_hash['parent']
-      author = json_hash['author']
+      character = json_hash['character'] || json_hash['author']
       face = json_hash['face']
+      @author = nil unless @author.nil?
 
       if parent
         self.parent = parent
         self.parent
       end
-      if author
-        self.author = author
+      if character
+        self.character = character
       end
       if face
         self.face = face
@@ -1132,30 +1061,22 @@
     end
   end
 
-  class Author < Model
+  class Character < Model
     attr_accessor :name, :screenname, :chapter_list, :display, :unique_id, :default_face
     serialize_ignore :faces, :chapters, :chapter_list, :allowed_params, :default_face, :site_handler
 
     def initialize(params={})
       return if params.empty?
-      params = standardize_params(params)
+      super(params)
 
-      params.reject! do |param|
-        unless allowed_params.include?(param)
-          raise(ArgumentError, "Invalid parameter: #{param} = #{params[param]}")
-        end
-      end
-
-      raise(ArgumentError, "Display must be given") unless (params.key?(:display) and not params[:display].nil?)
-      raise(ArgumentError, "Unique ID must be given") unless (params.key?(:unique_id) and not params[:unique_id].nil?)
-      allowed_params.each do |symbol|
-        public_send("#{symbol}=", params[symbol]) if params[symbol]
-      end
+      raise(ArgumentError, "Display must be given") unless params[:display]
+      raise(ArgumentError, "Unique ID must be given") unless params[:unique_id]
     end
 
-    def allowed_params
+    def self.allowed_params
       @allowed_params ||= [:chapter_list, :moiety, :name, :screenname, :display, :unique_id, :default_face]
     end
+
     def site_handler
       return @site_handler unless @site_handler.nil?
       handler_type = GlowficSiteHandlers.get_handler_for(self)
@@ -1166,13 +1087,11 @@
     def to_s; display.to_s; end
 
     def default_face_id
-      return unless @default_face.present?
-      return @default_face if @default_face.is_a?(String)
+      return @default_face if @default_face.nil? || @default_face.is_a?(String)
       @default_face.unique_id
     end
     def default_face
-      return unless @default_face.present?
-      return @default_face if @default_face.is_a?(Face)
+      return @default_face if @default_face.nil? || @default_face.is_a?(Face)
 
       if chapter_list
         new_face = chapter_list.get_face_by_id(@default_face)
@@ -1183,7 +1102,7 @@
         end
       end
 
-      if site_handler and (not @default_face or @default_face.is_a?(String))
+      if site_handler && @default_face.is_a?(String)
         temp_face = site_handler.get_face_by_id(@default_face)
         if temp_face
           @default_face = temp_face
@@ -1191,15 +1110,14 @@
         end
       end
 
-      @default_face.author = self if @default_face and not @default_face.is_a?(String)
+      @default_face.character = self if @default_face && !@default_face.is_a?(String)
       LOG.error "Failed to generate a face object for default_face, is still string (#{@default_face})" if @default_face.is_a?(String)
-      LOG.error "Default_face was non-nil, now nil? oops." unless @default_face.present?
       @default_face
     end
 
     def moiety
-      return @moiety if @moieties.nil? || @moieties.empty?
-      @moieties.map{|m|m.gsub(/[^\w]/,'_')} * '_'
+      return @moiety if @moieties.blank?
+      @moieties.map { |m| m.gsub(/[^\w]/,'_') } * '_'
     end
     def moiety=(val)
       if val.is_a?(Array)
@@ -1211,7 +1129,7 @@
       end
     end
     def moieties
-      return [@moiety] if @moieties.nil? || @moieties.empty?
+      return [@moiety] if @moieties.blank?
       @moieties
     end
 

@@ -205,7 +205,7 @@ def main(*args)
 
   chapter_list = options.chapter_list
   if chapter_list
-    chapter_list.old_authors = nil
+    chapter_list.old_characters = nil
     chapter_list.old_faces = nil
   end
 
@@ -258,7 +258,7 @@ def main(*args)
 
     oldify_chapters_data(group)
     data = get_old_data(group)
-    chapter_list.old_authors = data.authors
+    chapter_list.old_characters = data.characters
     chapter_list.old_faces = data.faces
 
     group_handler = GlowficIndexHandlers.get_handler_for(group)
@@ -385,10 +385,9 @@ def main(*args)
     LOG.info "Doing stats for '#{group}'"
 
     # list:
-    # replies by author, replies by character, icon uses
+    # replies by author (moiety), character, icon uses; posts by …
     # total and per-month?
-    # maybe track per continuity thing on the constellation, too.
-    # things started by author
+    # maybe track per continuity
 
     blank_hash = Hash.new { Hash.new(0) }
     # entry_moiety:, msg_moiety:, msg_character:, msg_icons:, moiety_words:, char_words:, icons_words:
@@ -414,8 +413,8 @@ def main(*args)
 
         stats[msg_mo_str] ||= blank_hash.clone
 
-        msg_moiety = msg.author.moiety
-        msg_char = msg.author.to_s
+        msg_moiety = msg.moiety
+        msg_char = msg.character.to_s
         msg_icon = msg.face.try(:to_s)
 
         msg_text = msg.content.gsub(html_match, ' ')

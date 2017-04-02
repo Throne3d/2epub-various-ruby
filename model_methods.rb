@@ -491,4 +491,19 @@
   def get_prev_chapter_check_pages(group)
     get_prev_chapter_detail(group, detail: :check_pages, only_present: true)
   end
+
+  def shortenURL(longURL)
+    return '' if longURL.blank?
+    uri = URI.parse(longURL)
+    if uri.query.present?
+      query = CGI.parse(uri.query)
+      query.delete("style")
+      query.delete("view")
+      query.delete("per_page")
+      query = URI.encode_www_form(query)
+      uri.query = query
+    end
+    uri.host = uri.host.sub(/\.dreamwidth\.org$/, '.dreamwidth').sub('vast-journey-9935.herokuapp.com', 'constellation').sub('www.glowfic.com', 'constellation').sub('glowfic.com', 'constellation')
+    uri.to_s.sub(/^https?\:\/\//, '').sub(/\.html($|(?=\?))/, '')
+  end
 end
