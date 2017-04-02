@@ -21,11 +21,11 @@ $LOAD_PATH << 'script'
 $LOAD_PATH << 'script/scraper'
 $LOAD_PATH << File.dirname(__FILE__)
 require 'models'
-require 'model_methods'
+require 'scraper_utils'
 require 'handlers_indexes'
 require 'handlers_sites'
 require 'handlers_outputs'
-include GlowficEpubMethods
+include ScraperUtils
 include GlowficEpub
 
 FileUtils.mkdir "web_cache" unless File.directory?("web_cache")

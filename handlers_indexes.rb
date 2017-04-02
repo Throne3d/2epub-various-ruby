@@ -1,7 +1,7 @@
 module GlowficIndexHandlers
-  require 'model_methods'
+  require 'scraper_utils'
   require 'models'
-  include GlowficEpubMethods
+  include ScraperUtils
 
   INDEX_PRESETS = {
     test:

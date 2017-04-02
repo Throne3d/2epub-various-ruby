@@ -16,7 +16,7 @@ The "2epub-various" script, converted to use the Ruby language. It hopefully dow
 ### What can I do? ###
 The different 'processes' are outlined in `do_various.rb` in the code, and include: `do`, which downloads the data for a group, `epubdo`, which basically does `do` and then `output_epub`, and `repdo`, which basically does `do` and then `output_report`.
 
-The different 'groups' are outlined in `model_methods.rb`, in `FIC_NAME_MAPPING`. For example, `efful` maps to `effulgence`. The TOC pages are listed below in `FIC_TOCS`, and they are individually handled in `handlers_indexes.rb` depending on how the index is formatted.
+The different 'groups' are outlined in `scraper_utils.rb`, in `FIC_NAME_MAPPING`. For example, `efful` maps to `effulgence`. The TOC pages are listed below in `FIC_TOCS`, and they are individually handled in `handlers_indexes.rb` depending on how the index is formatted.
 
 Pass as a parameter, to `do_various.rb`, a 'process' followed by a 'group', preferably separated by a space but it might work with other separators. For example, to do a report for the daily report (`repdo` as a process, `report` as a group), run `do_various.rb repdo report` – in the Ubuntu Terminal, at least, you do this by navigating to this directory (`2epub-various-ruby`) and then executing the command `./do_various.rb repdo report`.
 

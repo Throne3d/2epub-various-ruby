@@ -1,14 +1,14 @@
 ﻿module GlowficOutputHandlers
-  require 'model_methods'
+  require 'scraper_utils'
   require 'models'
   require 'uri'
   require 'erb'
-  include GlowficEpubMethods
+  include ScraperUtils
   include GlowficEpub::PostType
 
   class OutputHandler
     include GlowficEpub
-    include GlowficEpubMethods
+    include ScraperUtils
     def initialize(options={})
       @chapters = options[:chapters] if options.key?(:chapters)
       @chapters = options[:chapter_list] if options.key?(:chapter_list)

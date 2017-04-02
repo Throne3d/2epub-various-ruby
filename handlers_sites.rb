@@ -1,8 +1,8 @@
 ﻿module GlowficSiteHandlers
-  require 'model_methods'
+  require 'scraper_utils'
   require 'models'
   require 'mechanize'
-  include GlowficEpubMethods
+  include ScraperUtils
   include GlowficEpub::PostType
 
   def self.get_handler_for(thing)

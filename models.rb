@@ -1,8 +1,8 @@
 ﻿module GlowficEpub
-  require 'model_methods'
+  require 'scraper_utils'
   require 'json'
   require 'date'
-  include GlowficEpubMethods
+  include ScraperUtils
 
   def self.built_moieties?
     @built_moieties ||= false

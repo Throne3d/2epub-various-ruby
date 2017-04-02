@@ -1,4 +1,4 @@
-﻿module GlowficEpubMethods
+﻿module ScraperUtils
   require 'fileutils'
   require 'open-uri'
   require 'open_uri_redirections'
