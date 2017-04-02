@@ -10,7 +10,7 @@
   def self.built_moieties=(val)
     @built_moieties = val
   end
-  def self.build_moieties()
+  def self.build_moieties
     return @moieties if self.built_moieties?
 
     url = MOIETY_LIST_URL
@@ -59,22 +59,16 @@
   end
 
   class Model
-    def initialize
-      @dirty = false
-    end
+    attr_accessor :dirty, :serialize_ignore
     def standardize_params(params = {})
       params.keys.each do |param|
         if param.is_a?(String)
-          params[param.to_sym] = params[param]
-          params.delete param
+          params[param.to_sym] = params.delete(param)
           param = param.to_sym
         end
         if param_transform.key?(param)
-          params[param_transform[param]] = params[param]
-          params.delete(param)
-          param = param_transform[param]
+          params[param_transform[param]] = params.delete(param)
         end
-        params.delete(param) if params[param].nil?
       end
       params
     end
@@ -82,7 +76,6 @@
     def self.dirty_accessors(*method_names)
       GlowficEpub::LOG.debug "Defining dirty accessors for #{self}: #{method_names * ', '}"
       method_names.each do |method_name|
-        method_name = method_name.to_sym
         method_name_str = method_name.to_s
         local_instance_var = '@' + method_name_str
         define_method(method_name_str) do
@@ -99,7 +92,6 @@
     def self.dirty_datetime_accessors(*method_names)
       GlowficEpub::LOG.debug "Defining dirty datetime accessors for #{self}: #{method_names * ', '}"
       method_names.each do |method_name|
-        method_name = method_name.to_sym
         method_name_str = method_name.to_s
         local_instance_var = '@' + method_name_str
         define_method(method_name_str) do
@@ -116,15 +108,11 @@
     end
 
     def dirty!; @dirty = true; end
-    def dirty?; @dirty; end
-    def dirty; @dirty; end
+    def dirty?; dirty; end
 
     def to_datetime(val)
-      if val.is_a?(String)
-        val = DateTime.parse(val)
-      elsif val.is_a?(Date)
-        val = val.to_datetime
-      end
+      return DateTime.parse(val) if val.is_a?(String)
+      return val.to_datetime if val.is_a?(Date)
       val
     end
 
@@ -138,7 +126,6 @@
       return @serialize_ignore if things.empty?
       self.serialize_ignore!(*things)
     end
-    def serialize_ignore; @serialize_ignore; end
     def self.serialize_ignore!(*things)
       things = things.first if things.length == 1 && things.first.is_a?(Array)
       things = things.map do |thing|
@@ -166,13 +153,9 @@
     def param_transform; self.class.param_transform; end
 
     def json_hash_from_arg(arg)
-      if arg.is_a? String
-        JSON.parse(arg)
-      elsif arg.is_a? Hash
-        arg
-      else
-        raise(ArgumentError, "Not a string or a hash.")
-      end
+      return arg if arg.is_a?(Hash)
+      return JSON.parse(arg) if arg.is_a?(String)
+      raise(ArgumentError, "Not a string or a hash.")
     end
 
     def as_json_meta(_options={})
@@ -823,6 +806,8 @@
         end
       end
 
+      @push_title = false
+
       raise(ArgumentError, "Content must be given") unless params.key?(:content)
       raise(ArgumentError, "Chapter must be given") unless params.key?(:chapter)
       allowed_params.each do |symbol|
@@ -847,7 +832,6 @@
     def site_handler; chapter.try(:site_handler); end
     def chapter_list; chapter.try(:chapter_list); end
 
-    @push_title = false
     def entry_title; chapter.entry_title; end
     def entry_title=(newval)
       dirty!
@@ -882,24 +866,18 @@
     end
 
     def time
-      return unless @time
       return @time unless @time.is_a?(String)
       @time = DateTime.parse(@time)
-      return @time
     end
     def time_display
-      return unless time
-      return time.strftime(@@date_format)
+      time.try(:strftime, @@date_format)
     end
     def edittime
-      return unless @edittime
       return @edittime unless @edittime.is_a?(String)
       @edittime = DateTime.parse(@edittime)
-      return @edittime
     end
     def edittime_display
-      return unless edittime
-      return edittime.strftime(@@date_format)
+      edittime.try(:strftime, @@date_format)
     end
 
     def depth
@@ -916,10 +894,10 @@
       val.parent = self unless val.parent == self
     end
     def remove_child(val)
-      children.delete(val) if children.include?(val)
+      children.delete(val)
       val.parent = nil if val.parent == self
     end
-    def moiety; face.try(:moiety) || ''; end
+    def moiety; author.try(:moiety) || ''; end
 
     def post_type_str
       if post_type == PostType::ENTRY
