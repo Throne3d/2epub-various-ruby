@@ -1061,6 +1061,25 @@
       [username]
     end
 
+    # fetches the user ID and username for the giripage, from the breadcrumbs
+    def get_owner_from_breadcrumbs(giripage)
+      subber = giripage.at_css('.flash.subber')
+      breadcrumb = subber.at_css('a')
+      if breadcrumb
+        url = breadcrumb[:href]
+        if url['users/']
+          user_id = url.split('users/').last.split('/').first
+          username = breadcrumb.text.strip
+          return [user_id, username]
+        end
+      end
+      user_link = giripage.at_css('#user-info').at_css('a')
+      user_link.at_css('img').try(:remove)
+      user_id = user_link.split('users/').last.split('/').first
+      username = user_link.text.strip
+      [user_id, username]
+    end
+
     # returns face_id, icon_id, character_id bits from a face / face_id
     def fetch_face_id_parts(face)
       # TODO: make face ID standards clearer
@@ -1097,25 +1116,6 @@
         @char_page_cache[character_id][icon_id] = face
       end
       face
-    end
-
-    # fetches the user ID and username for the giripage, from the breadcrumbs
-    def get_owner_from_breadcrumbs(giripage)
-      subber = giripage.at_css('.flash.subber')
-      breadcrumb = subber.at_css('a')
-      if breadcrumb
-        url = breadcrumb[:href]
-        if url['users/']
-          user_id = url.split('users/').last.split('/').first
-          username = breadcrumb.text.strip
-          return [user_id, username]
-        end
-      end
-      user_link = giripage.at_css('#user-info').at_css('a')
-      user_link.at_css('img').try(:remove)
-      user_id = user_link.split('users/').last.split('/').first
-      username = user_link.text.strip
-      [user_id, username]
     end
 
     # fetches all faces in galleries attached to a character_id
@@ -1242,6 +1242,11 @@
     def get_face_for_icon(icon_id)
       icon_page = giri_or_cache("https://glowfic.com/icons/#{icon_id}/")
       LOG.debug "nokogiri'd"
+      unless icon_page.at_css('#content').at_css('*')
+        # check is for elements inside #content as .flash.error mysteriously doesn't show
+        LOG.error "Encountered an error while trying to load icon ID #{icon_id}"
+        return
+      end
 
       icon_img = icon_page.at_css('#content').at_css('.icon-icon').try(:at_css, 'img')
       params = {}
@@ -1308,6 +1313,7 @@
       unless @icon_errors.include?(face_id)
         LOG.error "Failed to find a face for character: ##{character_id} and icon: ##{icon_id}"
         @icon_errors << face_id
+        nil
       end
     end
 
@@ -1498,26 +1504,28 @@
           icon_name = userpic[:title]
         end
 
-        if character_id == "user##{author_id}"
-          face_id = "#{icon_id}"
-        else
-          face_id = "#{character_id}##{icon_id}"
-        end
+        if icon_id.present?
+          if character_id == "user##{author_id}"
+            face_id = "#{icon_id}"
+          else
+            face_id = "#{character_id}##{icon_id}"
+          end
 
-        if face_id.present?
-          params[:face] = get_face_by_id(face_id)
-          params[:face] ||= @chapter_list.get_face_by_id(face_id)
+          if face_id.present?
+            params[:face] = get_face_by_id(face_id)
+            params[:face] ||= @chapter_list.get_face_by_id(face_id)
+            LOG.error "could not get face for #{face_id} for message type #{message_type} ID #{message_id}" unless params[:face]
+          end
         end
 
         if params[:face].nil?
           face_params = {}
           face_params[:keyword] = icon_name
           face_params[:character] = params[:character]
+          face_params[:imageURL] = icon_url
           if icon_url.present?
-            face_params[:imageURL] = icon_url
             face_params[:unique_id] = icon_id
           else
-            face_params[:imageURL] = nil
             face_params[:unique_id] = "#{character_id}##{icon_name}"
           end
           face = Face.new(face_params)

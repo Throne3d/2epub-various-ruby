@@ -724,7 +724,7 @@
     def moiety; character.moiety; end
 
     def imageURL=(newval)
-      @imageURL = newval.gsub(' ', '%20')
+      @imageURL = newval.try(:gsub, ' ', '%20')
     end
 
     def character
