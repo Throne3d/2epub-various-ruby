@@ -204,20 +204,20 @@
 
   def get_page_location(page_url, options={})
     standardize_params(options)
-    where = options[:where] || "web_cache"
+    where = options.fetch(:where, 'web_cache')
 
     uri = URI.parse(page_url)
-    return unless uri && (uri.scheme == "http" || uri.scheme == "https")
+    return unless uri && (uri.scheme == 'http' || uri.scheme == 'https')
 
     uri_query = sort_query(uri.query)
     uri_host = uri.host
     uri_path = uri.path
-    if uri_path[-1] == '/'
+    if uri_path.end_with?('/')
       uri_folder = uri_path[0..-2]
       uri_file = 'index'
     else
       uri_folder = File.dirname(uri_path)
-      uri_file = uri_path.sub(uri_folder + '/', '')
+      uri_file = File.basename(uri_path)
     end
     uri_file += "~QMARK~#{uri_query}" unless uri_query.nil?
 
@@ -230,7 +230,7 @@
   def download_file(file_url, options={})
     LOG.debug "download_file('#{file_url}', #{options})"
     standardize_params(options)
-    headers = options[:headers] || {}
+    headers = options.fetch(:headers, {})
     save_path = options[:save_path] || get_page_location(file_url, options)
 
     save_folder = File.dirname(save_path)
@@ -284,9 +284,7 @@
 
     return unless File.file?(file_path)
 
-    data = ''
-    open(file_path, 'r') { |file| data = file.read }
-    data
+    open(file_path, 'r') { |file| file.read }
   end
 
   BLOCK_LEVELS = [:address, :article, :aside, :blockquote, :canvas, :dd, :div, :dl, :fieldset, :figcaption, :figure, :footer, :form, :h1, :h2, :h3, :h4, :h5, :h6, :header, :hgroup, :hr, :li, :main, :nav, :noscript, :ol, :output, :p, :pre, :section, :table, :tfoot, :ul, :video, :br]
@@ -295,28 +293,25 @@
     raise(ArgumentError, "Invalid parameter combo: :after and :forward") if options.key?(:after) && options.key?(:forward)
     raise(ArgumentError, "Invalid parameter combo: :before and :backward") if options.key?(:before) && options.key?(:backward)
 
-    stop_at = options[:stop_at] || []
+    stop_at = options.fetch(:stop_at, [])
     stop_at = [stop_at] unless stop_at.is_a?(Array)
 
-    forward = true
-    forward = options[:forward] || options[:after] if options.key?(:forward) || options.key?(:after)
+    forward = options.fetch(:forward, options.fetch(:after, true))
+    backward = options.fetch(:backward, options.fetch(:before, true))
 
-    backward = true
-    backward = options[:backward] || options[:before] if options.key?(:backward) || options.key?(:before)
+    include_node = options.fetch(:include_node, true)
 
-    include_node = options.key?(:include_node) ? options[:include_node] : true
-
-    text = ''
     text = node.text if include_node
+    text ||= ''
 
     previous_element = node.previous
-    while backward && previous_element && !BLOCK_LEVELS.include?(previous_element.name) && !BLOCK_LEVELS.include?(previous_element.name.to_sym) && !stop_at.include?(previous_element.name) && !stop_at.include?(previous_element.name.to_sym)
+    while backward && previous_element && !BLOCK_LEVELS.include?(previous_element.name.to_sym) && !stop_at.include?(previous_element.name) && !stop_at.include?(previous_element.name.to_sym)
       text = previous_element.text + text
       previous_element = previous_element.previous
     end
 
     next_element = node.next
-    while forward && next_element && !BLOCK_LEVELS.include?(next_element.name) && !BLOCK_LEVELS.include?(next_element.name.to_sym) && !stop_at.include?(next_element.name) && !stop_at.include?(next_element.name.to_sym)
+    while forward && next_element && !BLOCK_LEVELS.include?(next_element.name.to_sym) && !stop_at.include?(next_element.name) && !stop_at.include?(next_element.name.to_sym)
       text = text + next_element.text
       next_element = next_element.next
     end
@@ -395,18 +390,19 @@
   end
 
   def oldify_chapters_data(group, options={})
-    old_where = options[:where] || options[:old] || options[:old_where] || "web_cache/chapterdetails_#{group}.txt"
-    new_where = options[:new] || options[:new_where] || ''
+    old_where = options.fetch(:where, "web_cache/chapterdetails_#{group}.txt")
+    new_where = options.fetch(:new, '')
 
     old_where = old_where.tr("\\", "/")
     new_where = new_where.tr("\\", "/")
+    return unless File.file?(old_where)
+
     if new_where.empty?
       where_bits = old_where.split('/')
       where_bits[-1] = "old_" + where_bits.last
       new_where = where_bits * '/'
     end
 
-    return unless File.file?(old_where)
     File.open(old_where, "r") do |oldf|
       File.open(new_where, "w") do |newf|
         newf.write oldf.read
@@ -415,8 +411,8 @@
   end
 
   def get_chapters_data(group, options={})
-    where = options[:where] || "web_cache/chapterdetails_#{group}.txt"
-    trash_messages = options[:trash_messages] || false
+    where = options.fetch(:where, "web_cache/chapterdetails_#{group}.txt")
+    trash_messages = options.fetch(:trash_messages, false)
 
     chapterRep = GlowficEpub::Chapters.new(group: group, trash_messages: trash_messages)
 
@@ -429,12 +425,8 @@
 
   def set_chapters_data(chapters, group, others={})
     standardize_params(others)
-    old = others[:old] || false
-    where = others[:where] || ''
+    where = others.fetch(:where, "web_cache/chapterdetails_#{group}.txt")
 
-    if where.empty?
-      where = 'web_cache/' + (old ? 'old_' : '') + "chapterdetails_#{group}.txt"
-    end
     if chapters.is_a?(Array)
       chapterRep = GlowficEpub::Chapters.new
       chapters.each do |chapter|
@@ -464,14 +456,12 @@
       others = group
       group = others[:group]
     end
-    if others.is_a?(Hash)
+    if others.present?
       detail = others[:detail]
       only_present = others[:only_present]
       chapters = others[:chapters] || others[:chapter_list]
-      group = chapters.group if chapters.present? && group.blank?
-    else
-      detail = others
     end
+    group ||= chapters.group
     chapters ||= get_old_data(group)
 
     prev_detail = {}
@@ -481,11 +471,8 @@
     prev_detail.select! {|_key, value| value.present?} if only_present
     prev_detail
   end
-  def get_prev_chapter_details(group, others={})
-    get_prev_chapter_detail(group, others)
-  end
   def get_prev_chapter_pages(group)
-    get_prev_chapter_detail(group, :pages)
+    get_prev_chapter_detail(group, detail: :pages)
   end
   def get_prev_chapter_check_pages(group)
     get_prev_chapter_detail(group, detail: :check_pages, only_present: true)
@@ -526,41 +513,45 @@
     [r,g,b]
   end
   def rgb_to_hsl(r, g=nil, b=nil)
+    # accepts r,g,b or [r,g,b], returns [h,s,l]
     if r.is_a?(Array)
       g = r[1]
       b = r[2]
       r = r[0]
     end
 
-    r = r.to_f / 255
-    g = g.to_f / 255
-    b = b.to_f / 255
+    r = r / 255.0
+    g = g / 255.0
+    b = b / 255.0
     max = [r,g,b].max
     min = [r,g,b].min
-    l = s = h = (max + min) / 2.0
+    l = (max + min) / 2.0
 
     if (max == min)
-      h = s = 1.0 #hack so gray gets sent to the end
-    else
-      d = max - min
-      s = (l > 0.5) ? d / (2.0 - max - min) : d / (max + min)
-      case (max)
-      when r
-        h = (g - b) / d + (g < b ? 6.0 : 0.0)
-      when g
-        h = (b - r) / d + 2.0
-      when b
-        h = (r - g) / d + 4.0
-      end
-      h = h / 6.0
+      h = s = 1.0 # hack so gray gets sent to the end
+      return [h,s,l]
     end
+
+    d = max - min
+    s = (l > 0.5) ? d / (2.0 - max - min) : d / (max + min)
+    case (max)
+    when r
+      h = (g - b) / d + (g < b ? 6.0 : 0.0)
+    when g
+      h = (b - r) / d + 2.0
+    when b
+      h = (r - g) / d + 4.0
+    end
+    h = h / 6.0
 
     [h,s,l]
   end
   def hsl_comp(hsl1, hsl2)
     if hsl1[0] == hsl2[0]
+      # if hues are same, use luminosity
       hsl1[2] <=> hsl2[2]
     else
+      # if hue is different, use that
       hsl1[0] <=> hsl2[0]
     end
   end
