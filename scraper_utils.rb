@@ -191,7 +191,7 @@
     test: "Test EPUB",
     temp_starlight: "Starlight"
   }
-  FIC_NAMESTRINGS.default_proc = proc {|hash, key| hash[key] = key.titleize }
+  FIC_NAMESTRINGS.default_proc = proc {|hash, key| hash[key] = key.to_s.titleize }
 
   def is_huge_cannot_dirty(group)
     group = group.group if group.is_a?(Chapters)
