@@ -1279,7 +1279,7 @@
       character_id = nil if character_id == face_id || character_id.blank?
 
       # empty face for user
-      if icon_id == "none" && character_id.try(:start_with?, 'user#')
+      if icon_id == "none"
         face_params = {}
         face_params[:imageURL] = nil
         face_params[:keyword] = "none"
@@ -1311,7 +1311,7 @@
       # it's probably going to error before this if there's no icon
       # or Face.new will complain about nil params?
       unless @icon_errors.include?(face_id)
-        LOG.error "Failed to find a face for character: ##{character_id} and icon: ##{icon_id}"
+        LOG.error "Failed to find a face for character: #{character_id} and icon: s#{icon_id}"
         @icon_errors << face_id
         nil
       end
