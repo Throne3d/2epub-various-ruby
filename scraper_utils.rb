@@ -496,8 +496,9 @@
       query.delete("view")
       query.delete("per_page")
       query = URI.encode_www_form(query)
-      uri.query = (query.present? ? query : nil)
+      uri.query = query
     end
+    uri.query = nil if uri.query.blank?
     uri.host = uri.host.sub(/\.dreamwidth\.org$/, '.dreamwidth').sub('vast-journey-9935.herokuapp.com', 'constellation').sub('www.glowfic.com', 'constellation').sub('glowfic.com', 'constellation')
     uri.to_s.sub(/^https?\:\/\//, '').sub(/\.html($|(?=\?))/, '')
   end
