@@ -6,7 +6,7 @@ require 'do_various'
 def profile_bit(args=ARGV)
   RubyProf.start
   begin
-    main(ARGV)
+    main(args)
   rescue StandardError, Interrupt => e
     yield RubyProf.stop
     raise e
