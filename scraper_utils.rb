@@ -254,6 +254,11 @@
       retries -= 1
       has_retried = true
       retry if retries >= 0
+    rescue StandardError => error
+      LOG.error "ERROR: Encountered non-HTTP error?"
+      LOG.error error
+      binding.pry
+      raise error
     end
 
     unless success
