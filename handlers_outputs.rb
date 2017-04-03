@@ -111,12 +111,12 @@
 
       site = nil
       post_id = nil
-      if comment_uri.host['.dreamwidth.org/']
+      if comment_uri.host['.dreamwidth.org']
         comment_id = /(comment|cmt)-?(\d+)/.match(fragment).try(:[], 2) ||  get_url_param(comment_uri, 'thread')
         comment_id = 'cmt' + comment_id if comment_id
         post_id = /\/(\d+)(.html)?$/.match(comment_uri.path).try(:[], 1)
         site = :dreamwidth
-      elsif comment_uri.host['vast-journey-9935.herokuapp.com/'] || comment_uri.host['glowfic.com/']
+      elsif comment_uri.host['vast-journey-9935.herokuapp.com'] || comment_uri.host['glowfic.com']
         comment_id = /reply-(\d+)/.match(fragment).try(:[], 1) || /\/replies\/(\d+)/.match(comment_uri.path).try(:[], 1)
         post_id = /posts\/(\d+)/.match(comment_uri.path).try(:[], 1)
         site = :constellation
