@@ -81,9 +81,8 @@ HEREDOC
     $stderr.puts s unless s.nil?
     $stderr.puts usage_str
     abort
-  else
-    raise ArgumentError("args", s || "Invalid args passed.")
   end
+  raise ArgumentError("args", s || "Invalid args passed.")
 end
 
 # Returns the value from args for the appropriate shortarg or longarg
@@ -97,25 +96,24 @@ end
 def get_arg(args, shortarg, longarg, default=nil)
   argname_bit = args.detect{|arg| (!shortarg.nil? && arg.start_with?(shortarg)) || arg =~ /^#{Regexp.escape(longarg)}\b/}
   arg_val = nil
-  if argname_bit
-    arg_index = args.index(argname_bit)
-    arg_val =
-      if argname_bit['=']
-        argname_bit.split('=',2).last
-      elsif argname_bit[' ']
-        argname_bit.split(' ',2).last
+  return default unless argname_bit
+  arg_index = args.index(argname_bit)
+  arg_val =
+    if argname_bit['=']
+      argname_bit.split('=',2).last
+    elsif argname_bit[' ']
+      argname_bit.split(' ',2).last
+    else
+      temp_val = args[arg_index+1]
+      if !temp_val.try(:start_with?, '-')
+        # if the value is nil, or it's not another argument
+        args.delete_at(arg_index+1)
       else
-        temp_val = args[arg_index+1]
-        if temp_val.nil? || !temp_val.start_with?('-')
-          # if the value is nil, or it's not another argument
-          args.delete_at(arg_index+1)
-        else
-          # if it's another argument
-          true
-        end
+        # if it's another argument
+        true
       end
-    args.delete_at(arg_index)
-  end
+    end
+  args.delete_at(arg_index)
   # LOG.debug "get_arg got #{arg_val.inspect} for #{shortarg}, #{longarg}, default: #{default}"
   return arg_val || default
 end
@@ -167,11 +165,11 @@ PROCESSES = {
 # Parses a list of arguments into an option structure.
 def parse_args(args)
   args = [args] if args.is_a?(String)
-  usage("Invalid arguments.") unless args && args.is_a?(Array) && args.size > 0
+  usage("Invalid arguments.") unless args.present?
 
   options = OpenStruct.new(process: nil, group: nil, chapter_list: nil)
   options.chapter_list = args.find {|thing| thing.is_a?(Chapters)}
-  args.delete(options.chapter_list) if options.chapter_list
+  args.delete(options.chapter_list)
 
   args = args.map(&:to_s).map(&:downcase)
 
@@ -200,7 +198,7 @@ def parse_args(args)
 end
 
 def main(*args)
-  args = args.first if args.is_a?(Array) && args.first.is_a?(Array)
+  args = args.first if args.first.is_a?(Array)
   options = parse_args(args)
 
   chapter_list = options.chapter_list
@@ -216,7 +214,7 @@ def main(*args)
 
   OUTFILE.set_output_params(process, (group.empty? ? nil : group))
 
-  LOG.info "Option: #{option}"
+  LOG.info "Option: #{args}"
   LOG.info "Process: #{process}"
   LOG.info "Group: #{group}"
   LOG.info "Other params: #{option}" if option.present?

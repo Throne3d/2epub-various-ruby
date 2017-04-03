@@ -91,8 +91,7 @@ module GlowficIndexHandlers
       @handles = args
     end
     def self.handles?(thing)
-      return unless @handles
-      @handles.include?(thing)
+      @handles.try(:include?, thing)
     end
     def handles?(thing)
       self.handles?(thing)
@@ -149,21 +148,20 @@ module GlowficIndexHandlers
     end
 
     def get_chapter_titles(chapter_link, options = {})
-      backward = true
-      backward = options[:backward] if options.key?(:backward)
+      backward = options.fetch(:backward, true)
 
       chapter_text = get_text_on_line(chapter_link, stop_at: :a, backward: backward, forward: false).strip
       chapter_text_extras = get_text_on_line(chapter_link, stop_at: :a, backward: false, include_node: false).strip
 
-      if (chapter_text.index('(') && chapter_text_extras.index(')')) || (chapter_text.index('[') && chapter_text_extras.index(']'))
+      if (chapter_text['('] && chapter_text_extras[')']) || (chapter_text['['] && chapter_text_extras[']'])
         chapter_text = get_text_on_line(chapter_link, stop_at: :a, backward: backward).strip
         chapter_text_extras = ''
       end # If the title has brackets split between the text & extras, squish it
 
-      if (chapter_text_extras.index('(') == chapter_text_extras.length || chapter_text_extras.index('[') == chapter_text_extras.length)
+      if (chapter_text_extras.end_with?('(') || chapter_text_extras.end_with?('['))
         chapter_text_extras = chapter_text_extras[0..-2].strip
       end # If it ends in a start-bracket, remove it
-      if (chapter_text_extras.index(')') == chapter_text_extras.length && !chapter_text_extras.index('(')) || (chapter_text_extras.index(']') == chapter_text_extras.length && !chapter_text_extras.index('['))
+      if (chapter_text_extras.end_with?(')') && !chapter_text_extras['(']) || (chapter_text_extras.end_with?(']') && !chapter_text_extras['['])
         chapter_text_extras = chapter_text_extras[0..-2].strip
       end # If it ends in an end-bracket, and there's no corresponding start bracket, remove it
 
@@ -174,8 +172,8 @@ module GlowficIndexHandlers
     def chapter_from_toc(params = {})
       params[:thread] ||= get_url_param(params[:url], 'thread')
       params[:url] = standardize_chapter_url(params[:url])
-      params.delete(:thread) unless params[:thread]
-      params.delete(:title_extras) if params[:title_extras].nil? || params[:title_extras].empty?
+      params.delete(:thread) if params[:thread].blank?
+      params.delete(:title_extras) if params[:title_extras].blank?
 
       persist_chapter_data(params)
       return GlowficEpub::Chapter.new(params)
@@ -216,7 +214,7 @@ module GlowficIndexHandlers
           params[:title] = entry_link.try(:text)
           params[:title_extras] = nil
           params[:url] = entry_link.try(:[], :href)
-          next if params[:url].nil? || params[:url].empty?
+          next if params[:url].blank?
 
           params[:url] = standardize_chapter_url(params[:url])
 
@@ -260,10 +258,9 @@ module GlowficIndexHandlers
       end
 
       [defaultCont, 'oneshot'].each do |cont|
-        if chapter_list.key?(cont)
-          chapter_list[cont].each do |chapter|
-            sorted_chapter_list << chapter
-          end
+        next unless chapter_list.key?(cont)
+        chapter_list[cont].each do |chapter|
+          sorted_chapter_list << chapter
         end
       end
 
@@ -345,19 +342,16 @@ module GlowficIndexHandlers
       sections.each do |section|
         i = i.next
         sublist = section.at_css('> ol')
-        if sublist
-          subsection_text = ''
-          curr_element = sublist.previous
-          while curr_element
-            subsection_text = curr_element.text + subsection_text
-            curr_element = curr_element.previous
-          end
-          subsection_text.strip!
-          subsection_text = i.to_s if subsection_text.empty?
-          each_section(section, section_list + [subsection_text], &block)
-        else
-          yield section, section_list, i
+        yield(section, section_list, i) unless sublist
+        subsection_text = ''
+        curr_element = sublist.previous
+        while curr_element
+          subsection_text = curr_element.text + subsection_text
+          curr_element = curr_element.previous
         end
+        subsection_text.strip!
+        subsection_text = i.to_s if subsection_text.empty?
+        each_section(section, section_list + [subsection_text], &block)
       end
     end
     def toc_to_chapterlist(options={})
@@ -461,7 +455,7 @@ module GlowficIndexHandlers
         heading_text = nil
         prev_element = top_level.previous
         while prev_element && superheading.nil?
-          heading = prev_element if headings.include?(prev_element) && heading.nil?
+          heading ||= prev_element if headings.include?(prev_element)
           superheading = prev_element if uber_headings.include?(prev_element)
           prev_element = prev_element.previous
         end
