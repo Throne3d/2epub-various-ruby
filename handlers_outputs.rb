@@ -755,7 +755,8 @@
         next if upd_chapters.empty?
 
         # Do the optional "Earlier:" section (at the end)
-        if show_earlier && days_ago < 1
+        if days_ago < 1
+          next unless show_earlier
           sort_by_time(upd_chapters, :latest_update)
           if upd_chapters.present?
             report_list(upd_chapters, first_last: :latest, completed_before: late_time, new_after: today_time + 3, show_last_update_time: true, show_last_author: :unless_completed, message: 'Earlier:')
