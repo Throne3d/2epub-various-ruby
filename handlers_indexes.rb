@@ -76,6 +76,7 @@ module GlowficIndexHandlers
       sections: ["May or may not join the main Silmaril continuity"]}
     ]
   }
+  CONST_BOARDS = ['Site testing', 'Effulgence', 'Witchlight', 'Lighthouse', 'Opalescence', 'Silmaril', 'Zodiac', 'Rapid Nova'] # constellation boards to skip in non-specific scrapes
 
   def self.get_handler_for(thing)
     index_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
@@ -650,9 +651,11 @@ module GlowficIndexHandlers
   end
 
   class ConstellationIndexHandler < IndexHandler
-    handles :constellation, :opalescence, :zodiac, :lighthouse, :rapid_nova
+    handles :constellation, :constarchive16, :opalescence, :zodiac, :lighthouse, :rapid_nova
     def initialize(options = {})
       super(options)
+      Time.zone = 'Eastern Time (US & Canada)'
+      @archive_time = Time.zone.local(2017)
     end
 
     def fix_url_folder(url)
@@ -669,9 +672,12 @@ module GlowficIndexHandlers
     end
 
     def board_to_block(options = {})
-      board_url = options[:board_url]
-      board_url = fix_url_folder(board_url)
+      board_url = fix_url_folder(options[:board_url])
+      # skips boxes with a last_updated outside the relevant range (after <= time < before)
+      after = options[:after]
+      before = options[:before]
       LOG.info "TOC Page: #{board_url}"
+      LOG.info "Checking within #{after.to_s + ' < ' if after}time#{' < ' + before.to_s if before}" if after || before
 
       board_toc_data = get_page_data(board_url, replace: true, headers: {"Accept" => "text/html"})
       board_toc = Nokogiri::HTML(board_toc_data)
@@ -725,6 +731,22 @@ module GlowficIndexHandlers
           chapter_link = chapter_row.at_css('td a')
           chapter_title = chapter_link.text.strip
           chapter_url = get_absolute_url(chapter_link['href'], board_url)
+
+          if before || after
+            chapter_time = chapter_row.at_css('.post-time')
+            chapter_time.try(:at_css, 'a').try(:remove)
+            chapter_time = chapter_time.try(:text).try(:sub, ' by', '').try(:strip)
+            if chapter_time
+              chapter_time = Time.zone.parse(chapter_time).to_datetime
+              if (after && chapter_time < after) || (before && before <= chapter_time)
+                LOG.info "Skipping #{chapter_title} (outside bounds)"
+                LOG.debug "#{chapter_title} was at #{chapter_time}"
+                next
+              end
+            else
+              LOG.error "Failed to find last-update time for chapter #{chapter_title}; assuming allowed"
+            end
+          end
 
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
 
@@ -781,7 +803,7 @@ module GlowficIndexHandlers
           chapter_url = get_absolute_url(chapter_link[:href], user_url)
           chapter_sections = chapter_row.at_css('.post-board').try(:text).try(:strip)
 
-          next if @group == :lintamande && chapter_sections == 'Silmaril'
+          next if CONST_BOARDS.include?(chapter_sections)
           chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
           yield chapter_details if block_given?
         end
@@ -808,11 +830,20 @@ module GlowficIndexHandlers
 
           board_link = board.at_css('a')
           board_name = board_link.text.strip
-          next if ['Site testing', 'Effulgence', 'Witchlight', 'Lighthouse', 'Opalescence', 'Silmaril', 'Zodiac', 'Rapid Nova'].include?(board_name)
+          next if CONST_BOARDS.include?(board_name)
           next if ignore_sections.include?(board_name)
-          board_url = get_absolute_url(board_link["href"], fic_toc_url)
-
-          board_to_block(board_url: board_url) do |chapter_details|
+          params = {}
+          params[:board_url] = get_absolute_url(board_link[:href], fic_toc_url)
+          if @group == :constarchive16
+            # Archive only has sandboxes last updated before 2017
+            next unless board_name == "Sandboxes"
+            params[:before] = @archive_time
+          elsif @group == :constellation && board_name == "Sandboxes"
+            # Regular has sandboxes after 2017 and all non-skipped non-sandboxes
+            params[:after] = @archive_time
+          else
+          end
+          board_to_block(params) do |chapter_details|
             chapter_list << chapter_details
             yield chapter_details if block_given?
           end

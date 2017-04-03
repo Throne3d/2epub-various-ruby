@@ -90,6 +90,7 @@
     rapid_nova: [:rapid, :nova, :rapidnova, :rapid_nova],
 
     glowfic: [:othersandbox, :sandbox2, :glowfic],
+    constarchive16: [:archive, :archive16, :constarchive, :constarchive16],
     constellation: [:const, :constellation, :glowfic2, :sandbox3],
 
     mwf_leaf: [:mwf, :mwf_1, :leaf, :mwf_leaf],
@@ -124,6 +125,7 @@
 
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
+    constarchive16: "https://glowfic.com/boards/", # 2016 archive
     constellation: "https://glowfic.com/boards/",
 
     mwf_leaf: "http://manyworlds.boards.net/thread/80/backstage-leafy-glowfic-index",
@@ -156,6 +158,7 @@
     rapid_nova: "Jarnvidr & Pedro",
 
     glowfic: "Misc",
+    constarchive16: "Misc",
     constellation: "Misc",
 
     mwf_leaf: "Kappa & Misc",
@@ -178,6 +181,7 @@
     rapid_nova: "Rapid Nova",
 
     glowfic: "Glowfic Community",
+    constarchive16: "Constellation Archive 2016",
 
     mwf_leaf: "Leafy Glowfic",
     mwf_lioncourt: "Lioncourt Party",
