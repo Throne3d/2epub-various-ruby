@@ -755,11 +755,10 @@
     end
 
     def initialize(params={})
-      return if params.empty?
-
       @push_title = false
       @push_character = false
       @children = []
+      return if params.empty?
 
       super(params)
 
@@ -897,7 +896,9 @@
           end
         end
       end
-      self.parent = @parent
+      @parent.children << self unless @parent.children.include?(self)
+      @depth = @parent.depth + 1
+      @parent
     end
 
     def face
