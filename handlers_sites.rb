@@ -1463,10 +1463,14 @@
       if character_element
         character_id = character_element["href"].split("characters/").last
         character_name = character_element.text.strip
+        character_screen = post_info_text.at_css('.post-screenname').try(:text).try(:strip)
       else
         character_id = "user##{author_id}"
         character_name = nil
+        character_screen = nil
       end
+      character_display = character_name
+      character_display += " (#{character_screen})" if character_name && character_screen
 
       date_element = message_element.at_css('> .post-footer')
 
@@ -1488,7 +1492,7 @@
 
       params[:content] = message_element.at_css('.post-content').inner_html.strip
       params[:character] = get_character_by_id(character_id) if message_attributes.include?(:character)
-      params[:alias] = character_name if character_name && (params[:character].nil? || character_name != params[:character].display)
+      params[:alias] = character_display if character_display && (params[:character].nil? || character_display != params[:character].display)
       params[:author_str] = author_name unless message_attributes.include?(:character)
 
       params[:id] = message_id
