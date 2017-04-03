@@ -349,7 +349,10 @@ module GlowficIndexHandlers
       sections.each do |section|
         i = i.next
         sublist = section.at_css('> ol')
-        yield(section, section_list, i) unless sublist
+        unless sublist
+          yield(section, section_list, i)
+          next
+        end
         subsection_text = ''
         curr_element = sublist.previous
         while curr_element
