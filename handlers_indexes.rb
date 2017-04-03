@@ -68,7 +68,13 @@ module GlowficIndexHandlers
       sections: ["Starlight"]}
     ],
     lintamande:
-    []
+    [],
+    silmaril:
+    [
+      {url: "http://lintamande.dreamwidth.org/513.html?style=site",
+      title: "don't touch me",
+      sections: ["May or may not join the main Silmaril continuity"]}
+    ]
   }
 
   def self.get_handler_for(thing)
@@ -269,7 +275,7 @@ module GlowficIndexHandlers
   end
 
   class OrderedListHandler < IndexHandler
-    handles :effulgence, :pixiethreads, :incandescence, :radon, :silmaril
+    handles :effulgence, :pixiethreads, :incandescence, :radon#, :silmaril
     def initialize(options = {})
       super(options)
       @strip_li_end = (@group == :incandescence || @group == :silmaril)
@@ -842,7 +848,7 @@ module GlowficIndexHandlers
   end
 
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :reptest
+    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :reptest, :silmaril
     def initialize(options = {})
       super(options)
     end
@@ -930,6 +936,14 @@ module GlowficIndexHandlers
         chapter_list.sort_chapters = true
         chapter_list.get_sections = true
         const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group], ignore_sections: ['Silmaril']) do |chapter|
+          yield chapter if block_given?
+        end
+        const_chapters.each do |chapter|
+          chapter_list << chapter
+        end
+      elsif @group == :silmaril
+        const_handler = ConstellationIndexHandler.new(group: @group)
+        const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group]) do |chapter|
           yield chapter if block_given?
         end
         const_chapters.each do |chapter|

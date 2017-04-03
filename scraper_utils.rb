@@ -118,7 +118,7 @@
     radon: "http://radon-absinthe.dreamwidth.org/295.html?style=site",
     opalescence: "https://glowfic.com/boards/12",
     zodiac: "https://glowfic.com/boards/7",
-    silmaril: "https://alicornutopia.dreamwidth.org/31812.html",
+    silmaril: "https://glowfic.com/boards/18", # "https://alicornutopia.dreamwidth.org/31812.html"
     lighthouse: "https://glowfic.com/boards/16",
     rapid_nova: "https://glowfic.com/boards/30",
 
