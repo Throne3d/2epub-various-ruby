@@ -169,7 +169,7 @@
       uri_path = uri_path[1..-1] if uri_path.start_with?('/')
       save_file += '-' + uri_path.sub('.html', '')
       save_file += "-#{thread}" if thread.present?
-      save_file += '-split%03d' if page > 1
+      save_file += '-split%03d' % page if page > 1
       save_file.gsub('/', '-') + '.html' # save_path
     end
 
