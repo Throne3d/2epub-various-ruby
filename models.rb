@@ -748,7 +748,7 @@
   class Message < Model #post or entry
     @@date_format = "%Y-%m-%d %H:%M"
 
-    dirty_accessors :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no, :author_str
+    dirty_accessors :content, :time, :edittime, :id, :chapter, :post_type, :depth, :children, :page_no, :author_str, :alias
 
     def self.message_serialize_ignore
       serialize_ignore :character, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_character, :post_type
@@ -767,7 +767,7 @@
     end
 
     def self.allowed_params
-      @allowed_params ||= [:character, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face, :entry_title, :page_no, :author_str]
+      @allowed_params ||= [:character, :content, :time, :edittime, :id, :chapter, :parent, :post_type, :depth, :children, :face, :entry_title, :page_no, :author_str, :alias]
     end
 
     def unpack!
@@ -778,6 +778,12 @@
     def dirty!
       @dirty = true
       chapter.dirty! if chapter
+    end
+
+    def alias
+      return @alias if @alias
+      return @character.display if @character.is_a?(Character)
+      return @face.user_display if @face.is_a?(Face)
     end
 
     def site_handler; chapter.try(:site_handler); end

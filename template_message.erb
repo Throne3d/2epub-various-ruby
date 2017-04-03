@@ -1,17 +1,17 @@
 <div id="<%= @message.post_type_str + "-" + @message.id %>" data-depth="<%= @message.depth %>" data-type="<%= @message.post_type_str %>" class="<%= @message.moiety.downcase %>">
   <div class="user">
     <div class="usericon">
-      <% if @message.face and get_face_path(@message.face) and not get_face_path(@message.face).empty? -%>
+      <% if @message.face && get_face_path(@message.face).present? -%>
         <img src="<%= get_face_path(@message.face).gsub(' ', '%20') %>" />
       <% else -%>
         <div>X</div>
       <% end -%>
     </div>
     <div class="username">
-      <% if @message.face and @message.face.keyword and not @message.face.keyword.empty? -%>
-        <%= h(@message.face.user_display + ": " + @message.face.keyword) %>
-      <% elsif @message.face -%>
-        <%= h(@message.face.user_display) %>
+      <% if @message.face && @message.face.keyword.present? -%>
+        <%= h(@message.alias + ": " + @message.face.keyword) %>
+      <% elsif @message.alias -%>
+        <%= h(@message.alias) %>
       <% else -%>
         Unknown
       <% end -%>

@@ -1462,8 +1462,10 @@
       character_element = post_info_text.at_css('.post-character').try(:at_css, 'a')
       if character_element
         character_id = character_element["href"].split("characters/").last
+        character_name = character_element.text.strip
       else
         character_id = "user##{author_id}"
+        character_name = nil
       end
 
       date_element = message_element.at_css('> .post-footer')
@@ -1486,7 +1488,7 @@
 
       params[:content] = message_element.at_css('.post-content').inner_html.strip
       params[:character] = get_character_by_id(character_id) if message_attributes.include?(:character)
-      # TODO: add aliases
+      params[:alias] = character_name if character_name && (params[:character].nil? || character_name != params[:character].display)
       params[:author_str] = author_name unless message_attributes.include?(:character)
 
       params[:id] = message_id
