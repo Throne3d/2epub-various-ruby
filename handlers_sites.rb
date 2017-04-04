@@ -935,6 +935,16 @@
           old_content = page_old.at_css('#content')
           new_content = page_new.at_css('#content')
           cache_content = page_cache.at_css('#content') if cache_exists
+          unless new_content
+            LOG.error "Failed to find #content for check page (#{i}, #{check_page})."
+            changed = true
+            break
+          end
+          if (cache_exists && !cache_content) || !old_content
+            LOG.info "Couldn't find #content for an old check page (#{i}, #{check_page})"
+            changed = true
+            break
+          end
 
           # remove time_loaded so as to check just the content
           old_content.at_css(".time-loaded").try(:remove)
@@ -943,14 +953,14 @@
 
           changed = (old_content.inner_html != new_content.inner_html)
           if changed
-            LOG.debug "check page #{i}, #{check_page}, was different"
+            LOG.debug "check page was difference (#{i}, #{check_page})"
             break
           end
 
           if cache_exists
             changed = (old_content.inner_html != cache_content.inner_html)
             if changed
-              LOG.info "check page cache in JSON (#{i}, #{check_page}) was different. other cache wasn't. fixing."
+              LOG.info "check page cache in JSON differed from old content, fixing (#{i}, #{check_page})"
               break
             end
           end
