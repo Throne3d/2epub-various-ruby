@@ -1,29 +1,29 @@
 <div id="<%= @message.post_type_str + "-" + @message.id %>" data-depth="<%= @message.depth %>" data-type="<%= @message.post_type_str %>" class="<%= @message.moiety.downcase %>">
-  <div class="user">
-    <div class="usericon">
-      <% if @message.face && get_face_path(@message.face).present? -%>
-        <img src="<%= get_face_path(@message.face).gsub(' ', '%20') %>" />
-      <% else -%>
-        <div>X</div>
-      <% end -%>
-    </div>
-    <div class="username">
-      <% if @message.face && @message.face.keyword.present? -%>
-        <%= h(@message.alias + ": " + @message.face.keyword) %>
-      <% elsif @message.alias -%>
-        <%= h(@message.alias) %>
-      <% else -%>
-        Unknown
-      <% end -%>
-    </div>
-  </div>
-  <div class="text">
-    <div class="content"><%= @message.content %></div>
-    <% if @message.edittime -%>
-      <div class="edittime timestamp">Edited: <%= h(@message.edittime_display) %></div>
-    <% end -%>
-    <% if @message.time -%>
-      <div class="posttime timestamp"><%= h(@message.time_display) %></div>
-    <% end -%>
-  </div>
+<div class="user">
+<div class="usericon">
+<% if @message.face && get_face_path(@message.face).present? -%>
+<img src="<%= get_face_path(@message.face).gsub(' ', '%20') %>" />
+<% else -%>
+<div>X</div>
+<% end -%>
+</div>
+<div class="username">
+<% if @message.face && @message.face.keyword.present? -%>
+<%= h(@message.alias + ": " + @message.face.keyword) %>
+<% elsif @message.alias -%>
+<%= h(@message.alias) %>
+<% else -%>
+Unknown
+<% end -%>
+</div>
+</div>
+<div class="text">
+<div class="content"><%= @message.content %></div>
+<% if @message.edittime -%>
+<div class="edittime timestamp">Edited: <%= h(@message.edittime_display) %></div>
+<% end -%>
+<% if @message.time -%>
+<div class="posttime timestamp"><%= h(@message.time_display) %></div>
+<% end -%>
+</div>
 </div>
