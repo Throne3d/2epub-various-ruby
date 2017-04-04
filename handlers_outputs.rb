@@ -22,7 +22,7 @@
     attr_reader :changed
 
     HIATUS_DATE = Time.now.months_ago(2)
-    ABADON = '&mdash;'
+    ABANDON = '&mdash;'
     COMPLETE = ''
     HIATUS = '&infin;'
     ACTIVE = '+'
