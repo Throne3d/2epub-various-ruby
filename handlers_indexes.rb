@@ -8,16 +8,20 @@ module GlowficIndexHandlers
     [
       {url: "https://darkest-evening.dreamwidth.org/520.html?style=site",
       title: "You've Got Mail",
-      sections: ["Incandescence"]},
+      sections: ["Incandescence"],
+      marked_complete: true},
       {url: "http://alicornutopia.dreamwidth.org/4027.html?style=site",
       title: "Clannish",
-      sections: ["Incandescence", "Chamomile"]},
+      sections: ["Incandescence", "Chamomile"],
+      marked_complete: true},
       {url: "http://edgeofyourseat.dreamwidth.org/1949.html?style=site",
       title: "he couldn't have imagined",
-      sections: ["AAAA-1-Effulgence", "AAAB-2-make a wish"]},
+      sections: ["AAAA-1-Effulgence", "AAAB-2-make a wish"],
+      marked_complete: true},
       {url: "http://autokinetic.dreamwidth.org/783.html?style=site",
       title: "(admissions procedures)",
-      sections: ["AAAA-1-Effulgence", "AAAB-1-dance between the stars"]},
+      sections: ["AAAA-1-Effulgence", "AAAB-1-dance between the stars"],
+      marked_complete: true},
       {url: "https://glowfic.com/posts/43",
       title: "Book of Discovery",
       sections: ["AAAA-2-Zodiac", "AAAB-1-Book of the Moon"]},
@@ -29,7 +33,8 @@ module GlowficIndexHandlers
       sections: ["AAAA-2-Zodiac", "AAAB-2-Apricum"]},
       {url: "http://alicornutopia.dreamwidth.org/25861.html?style=site",
       title: "Double Witch",
-      sections: ["AAAA-4-Bluebell Flames"]},
+      sections: ["AAAA-4-Bluebell Flames"],
+      marked_complete: true},
       {url: "https://alicornutopia.dreamwidth.org/6744.html?thread=2465368&style=site#cmt2465368",
       title: "A Joker summons Demon Cam",
       sections: ["AAAA-3-Demon Cam"],
@@ -62,10 +67,12 @@ module GlowficIndexHandlers
     [
       {url: "https://alicornutopia.dreamwidth.org/29069.html?style=site",
       title: "and in my hands place honesty",
-      sections: ["Starlight"]},
+      sections: ["Starlight"],
+      marked_complete: true},
       {url: "https://alicornutopia.dreamwidth.org/29401.html?style=site",
       title: "veritable",
-      sections: ["Starlight"]}
+      sections: ["Starlight"],
+      marked_complete: true}
     ],
     lintamande:
     [],
@@ -73,7 +80,8 @@ module GlowficIndexHandlers
     [
       {url: "http://lintamande.dreamwidth.org/513.html?style=site",
       title: "don't touch me",
-      sections: ["May or may not join the main Silmaril continuity"]}
+      sections: ["May or may not join the main Silmaril continuity"],
+      marked_complete: true}
     ],
     ror:
     [
@@ -340,8 +348,10 @@ module GlowficIndexHandlers
           params[:title] += ")"
           params[:title_extras] = params[:title_extras][1..-1]
         end
+        incomplete = params[:title_extras].start_with?('+')
         params[:url] = c_link.try(:[], :href)
         next unless params[:url]
+        params[:marked_complete] = !incomplete
 
         params[:sections] = section_list
         chapter_details = chapter_from_toc(params)
@@ -515,6 +525,11 @@ module GlowficIndexHandlers
 
         chapter_url = chapter_link.try(:[], :href)
         next unless chapter_url
+
+        parent_name = chapter_link.parent.name
+        suparent_name = chapter_link.parent.parent.name
+        complete = parent_name == 'b' || parent_name == 'strong' || suparent_name == 'b' || suparent_name == 'strong'
+        params[:marked_complete] = complete
 
         section_list = [superheading_text, heading_text]
         section_list.compact!
