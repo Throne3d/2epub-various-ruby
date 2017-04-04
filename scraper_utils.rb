@@ -251,7 +251,7 @@
       end
       sleep 0.05
       success = true
-    rescue OpenURI::HTTPError, SocketError, Net::OpenTimeout, Net::ReadTimeout => error
+    rescue OpenURI::HTTPError, SocketError, Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET => error
       LOG.error "Error loading file (#{file_url}); #{retries} retr#{retries==1 ? 'y' : 'ies'} left"
       LOG.debug error
 
