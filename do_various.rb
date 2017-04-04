@@ -343,9 +343,18 @@ def main(*args)
     params = {chapter_list: chapter_list, group: group, mode: mode}
     params[:no_split] = true if no_split
 
-    handler = handler.new(params)
-    changed = handler.output
-    set_chapters_data(chapter_list, group) if changed
+    begin
+      handler = handler.new(params)
+      handler.output
+    rescue StandardError, Interrupt => e
+      changed = handler.changed
+      if changed
+        puts "Encountered an error. Saving changed data then re-raising."
+        set_chapters_data(chapter_list, group)
+      end
+      raise e
+    end
+    set_chapters_data(chapter_list, group) if handler.changed
   elsif (process == :output_report)
     LOG.info "Outputting a report for '#{group}'"
 

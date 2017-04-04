@@ -18,6 +18,7 @@
 
   class EpubHandler < OutputHandler
     include ERB::Util
+    attr_reader :changed
 
     def initialize(options={})
       super options
