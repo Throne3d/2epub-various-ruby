@@ -214,7 +214,7 @@ def main(*args)
 
   OUTFILE.set_output_params(process, (group.empty? ? nil : group))
 
-  LOG.info "Option: #{args}"
+  LOG.info "Option: #{args.map(&:to_s) * ' '}"
   LOG.info "Process: #{process}"
   LOG.info "Group: #{group}"
   LOG.info "Other params: #{option}" if option.present?
