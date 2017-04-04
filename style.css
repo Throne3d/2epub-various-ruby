@@ -3,12 +3,8 @@ h3.entry-title {
   border-bottom: solid 1px #aaa;
   padding-bottom: 5px;
 }
-body {
-  font-family: sans-serif;
-}
-div[data-type] {
-  padding-top: 10px;
-}
+body { font-family: sans-serif; }
+div[data-type] { padding-top: 10px; }
 .user {
   border: solid 1px #aaa;
   padding: 10px;
@@ -52,14 +48,13 @@ div[data-type] {
   font-size: 90%;
   font-weight: 600;
 }
+/* shades of gray get 0.7 opacity, else 0.3 */
+/* luminosity is typically 87% (210) unless necessary to be distinct */
+/* font color is only specified on non-standard luminosities */
+/* and is #dddddd if on dark, or #111111 if on light */
 .alicorn .user {
   background-color: #bfffc8; /*hsl(128, 100%, 87%)*/
   background-color: rgba(0, 191, 128, 0.3);
-  color: inherit;
-}
-.aestrix .user {
-  background-color: #bfdfff; /*hsl(210, 100%, 87%)*/
-  background-color: rgba(0, 128, 255, 0.3);
   color: inherit;
 }
 .kappa .user {
@@ -67,29 +62,14 @@ div[data-type] {
   background-color: rgba(128, 64, 191, 0.3);
   color: inherit;
 }
-.adelene .user {
-  background-color: #f0dace; /*hsl(21, 53%, 87%)*/
-  background-color: rgba(98, 55, 31, 0.3);
+.aestrix .user {
+  background-color: #bfdfff; /*hsl(210, 100%, 87%)*/
+  background-color: rgba(0, 128, 255, 0.3);
   color: inherit;
 }
-.andaisq .user {
-  background-color: #ffbfd5; /*hsl(339, 100%, 87%)*/
-  background-color: rgba(255, 64, 128, 0.3);
-  color: inherit;
-}
-.anthusiasm .user {
-  background-color: #ffdfbf; /*hsl(30, 100%, 87%)*/
-  background-color: rgba(255, 128, 0, 0.3);
-  color: inherit;
-}
-.anya .user {
-  background-color: #f4eaff; /*hsl(269, 100%, 96%)*/
-  background-color: rgba(192, 128, 255, 0.3);
-  color: inherit;
-}
-.atheistcanuck .user, .andygal .user {
-  background-color: #fdc1e8;
-  background-color: rgba(125, 5, 82, 0.3);
+.marrinikari .user, .marri .user {
+  background-color: #efcfcf; /*hsl(0, 50%, 87%)*/
+  background-color: rgba(191, 64, 64, 0.3);
   color: inherit;
 }
 .benedict .user {
@@ -97,74 +77,9 @@ div[data-type] {
   background-color: rgba(105, 105, 105, 0.7);
   color: #dddddd;
 }
-.curiousdiscoverer .user, .bluelantern .user, .faceless .user {
-  background-color: #a0a0a0; /*hsl(0, 0%, 63%)*/
-  background-color: rgba(160, 160, 160, 0.7);
-  color: #111111;
-}
-.deanno .user {
-  background-color: #ffffbf; /*hsl(60, 100%, 87%)*/
-  background-color: rgba(255, 255, 0, 0.3);
-  color: inherit;
-}
-.diaeresis .user {
-  background-color: #bfffbf; /*hsl(120, 100%, 87%)*/
-  background-color: rgba(0, 96, 0, 0.3);
-  color: inherit;
-}
-.erinflight .user {
-  background-color: #e9b996; /*hsl(26, 66%, 87%)*/
-  background-color: rgba(213, 115, 42, 0.3);
-  color: inherit;
-}
-.eva .user, .evenstar .user {
-  background-color: #bfbfff; /*hsl(240, 100%, 87%)*/
-  background-color: rgba(0, 0, 128, 0.3);
-  color: inherit;
-}
-.kel .user {
-  background-color: #eaffff; /*hsl(180, 100%, 96%)*/
-  background-color: rgba(0, 207, 207, 0.3);
-  color: inherit;
-}
-.kuuskytkolme .user {
-  background-color: #e7f1cd; /*hsl(77, 56%, 87%)*/
-  background-color: rgba(153, 197, 52, 0.3);
-  color: inherit;
-}
-.lambda .user {
-  background-color: #bfffff; /*hsl(180, 100%, 87%)*/
-  background-color: rgba(0, 128, 128, 0.3);
-  color: inherit;
-}
-.link .user, .linkhyrule5 .user {
-  background-color: #d5aaff; /*hsl(270, 100%, 83%)*/
-  background-color: rgba(127, 0, 255, 0.3);
-  color: inherit;
-}
-.lintamande .user {
-  background-color: #ffbfbf; /*hsl(0, 100%, 87%)*/
-  background-color: rgba(255, 0, 0, 0.3);
-  color: inherit;
-}
-.maggie .user, .maggieoftheowls .user {
-  background-color: #ffffff; /*hsl(0, 0%, 100%)*/
-  background-color: rgba(255, 255, 255, 0.7);
-  color: #111111;
-}
-.marrinikari .user, .marri .user {
-  background-color: #efcfcf; /*hsl(0, 50%, 87%)*/
-  background-color: rgba(191, 64, 64, 0.3);
-  color: inherit;
-}
-.moriwen .user {
-  background-color: #cac6f9; /*hsl(245, 81%, 88%)*/
-  background-color: rgba(105, 96, 236, 0.3);
-  color: inherit;
-}
-.nemo .user {
-  background-color: #ffefbf; /*hsl(45, 100%, 87%)*/
-  background-color: rgba(255, 191, 0, 0.3);
+.anthusiasm .user {
+  background-color: #ffdfbf; /*hsl(30, 100%, 87%)*/
+  background-color: rgba(255, 128, 0, 0.3);
   color: inherit;
 }
 .pdv .user, .plaindealingvillain .user {
@@ -172,28 +87,78 @@ div[data-type] {
   background-color: rgba(191, 128, 64, 0.3);
   color: inherit;
 }
-.pedro .user {
-  background-color: #ffbfbf; /*hsl(0, 100%, 87%)*/
-  background-color: rgba(255, 92, 92, 0.3);
+.andaisq .user {
+  background-color: #ffbfd5; /*hsl(339, 100%, 87%)*/
+  background-color: rgba(255, 64, 128, 0.3);
   color: inherit;
 }
-.roboticlin .user {
-  background-color: #f4ffbf; /*hsl(70, 100%, 87%)*/
-  background-color: rgba(114, 140, 0, 0.3);
+.anya .user {
+  background-color: #f4eaff; /*hsl(269, 100%, 96%)*/
+  background-color: rgba(192, 128, 255, 0.3);
   color: inherit;
+}
+.lambda .user, .sonata .user {
+  background-color: #bfffff; /*hsl(180, 100%, 87%)*/
+  background-color: rgba(0, 128, 128, 0.3);
+  color: inherit;
+}
+.kel .user {
+  background-color: #eaffff; /*hsl(180, 100%, 96%)*/
+  background-color: rgba(0, 207, 207, 0.3);
+  color: inherit;
+}
+.adelene .user {
+  background-color: #f0dace; /*hsl(21, 53%, 87%)*/
+  background-color: rgba(98, 55, 31, 0.3);
+  color: inherit;
+}
+.curiousdiscoverer .user, .bluelantern .user, .faceless .user {
+  background-color: #a0a0a0; /*hsl(0, 0%, 63%)*/
+  background-color: rgba(160, 160, 160, 0.7);
+  color: #111111;
+}
+.nemo .user {
+  background-color: #ffefbf; /*hsl(45, 100%, 87%)*/
+  background-color: rgba(255, 191, 0, 0.3);
+  color: inherit;
+}
+.link .user, .linkhyrule5 .user {
+  background-color: #d5aaff; /*hsl(270, 100%, 83%)*/
+  background-color: rgba(127, 0, 255, 0.3);
+  color: inherit;
+}
+.kuuskytkolme .user {
+  background-color: #e7f1cd; /*hsl(77, 56%, 87%)*/
+  background-color: rgba(153, 197, 52, 0.3);
+  color: inherit;
+}
+.erinflight .user {
+  background-color: #e9b996; /*hsl(26, 66%, 87%)*/
+  background-color: rgba(213, 115, 42, 0.3);
+  color: inherit;
+}
+.maggie .user, .maggieoftheowls .user {
+  background-color: #ffffff; /*hsl(0, 0%, 100%)*/
+  background-color: rgba(255, 255, 255, 0.7);
+  color: #111111;
 }
 .rockeye .user, .rockeye_stonetoe .user {
   background-color: #000000; /*hsl(0, 0%, 0%)*/
   background-color: rgba(0, 0, 0, 0.7);
   color: #dddddd;
 }
-.sine_salvatorem .user {
-  background-color: #bfffff;
-  background-color: rgba(0, 255, 255, 0.3);
+.pedro .user {
+  background-color: #ffbfbf; /*hsl(0, 100%, 87%)*/
+  background-color: rgba(255, 92, 92, 0.3);
+  color: inherit;
+}
+.eva .user, .evenstar .user {
+  background-color: #bfbfff; /*hsl(240, 100%, 87%)*/
+  background-color: rgba(0, 0, 128, 0.3);
   color: inherit;
 }
 .teceler .user {
-  background-color: #ccf2cc;
+  background-color: #ccf2cc; /*hsl(120, 59%, 87%)*/
   background-color: rgba(34, 139, 34, 0.3);
   color: inherit;
 }
@@ -205,6 +170,76 @@ div[data-type] {
 .timepoof .user {
   background-color: #ffbfdb; /*hsl(334, 100%, 87%)*/
   background-color: rgba(255, 145, 191, 0.3);
+  color: inherit;
+}
+.roboticlin .user {
+  background-color: #f4ffbf; /*hsl(70, 100%, 87%)*/
+  background-color: rgba(114, 140, 0, 0.3);
+  color: inherit;
+}
+.diaeresis .user {
+  background-color: #bfffbf; /*hsl(120, 100%, 87%)*/
+  background-color: rgba(0, 96, 0, 0.3);
+  color: inherit;
+}
+.moriwen .user {
+  background-color: #cac6f9; /*hsl(245, 81%, 88%)*/
+  background-color: rgba(105, 96, 236, 0.3);
+  color: inherit;
+}
+.atheistcanuck .user, .andygal .user {
+  background-color: #fdc1e8; /*hsl(321, 94%, 87%)*/
+  background-color: rgba(125, 5, 82, 0.3);
+  color: inherit;
+}
+.lintamande .user {
+  background-color: #ffbfbf; /*hsl(0, 100%, 87%)*/
+  background-color: rgba(255, 0, 0, 0.3);
+  color: inherit;
+}
+.sine_salvatorem .user {
+  background-color: #bfffff; /*hsl(180, 100%, 87%)*/
+  background-color: rgba(0, 255, 255, 0.3);
+  color: inherit;
+}
+.deanno .user {
+  background-color: #ffffbf; /*hsl(60, 100%, 87%)*/
+  background-color: rgba(255, 255, 0, 0.3);
+  color: inherit;
+}
+.jarnvidr .user {
+  background-color: #febde3; /*hsl(325, 98%, 87%)*/
+  background-color: rgba(79, 1, 46, 0.3);
+  color: inherit
+}
+.unbitwise .user {
+  background-color: #d5e6e4; /*hsl(170, 26%, 87%)*/
+  background-color: rgba(141, 188, 180, 0.3);
+  color: inherit;
+}
+.tricky .user {
+  background-color: #ffcebd; /*hsl(16, 100%, 87%)*/
+  background-color: rgba(255, 69, 0, 0.3);
+  color: inherit;
+}
+.shirube .user {
+  background-color: #f0fff0; /*hsl(120, 100%, 97%)*/
+  background-color: rgba(204, 255, 204, 0.3);
+  color: inherit;
+}
+.ezra .user, .sigma .user {
+  background-color: #fffbbd; /*hsl(56, 100%, 87%)*/
+  background-color: rgba(255, 239, 0, 0.3);
+  color: inherit;
+}
+.guilty .user {
+  background-color: #eccfe9; /*hsl(308, 44%, 87%)*/
+  background-color: rgba(104, 40, 96, 0.3);
+  color: inherit;
+}
+.kaylin .user {
+  background-color: #c6d2f6; /*hsl(225, 73%, 87%)*/
+  background-color: rgba(65, 105, 225, 0.3);
   color: inherit;
 }
 .content {
@@ -220,15 +255,7 @@ div[data-type] {
   padding-top: 5px;
   padding-bottom: 5px;
 }
-.section-subtitle {
-  padding-bottom: 5px;
-}
-.entry-subtitle {
-  padding-bottom: 5px;
-}
-.edittime {
-  font-size: 80%;
-}
-.timestamp {
-  font-size: 80%;
-}
+.section-subtitle { padding-bottom: 5px; }
+.entry-subtitle { padding-bottom: 5px; }
+.edittime { font-size: 80%; }
+.timestamp { font-size: 80%; }
