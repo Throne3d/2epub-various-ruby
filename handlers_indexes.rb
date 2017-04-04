@@ -756,6 +756,8 @@ module GlowficIndexHandlers
           chapter_title = chapter_link.text.strip
           chapter_url = get_absolute_url(chapter_link['href'], board_url)
 
+          next if chapter_url[/posts\/452(\b|\/)/] # skip RoR
+
           if before || after
             chapter_time = chapter_row.at_css('.post-time')
             chapter_time.try(:at_css, 'a').try(:remove)
@@ -825,6 +827,7 @@ module GlowficIndexHandlers
           chapter_link = chapter_row.at_css('td a')
           chapter_title = chapter_link.text.strip
           chapter_url = get_absolute_url(chapter_link[:href], user_url)
+          next if chapter_url[/posts\/452(\b|\/)/] # skip RoR
           chapter_sections = chapter_row.at_css('.post-board').try(:text).try(:strip)
 
           next if CONST_BOARDS.include?(chapter_sections)
