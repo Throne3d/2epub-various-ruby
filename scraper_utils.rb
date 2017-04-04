@@ -88,6 +88,7 @@
     silmaril: [:silm, :silmaril],
     lighthouse: [:light, :lighthouse],
     rapid_nova: [:rapid, :nova, :rapidnova, :rapid_nova],
+    moonflower: [:moon, :moonflower],
 
     glowfic: [:othersandbox, :sandbox2, :glowfic],
     constarchive16: [:archive, :archive16, :constarchive, :constarchive16],
@@ -109,7 +110,7 @@
     report: [:report, :daily]
   }
 
-  FIC_SHOW_AUTHORS = [:glowfic, :constellation, :sandbox, :marri, :peterverse, :maggie, :throne, :lintamande, :test, :report, :mwf_leaf, :mwf_lioncourt]
+  FIC_SHOW_AUTHORS = [:glowfic, :constarchive16, :constellation,  :mwf_leaf, :mwf_lioncourt, :sandbox, :marri, :peterverse, :maggie, :throne, :lintamande, :test, :reptest, :report]
 
   FIC_TOCS = {
     #Continuities
@@ -122,6 +123,7 @@
     silmaril: "https://glowfic.com/boards/18", # "https://alicornutopia.dreamwidth.org/31812.html"
     lighthouse: "https://glowfic.com/boards/16",
     rapid_nova: "https://glowfic.com/boards/30",
+    moonflower: "https://glowfic.com/boards/20",
 
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
@@ -156,6 +158,7 @@
     silmaril: "Alicorn & Lintamande",
     lighthouse: "CuriousDiscoverer & Pedro",
     rapid_nova: "Jarnvidr & Pedro",
+    moonflower: "Faceless & Moriwen",
 
     glowfic: "Misc",
     constarchive16: "Misc",
