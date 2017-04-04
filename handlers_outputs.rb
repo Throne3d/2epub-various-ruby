@@ -9,6 +9,7 @@
   class OutputHandler
     include GlowficEpub
     include ScraperUtils
+    attr_reader :group
     def initialize(options={})
       @chapters = options[:chapters] || options[:chapter_list]
       @chapters.sort_chapters! if @chapters.is_a?(GlowficEpub::Chapters) && @chapters.sort_chapters
@@ -19,6 +20,12 @@
   class EpubHandler < OutputHandler
     include ERB::Util
     attr_reader :changed
+
+    HIATUS_DATE = Time.now.months_ago(2)
+    ABADON = '&mdash;'
+    COMPLETE = ''
+    HIATUS = '&infin;'
+    ACTIVE = '+'
 
     def initialize(options={})
       super options
@@ -267,6 +274,13 @@
       temp
     end
 
+    def symbol(chapter, latest_time)
+      return ABANDON if chapter.time_abandoned
+      return COMPLETE if chapter.time_completed || chapter.marked_complete
+      return HIATUS if chapter.time_hiatus || latest_time < HIATUS_DATE # more leeway for non-Constellation EPUB chapters
+      ACTIVE
+    end
+
     def output(chapter_list=nil)
       chapter_list ||= @chapters
       (LOG.fatal "No chapters given!"; return) unless chapter_list
@@ -331,8 +345,10 @@
 
         @messages = get_message_orders(chapter).map { |count| (count >= 0) ? chapter.replies[count] : chapter.entry }
 
+        latest_time = chapter.time_new
         erb = ERB.new(template_message, 0, '-')
         @message_htmls = @messages.map do |message|
+          latest_time = message.time if message.time && message.time > latest_time
           @message = message
           b = binding
           erb.result b
@@ -364,9 +380,12 @@
           end
 
           unless done_headers
+            status_symbol = symbol(chapter, latest_time)
             temp_html += "<div class=\"chapter-header\">\n"
             temp_html << "<h2 class=\"section-title\">#{h(chapter.sections * ', ')}</h2>\n" if chapter.sections.present?
-            temp_html << "<h3 class=\"entry-title\">#{h(chapter.title)}</h3>\n"
+            temp_html << "<h3 class=\"entry-title\">#{h(chapter.title)}"
+            temp_html << " " + status_symbol if status_symbol
+            temp_html << "</h3>\n"
             temp_html << "<strong class=\"entry-subtitle\">#{h(chapter.title_extras)}</strong><br />\n" if chapter.title_extras
             temp_html << "<strong class=\"entry-authors\">Authors: #{h(chapter.moieties * ', ')}</strong><br />\n" if @show_authors && @chapter.moieties.present?
             temp_html << "</div>\n"
