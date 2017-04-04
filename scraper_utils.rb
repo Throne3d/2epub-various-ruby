@@ -91,6 +91,7 @@
     moonflower: [:moon, :moonflower],
     ror: [:ror, :room, :room_of_requirement],
     errant_void: [:errant, :void, :errantvoid, :errant_void],
+    fruitflower: [:fruit, :flower, :fruitflower, :fruit_flower],
 
     glowfic: [:othersandbox, :sandbox2, :glowfic],
     constarchive16: [:archive, :archive16, :constarchive, :constarchive16],
@@ -128,6 +129,7 @@
     moonflower: "https://glowfic.com/boards/20",
     ror: "https://glowfic.com/posts/452",
     errant_void: "https://glowfic.com/boards/28",
+    fruitflower: "https://glowfic.com/boards/32",
 
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
@@ -165,6 +167,7 @@
     moonflower: "Faceless & Moriwen",
     ror: "Alicorn & Lintamande",
     errant_void: "Jarnvidr & Throne",
+    fruitflower: "Lintamande & Maggie",
 
     glowfic: "Misc",
     constarchive16: "Misc",
@@ -190,6 +193,7 @@
     rapid_nova: "Rapid Nova",
     ror: "Room of Requirement",
     errant_void: "Errant Void",
+    fruitflower: "Fruit and Flower",
 
     glowfic: "Glowfic Community",
     constarchive16: "Constellation Archive 2016",

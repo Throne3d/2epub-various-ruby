@@ -82,7 +82,7 @@ module GlowficIndexHandlers
     ]
   }
   # constellation boards to skip in non-specific scrapes
-  CONST_BOARDS = ['Site testing', 'Effulgence', 'Incandescence', 'Witchlight', 'Lighthouse', 'Opalescence', 'Silmaril', 'Zodiac', 'Rapid Nova', 'Bluebell Flames', 'Coruscation', 'Eclipse', 'Fairylights', 'Amber Dreams', 'Calibrilustrum', 'Mecone', 'Moonflower', 'Errant Void']
+  CONST_BOARDS = ['Site testing', 'Effulgence', 'Incandescence', 'Witchlight', 'Lighthouse', 'Opalescence', 'Silmaril', 'Zodiac', 'Rapid Nova', 'Bluebell Flames', 'Coruscation', 'Eclipse', 'Fairylights', 'Amber Dreams', 'Calibrilustrum', 'Mecone', 'Moonflower', 'Errant Void', 'Fruit and Flower']
 
   def self.get_handler_for(thing)
     index_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
@@ -660,7 +660,7 @@ module GlowficIndexHandlers
   end
 
   class ConstellationIndexHandler < IndexHandler
-    handles :constellation, :constarchive16, :opalescence, :zodiac, :lighthouse, :rapid_nova, :moonflower, :errant_void
+    handles :constellation, :constarchive16, :opalescence, :zodiac, :lighthouse, :rapid_nova, :moonflower, :errant_void, :fruitflower
     def initialize(options = {})
       super(options)
       Time.zone = 'Eastern Time (US & Canada)'
