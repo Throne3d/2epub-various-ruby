@@ -89,6 +89,8 @@
     lighthouse: [:light, :lighthouse],
     rapid_nova: [:rapid, :nova, :rapidnova, :rapid_nova],
     moonflower: [:moon, :moonflower],
+    ror: [:ror, :room, :room_of_requirement],
+    errant_void: [:errant, :void, :errantvoid, :errant_void],
 
     glowfic: [:othersandbox, :sandbox2, :glowfic],
     constarchive16: [:archive, :archive16, :constarchive, :constarchive16],
@@ -110,7 +112,7 @@
     report: [:report, :daily]
   }
 
-  FIC_SHOW_AUTHORS = [:glowfic, :constarchive16, :constellation,  :mwf_leaf, :mwf_lioncourt, :sandbox, :marri, :peterverse, :maggie, :throne, :lintamande, :test, :reptest, :report]
+  FIC_SHOW_AUTHORS = [:glowfic, :constarchive16, :constellation, :mwf_leaf, :mwf_lioncourt, :sandbox, :marri, :peterverse, :maggie, :throne, :lintamande, :test, :reptest, :report]
 
   FIC_TOCS = {
     #Continuities
@@ -124,6 +126,8 @@
     lighthouse: "https://glowfic.com/boards/16",
     rapid_nova: "https://glowfic.com/boards/30",
     moonflower: "https://glowfic.com/boards/20",
+    ror: "https://glowfic.com/posts/452",
+    errant_void: "https://glowfic.com/boards/28",
 
     #Sandboxes
     glowfic: "http://glowfic.dreamwidth.org/2015/06/",
@@ -159,6 +163,8 @@
     lighthouse: "CuriousDiscoverer & Pedro",
     rapid_nova: "Jarnvidr & Pedro",
     moonflower: "Faceless & Moriwen",
+    ror: "Alicorn & Lintamande",
+    errant_void: "Jarnvidr & Throne",
 
     glowfic: "Misc",
     constarchive16: "Misc",
@@ -182,6 +188,8 @@
   FIC_NAMESTRINGS = {
     radon: "Radon Absinthe",
     rapid_nova: "Rapid Nova",
+    ror: "Room of Requirement",
+    errant_void: "Errant Void",
 
     glowfic: "Glowfic Community",
     constarchive16: "Constellation Archive 2016",

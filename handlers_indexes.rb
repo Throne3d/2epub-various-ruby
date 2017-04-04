@@ -74,10 +74,15 @@ module GlowficIndexHandlers
       {url: "http://lintamande.dreamwidth.org/513.html?style=site",
       title: "don't touch me",
       sections: ["May or may not join the main Silmaril continuity"]}
+    ],
+    ror:
+    [
+      {url: "https://glowfic.com/posts/452",
+      title: "room of requirement"}
     ]
   }
   # constellation boards to skip in non-specific scrapes
-  CONST_BOARDS = ['Site testing', 'Effulgence', 'Incandescence', 'Witchlight', 'Lighthouse', 'Opalescence', 'Silmaril', 'Zodiac', 'Rapid Nova', 'Bluebell Flames', 'Coruscation', 'Eclipse', 'Fairylights', 'Amber Dreams', 'Calibrilustrum', 'Mecone', 'Moonflower']
+  CONST_BOARDS = ['Site testing', 'Effulgence', 'Incandescence', 'Witchlight', 'Lighthouse', 'Opalescence', 'Silmaril', 'Zodiac', 'Rapid Nova', 'Bluebell Flames', 'Coruscation', 'Eclipse', 'Fairylights', 'Amber Dreams', 'Calibrilustrum', 'Mecone', 'Moonflower', 'Errant Void']
 
   def self.get_handler_for(thing)
     index_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
@@ -655,7 +660,7 @@ module GlowficIndexHandlers
   end
 
   class ConstellationIndexHandler < IndexHandler
-    handles :constellation, :constarchive16, :opalescence, :zodiac, :lighthouse, :rapid_nova, :moonflower
+    handles :constellation, :constarchive16, :opalescence, :zodiac, :lighthouse, :rapid_nova, :moonflower, :errant_void
     def initialize(options = {})
       super(options)
       Time.zone = 'Eastern Time (US & Canada)'
@@ -883,7 +888,7 @@ module GlowficIndexHandlers
   end
 
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :reptest, :silmaril
+    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :reptest, :silmaril, :ror
     def initialize(options = {})
       super(options)
     end
@@ -911,8 +916,7 @@ module GlowficIndexHandlers
         list.each do |thing|
           thing.keys.each do |key|
             next unless key.is_a?(String)
-            thing[key.to_sym] = thing[key]
-            thing.delete(key)
+            thing[key.to_sym] = thing.delete(key)
           end
         end
       elsif @group == :mwf_leaf || @group == :mwf_lioncourt
