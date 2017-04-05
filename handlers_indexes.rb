@@ -90,7 +90,31 @@ module GlowficIndexHandlers
     ]
   }
   # constellation boards to skip in non-specific scrapes
-  CONST_BOARDS = ['Site testing', 'Effulgence', 'Incandescence', 'Witchlight', 'Lighthouse', 'Opalescence', 'Silmaril', 'Zodiac', 'Rapid Nova', 'Bluebell Flames', 'Coruscation', 'Eclipse', 'Fairylights', 'Amber Dreams', 'Calibrilustrum', 'Mecone', 'Moonflower', 'Errant Void', 'Fruit and Flower']
+  CONST_BOARDS = [
+    'Site testing', # skip meta posts
+    'Witchlight', # ?
+    # large continuities elsewhere
+    'Effulgence',
+    'Incandescence',
+    # other EPUB continuities on Constellation
+    'Errant Void',
+    'Fruit and Flower',
+    'Lighthouse',
+    'Moonflower',
+    'Opalescence',
+    'Rapid Nova',
+    'Silmaril',
+    'Zodiac',
+    # found in Pedro's EPUB
+    'Amber Dreams',
+    'Aura',
+    'Bluebell Flames',
+    'Calibrilustrum',
+    'Coruscation',
+    'Eclipse',
+    'Fairylights',
+    'Mecone',
+  ]
 
   def self.get_handler_for(thing)
     index_handlers = GlowficIndexHandlers.constants.map {|c| GlowficIndexHandlers.const_get(c) }
