@@ -82,11 +82,6 @@ module GlowficIndexHandlers
       title: "don't touch me",
       sections: ["May or may not join the main Silmaril continuity"],
       marked_complete: true}
-    ],
-    ror:
-    [
-      {url: "https://glowfic.com/posts/452",
-      title: "room of requirement"}
     ]
   }
   # constellation boards to skip in non-specific scrapes
@@ -105,6 +100,7 @@ module GlowficIndexHandlers
     'Rapid Nova',
     'Silmaril',
     'Zodiac',
+    'Room of Requirement',
     # found in Pedro's EPUB
     'Amber Dreams',
     'Aura',
@@ -699,7 +695,7 @@ module GlowficIndexHandlers
   end
 
   class ConstellationIndexHandler < IndexHandler
-    handles :constellation, :constarchive16, :opalescence, :zodiac, :lighthouse, :rapid_nova, :moonflower, :errant_void, :fruitflower
+    handles :constellation, :constarchive16, :opalescence, :zodiac, :lighthouse, :rapid_nova, :moonflower, :errant_void, :fruitflower, :ror
     def initialize(options = {})
       super(options)
       Time.zone = 'Eastern Time (US & Canada)'
@@ -780,8 +776,6 @@ module GlowficIndexHandlers
           chapter_title = chapter_link.text.strip
           chapter_url = get_absolute_url(chapter_link['href'], board_url)
 
-          next if chapter_url[/posts\/452(\b|\/)/] # skip RoR
-
           if before || after
             chapter_time = chapter_row.at_css('.post-time')
             chapter_time.try(:at_css, 'a').try(:remove)
@@ -851,7 +845,6 @@ module GlowficIndexHandlers
           chapter_link = chapter_row.at_css('td a')
           chapter_title = chapter_link.text.strip
           chapter_url = get_absolute_url(chapter_link[:href], user_url)
-          next if chapter_url[/posts\/452(\b|\/)/] # skip RoR
           chapter_sections = chapter_row.at_css('.post-board').try(:text).try(:strip)
 
           next if CONST_BOARDS.include?(chapter_sections)
@@ -930,7 +923,7 @@ module GlowficIndexHandlers
   end
 
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :reptest, :silmaril, :ror
+    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :reptest, :silmaril
     def initialize(options = {})
       super(options)
     end

@@ -127,7 +127,7 @@
     lighthouse: "https://glowfic.com/boards/16",
     rapid_nova: "https://glowfic.com/boards/30",
     moonflower: "https://glowfic.com/boards/20",
-    ror: "https://glowfic.com/posts/452",
+    ror: "https://glowfic.com/boards/48",
     errant_void: "https://glowfic.com/boards/28",
     fruitflower: "https://glowfic.com/boards/32",
 
