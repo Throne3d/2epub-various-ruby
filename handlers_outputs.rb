@@ -741,6 +741,9 @@
             last_update = chapter.entry
             latest_update = chapter.entry
           end
+          if chapter.time_new < today_time
+            latest_update = chapter.entry
+          end
 
           messages = chapter.replies
           # messages are probably in chronological order (oldest first); ignore cases where this is not true
@@ -768,6 +771,7 @@
       LOG.progress("Organized chapters for report.\n" + '-' * 60)
 
       day_list.each do |days_ago|
+        LOG.debug "Outputting report for #{days_ago}"
         early_time = today_time - days_ago
         late_time = early_time + 1
 
