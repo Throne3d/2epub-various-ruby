@@ -1,6 +1,8 @@
 module GlowficIndexHandlers
   require 'scraper_utils'
   require 'models'
+  require 'active_support'
+  require 'active_support/core_ext/object'
   include ScraperUtils
 
   INDEX_PRESETS = {

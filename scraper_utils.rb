@@ -2,6 +2,7 @@
   require 'fileutils'
   require 'open-uri'
   require 'open_uri_redirections'
+  require 'logger'
 
   class FileLogIO
     attr_reader :file
