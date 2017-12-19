@@ -76,15 +76,6 @@ module GlowficIndexHandlers
       sections: ["Starlight"],
       marked_complete: true}
     ],
-    lintamande:
-    [],
-    silmaril:
-    [
-      {url: "http://lintamande.dreamwidth.org/513.html?style=site",
-      title: "don't touch me",
-      sections: ["May or may not join the main Silmaril continuity"],
-      marked_complete: true}
-    ]
   }
   # constellation boards to skip in non-specific scrapes
   CONST_BOARDS = [
@@ -123,6 +114,7 @@ module GlowficIndexHandlers
   end
 
   class IndexHandler
+    include ScraperUtils
     attr_reader :group
     def initialize(options = {})
       @group = options[:group]
@@ -135,9 +127,6 @@ module GlowficIndexHandlers
     end
     def self.handles?(thing)
       @handles.try(:include?, thing)
-    end
-    def handles?(thing)
-      self.handles?(thing)
     end
 
     def chapter_list
@@ -697,7 +686,19 @@ module GlowficIndexHandlers
   end
 
   class ConstellationIndexHandler < IndexHandler
-    handles :constellation, :constarchive16, :opalescence, :zodiac, :lighthouse, :rapid_nova, :moonflower, :errant_void, :fruitflower, :ror
+    handles :constellation,
+      :constarchive16,
+      :opalescence,
+      :zodiac,
+      :lighthouse,
+      :rapid_nova,
+      :moonflower,
+      :errant_void,
+      :fruitflower,
+      :ror,
+      :lintamande,
+      :silmaril
+
     def initialize(options = {})
       super(options)
       Time.zone = 'Eastern Time (US & Canada)'
@@ -925,7 +926,7 @@ module GlowficIndexHandlers
   end
 
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :reptest, :silmaril
+    handles :test, :temp_starlight, :report, :mwf_leaf, :mwf_lioncourt, :reptest
     def initialize(options = {})
       super(options)
     end
@@ -1006,24 +1007,6 @@ module GlowficIndexHandlers
               end
             end
           end
-        end
-      elsif @group == :lintamande
-        const_handler = ConstellationIndexHandler.new(group: @group)
-        chapter_list.sort_chapters = true
-        chapter_list.get_sections = true
-        const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group], ignore_sections: ['Silmaril']) do |chapter|
-          yield chapter if block_given?
-        end
-        const_chapters.each do |chapter|
-          chapter_list << chapter
-        end
-      elsif @group == :silmaril
-        const_handler = ConstellationIndexHandler.new(group: @group)
-        const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group]) do |chapter|
-          yield chapter if block_given?
-        end
-        const_chapters.each do |chapter|
-          chapter_list << chapter
         end
       end
 
