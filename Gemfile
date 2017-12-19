@@ -2,13 +2,13 @@ source "https://rubygems.org"
 ruby '2.4.2'
 
 # gem "rails"
-gem 'nokogiri'
-gem 'zip-zip'
-gem 'eeepub'
-gem 'open_uri_redirections'
-gem 'activesupport'
-gem 'mechanize'
-gem 'memory_profiler'
-gem 'oj'
+gem 'nokogiri', '~> 1.0'
+gem 'zip-zip', '~> 0.3'
+gem 'eeepub', '~> 0.8'
+gem 'open_uri_redirections', '~> 0.2'
+gem 'activesupport', '~> 5.1'
+gem 'mechanize', '~> 2.7'
+gem 'memory_profiler', '~> 0.9'
+gem 'oj', '~> 3.0'
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw]
-gem 'pry'
+gem 'pry', '~> 0.10'

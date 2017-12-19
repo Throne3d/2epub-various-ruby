@@ -60,16 +60,16 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  activesupport
-  eeepub
-  mechanize
-  memory_profiler
-  nokogiri
-  oj
-  open_uri_redirections
-  pry
+  activesupport (~> 5.1)
+  eeepub (~> 0.8)
+  mechanize (~> 2.7)
+  memory_profiler (~> 0.9)
+  nokogiri (~> 1.0)
+  oj (~> 3.0)
+  open_uri_redirections (~> 0.2)
+  pry (~> 0.10)
   tzinfo-data
-  zip-zip
+  zip-zip (~> 0.3)
 
 RUBY VERSION
    ruby 2.4.2p198
