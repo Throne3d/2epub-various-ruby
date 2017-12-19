@@ -356,7 +356,7 @@
     elsif uri.host.end_with?('vast-journey-9935.herokuapp.com') || uri.host.end_with?('glowfic.com')
       return clear_url_params(uri.to_s)
     else
-      url
+      uri.to_s
     end
   end
 
