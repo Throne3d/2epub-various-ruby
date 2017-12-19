@@ -50,6 +50,36 @@ RSpec.describe GlowficIndexHandlers do
     end
 
     describe "#chapter_from_toc" do
+      it "works with simple dreamwidth example" do
+        handler = StubHandler.new
+        data = {
+          url: 'https://exampleblog.dreamwidth.org/1234.html?thread=9876',
+          title: 'test'
+        }
+
+        expect(handler).to receive(:persist_chapter_data)
+        response = handler.chapter_from_toc(data)
+
+        expect(response.title).to eq('test')
+        expect(response.url).to eq('https://exampleblog.dreamwidth.org/1234.html?style=site&thread=9876')
+        expect(response.thread).to eq('9876')
+      end
+
+      it "works with simple constellation example" do
+        handler = StubHandler.new
+        data = {
+          url: 'https://glowfic.com/posts/123',
+          title: 'test'
+        }
+
+        expect(handler).to receive(:persist_chapter_data)
+        response = handler.chapter_from_toc(data)
+
+        expect(response.title).to eq('test')
+        expect(response.url).to eq('https://glowfic.com/posts/123')
+        expect(response.thread).to be_nil
+      end
+
       skip "has more tests"
     end
   end

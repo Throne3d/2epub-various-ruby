@@ -396,7 +396,7 @@
 
   def clear_url_params(chapter_url)
     uri = URI(chapter_url)
-    uri.query = ''
+    uri.query = nil
     uri.to_s
   end
 
