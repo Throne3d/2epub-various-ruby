@@ -486,6 +486,7 @@
       only_present = others[:only_present]
       chapters = others[:chapters] || others[:chapter_list]
     end
+    raise(ArgumentError, "must give one of group or chapters") unless group || chapters
     group ||= chapters.group
     chapters ||= get_old_data(group)
 

@@ -1,5 +1,3 @@
-require 'scraper_utils'
-
 class UtilModule
   extend ScraperUtils
 end

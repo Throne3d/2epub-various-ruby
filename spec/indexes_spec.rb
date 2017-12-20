@@ -1,5 +1,3 @@
-require 'handlers_indexes'
-
 class StubHandler < GlowficIndexHandlers::IndexHandler
   handles :thing, :thingtwo # does not handle :other_thing
 end
@@ -101,7 +99,7 @@ RSpec.describe GlowficIndexHandlers do
   end
 
   describe GlowficIndexHandlers::ConstellationIndexHandler do
-    let(:handler) { GlowficIndexHandlers::ConstellationIndexHandler.new }
+    let(:handler) { GlowficIndexHandlers::ConstellationIndexHandler.new(group: :example) }
 
     describe "#fix_url_folder" do
       it "does nothing to normal URLs" do
@@ -148,8 +146,274 @@ RSpec.describe GlowficIndexHandlers do
     end
 
     describe "#board_to_block" do
-      skip "has more tests"
+      def gather_chapters(url, params={})
+        chapters = []
+        handler.board_to_block(params.merge(board_url: url)) do |chapter|
+          chapters << {url: chapter.url, title: chapter.title, sections: chapter.sections}
+        end
+        chapters
+      end
+
+      def check_function(url, expected, params={})
+        chapters = gather_chapters(url, params)
+        expect(chapters).to eq(expected)
+      end
+
+      def stub_local(file, url)
+        stub_request(:get, url).to_return(status: 200, body: File.new('spec/fixtures/indexes/constellation-board-' + file + '.html'))
+      end
+
+      before(:each) do
+        allow(STDOUT).to receive(:puts)
+        allow(LOG).to receive(:info)
+      end
+
+      # sectioned
+      it "succeeds with a sectioned board" do
+        url = 'https://glowfic.com/boards/1'
+        file = 'sectioned'
+        expected = [
+          {
+            url: 'https://glowfic.com/posts/5',
+            title: 'Post1',
+            sections: ['Sectioned board', 'Nonempty section']
+          },
+          {
+            url: 'https://glowfic.com/posts/3',
+            title: 'Post2',
+            sections: ['Sectioned board', 'Nonempty section 2']
+          },
+          {
+            url: 'https://glowfic.com/posts/4',
+            title: 'Post3',
+            sections: ['Sectioned board', 'Nonempty section 2']
+          }
+        ]
+
+        stub_local(file, url + '/')
+        check_function(url, expected)
+      end
+
+      # sectioned_with_unsectioned_posts
+      it "succeeds with a sectioned board with unsectioned posts" do
+        url = 'https://glowfic.com/boards/2'
+        file = 'sectioned_with_unsectioned_posts'
+        expected = [
+          {
+            url: 'https://glowfic.com/posts/5',
+            title: 'Post1',
+            sections: ['Sectioned board with unsectioned posts', 'Nonempty section']
+          },
+          {
+            url: 'https://glowfic.com/posts/3',
+            title: 'Post2',
+            sections: ['Sectioned board with unsectioned posts', 'Nonempty section 2']
+          },
+          {
+            url: 'https://glowfic.com/posts/4',
+            title: 'Post3',
+            sections: ['Sectioned board with unsectioned posts', 'Nonempty section 2']
+          },
+          {
+            url: 'https://glowfic.com/posts/6',
+            title: 'Post4',
+            sections: ['Sectioned board with unsectioned posts']
+          },
+          {
+            url: 'https://glowfic.com/posts/7',
+            title: 'Post5',
+            sections: ['Sectioned board with unsectioned posts']
+          }
+        ]
+
+        stub_local(file, url + '/')
+        check_function(url, expected)
+      end
+
+      # unsectioned_short
+      it "succeeds with a one-page unsectioned board" do
+        url = 'https://glowfic.com/boards/3'
+        file = 'unsectioned_short'
+        expected = [
+          {
+            url: 'https://glowfic.com/posts/5',
+            title: 'Post1',
+            sections: ['Short unsectioned board']
+          },
+          {
+            url: 'https://glowfic.com/posts/4',
+            title: 'Post3',
+            sections: ['Short unsectioned board']
+          },
+          {
+            url: 'https://glowfic.com/posts/3',
+            title: 'Post2',
+            sections: ['Short unsectioned board']
+          },
+          {
+            url: 'https://glowfic.com/posts/7',
+            title: 'Post5',
+            sections: ['Short unsectioned board']
+          },
+          {
+            url: 'https://glowfic.com/posts/6',
+            title: 'Post4',
+            sections: ['Short unsectioned board']
+          }
+        ]
+
+        stub_local(file, url + '/')
+        check_function(url, expected)
+      end
+
+      # unsectioned_long_{1,2}
+      it "succeeds with a many-page unsectioned board" do
+        url = 'https://glowfic.com/boards/4'
+        expected = []
+        1.upto(26) do |i|
+          expected << {
+            url: "https://glowfic.com/posts/#{i+2}",
+            title: "Post#{i}",
+            sections: ['Long unsectioned board']
+          }
+        end
+
+        stub_local('unsectioned_long_1', url + '/')
+        stub_local('unsectioned_long_2', url + '/?page=2')
+        check_function(url, expected)
+      end
+
+      # reversed_long_{1,2}
+      it "succeeds with a many-page reverse-order boards when told to reverse" do
+        url = 'https://glowfic.com/boards/9'
+        expected = []
+        1.upto(26) do |i|
+          expected << {
+            url: "https://glowfic.com/posts/#{i+2}",
+            title: "Post#{i}",
+            sections: ['Long unsectioned reversed board']
+          }
+        end
+
+        stub_local('reversed_long_1', url + '/')
+        stub_local('reversed_long_2', url + '/?page=2')
+        check_function(url, expected, reverse: true)
+      end
+
+      # empty
+      it "succeeds with an empty board" do
+        url = 'https://glowfic.com/boards/5'
+        file = 'empty'
+        expected = []
+
+        stub_local(file, url + '/')
+        check_function(url, expected)
+      end
+
+      # sectioned_with_empty
+      it "succeeds with a board with an empty section" do
+        url = 'https://glowfic.com/boards/6'
+        file = 'sectioned_with_empty'
+        expected = [
+          {
+            url: 'https://glowfic.com/posts/5',
+            title: 'Post1',
+            sections: ['Sectioned board with empty section', 'Nonempty section']
+          },
+          {
+            url: 'https://glowfic.com/posts/6',
+            title: 'Post4',
+            sections: ['Sectioned board with empty section']
+          },
+          {
+            url: 'https://glowfic.com/posts/7',
+            title: 'Post5',
+            sections: ['Sectioned board with empty section']
+          },
+          {
+            url: 'https://glowfic.com/posts/3',
+            title: 'Post2',
+            sections: ['Sectioned board with empty section']
+          },
+          {
+            url: 'https://glowfic.com/posts/4',
+            title: 'Post3',
+            sections: ['Sectioned board with empty section']
+          }
+        ]
+
+        stub_local(file, url + '/')
+        check_function(url, expected)
+      end
+
+      # described
+      it "succeeds with a board with a description" do
+        url = 'https://glowfic.com/boards/7'
+        file = 'described'
+        expected = [
+          {
+            url: 'https://glowfic.com/posts/5',
+            title: 'Post1',
+            sections: ['Described board', 'Nonempty section']
+          },
+          {
+            url: 'https://glowfic.com/posts/3',
+            title: 'Post2',
+            sections: ['Described board', 'Nonempty section 2']
+          },
+          {
+            url: 'https://glowfic.com/posts/4',
+            title: 'Post3',
+            sections: ['Described board', 'Nonempty section 2']
+          }
+        ]
+
+        stub_local(file, url + '/')
+        check_function(url, expected)
+      end
+
+      # timestamped
+      it "pays attention to given 'before' and 'after' times" do
+        url = 'https://glowfic.com/boards/8'
+        file = 'timestamped'
+        expected = [
+          { # Dec 19, 2017  7:25 PM
+            url: 'https://glowfic.com/posts/31',
+            title: 'Post3',
+            sections: ['Board with careful timestamps']
+          },
+          { # Dec 19, 2016  7:25 PM
+            url: 'https://glowfic.com/posts/30',
+            title: 'Post2',
+            sections: ['Board with careful timestamps']
+          },
+          { # Dec 19, 2015  7:25 PM
+            url: 'https://glowfic.com/posts/29',
+            title: 'Post1',
+            sections: ['Board with careful timestamps']
+          }
+        ]
+
+        zone = ActiveSupport::TimeZone['America/New_York']
+
+        stub_local(file, url + '/')
+        check_function(url, expected)
+        check_function(url, expected, after: zone.local(2015), before: zone.local(2018))
+
+        check_function(url, expected[0..-2], after: zone.local(2016))
+        check_function(url, expected[0..-3], after: zone.local(2017))
+        check_function(url, [], after: zone.local(2018))
+
+        check_function(url, expected[1..-1], before: zone.local(2017))
+        check_function(url, expected[2..-1], before: zone.local(2016))
+        check_function(url, [], before: zone.local(2015))
+
+        check_function(url, expected[0..0], after: zone.local(2017, 12, 19, 19, 24), before: zone.local(2017, 12, 19, 19, 26))
+        check_function(url, [], after: zone.local(2017, 12, 19, 19, 26), before: zone.local(2018))
+        check_function(url, [], after: zone.local(2017), before: zone.local(2017, 12, 19, 19, 24))
+      end
     end
+
     describe "#userlist_to_block" do
       skip "has more tests"
     end

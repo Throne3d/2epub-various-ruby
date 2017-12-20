@@ -3,6 +3,7 @@ module GlowficIndexHandlers
   require 'models'
   require 'active_support'
   require 'active_support/core_ext/object'
+  require 'nokogiri'
   include ScraperUtils
 
   INDEX_PRESETS = {
@@ -718,43 +719,38 @@ module GlowficIndexHandlers
       url_path
     end
 
+    # for sandboxes and other reverse-order boards, invert this order
     def board_to_block(options = {})
       board_url = fix_url_folder(options[:board_url])
       # skips boxes with a last_updated outside the relevant range (after <= time < before)
       after = options[:after]
       before = options[:before]
+      reverse = options[:reverse]
       LOG.info "TOC Page: #{board_url}"
-      LOG.info "Checking within #{after.to_s + ' < ' if after}time#{' < ' + before.to_s if before}" if after || before
+      LOG.info "Checking within #{after.to_s + ' ≤ ' if after}time#{' < ' + before.to_s if before}" if after || before
 
       board_toc_data = get_page_data(board_url, replace: true, headers: {"Accept" => "text/html"})
       board_toc = Nokogiri::HTML(board_toc_data)
 
       content = board_toc.at_css('#content')
-      board_sections = content.css('tbody tr th')
+      board_sections = content.css('.continuity-header')
 
       board_title_ele = content.at_css('tr th')
-      board_title_ele.at_css('a').try(:remove)
+      board_title_ele.css('.link-box').map(&:remove)
       board_name = board_title_ele.text.strip
 
-      pages = board_toc.at_css('.pagination')
-      last_url = board_url
-      if pages
-        pages.at_css('a.last_page').try(:remove)
-        pages.at_css('a.next_page').try(:remove)
-        last_url = get_absolute_url(pages.css('a').last[:href].strip, board_url)
-      end
+      chapter_pieces = []
 
-      previous_url = last_url
-      while previous_url
-        puts "URL: #{previous_url}"
-        board_toc_data = get_page_data(previous_url, replace: (previous_url != board_url), headers: {"Accept" => "text/html"})
+      next_url = board_url
+      while next_url
+        puts "URL: #{next_url}"
+        board_toc_data = get_page_data(next_url, replace: (next_url != board_url), headers: {"Accept" => "text/html"})
         board_toc = Nokogiri::HTML(board_toc_data)
         board_body = board_toc.at_css('tbody')
 
         chapter_sections = [board_name]
 
         chapters = board_body.css('tr')
-        chapters = chapters.reverse unless board_sections
         chapters.each do |chapter_row|
           th = chapter_row.at_css('th')
           next if th && !th.try(:[], :colspan)
@@ -795,14 +791,16 @@ module GlowficIndexHandlers
             end
           end
 
-          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
-
-          yield chapter_details if block_given?
+          chapter_pieces << {url: chapter_url, title: chapter_title, sections: chapter_sections.dup}
         end
 
-        temp_url = previous_url
-        previous_url = board_toc.at_css('.pagination a.previous_page').try(:[], :href)
-        previous_url = get_absolute_url(previous_url.strip, temp_url) if previous_url
+        next_page = board_toc.at_css('.pagination')&.at_css('a.next_page')
+        next_url = (get_absolute_url(next_page[:href].strip, next_url) if next_page)
+      end
+
+      chapter_pieces.public_send(reverse ? :reverse_each : :each) do |piece|
+        details = chapter_from_toc(piece)
+        yield details if block_given?
       end
     end
 
@@ -895,8 +893,12 @@ module GlowficIndexHandlers
             yield chapter_details if block_given?
           end
         end
-      elsif fic_toc_url[/\/boards\/\d+/]
-        board_to_block(board_url: fic_toc_url) do |chapter_details|
+      elsif (part = fic_toc_url[/\/boards\/\d+/])
+        # figure out if it's a reversed board
+        # hardcoded for now; TODO: stop hardcoding this
+        board_id = part.sub(/^\/boards\//, '')
+        reversed = (board_id == 3)
+        board_to_block(board_url: fic_toc_url, reverse: reversed) do |chapter_details|
           chapter_list << chapter_details
           yield chapter_details if block_given?
         end
