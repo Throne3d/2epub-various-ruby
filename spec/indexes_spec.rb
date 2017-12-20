@@ -112,6 +112,10 @@ RSpec.describe GlowficIndexHandlers do
         prev = 'https://glowfic.com/users/123'
         post = prev + '/'
         expect(handler.fix_url_folder(prev)).to eq(post)
+
+        prev = 'https://glowfic.com/users'
+        post = prev + '/'
+        expect(handler.fix_url_folder(prev)).to eq(post)
       end
 
       it "handles special characters after the ID code" do
@@ -121,6 +125,10 @@ RSpec.describe GlowficIndexHandlers do
 
         prev = 'https://glowfic.com/users/123#'
         post = 'https://glowfic.com/users/123/#'
+        expect(handler.fix_url_folder(prev)).to eq(post)
+
+        prev = 'https://glowfic.com/users#'
+        post = 'https://glowfic.com/users/#'
         expect(handler.fix_url_folder(prev)).to eq(post)
       end
     end
@@ -146,16 +154,11 @@ RSpec.describe GlowficIndexHandlers do
     end
 
     describe "#board_to_block" do
-      def gather_chapters(url, params={})
+      def check_function(url, expected, params={})
         chapters = []
         handler.board_to_block(params.merge(board_url: url)) do |chapter|
           chapters << {url: chapter.url, title: chapter.title, sections: chapter.sections}
         end
-        chapters
-      end
-
-      def check_function(url, expected, params={})
-        chapters = gather_chapters(url, params)
         expect(chapters).to eq(expected)
       end
 
@@ -426,9 +429,142 @@ RSpec.describe GlowficIndexHandlers do
       end
 
       context "for boards list" do
-        it "works"
-        it "ignores separated boards"
-        it "ignores specified boards"
+        def check_function(url, expected, params={})
+          chapters = []
+          handler.board_to_block(params.merge(board_url: url)) do |chapter|
+            chapters << {url: chapter.url, title: chapter.title, sections: chapter.sections}
+          end
+          expect(chapters).to eq(expected)
+        end
+
+        def stub_local(file, url)
+          stub_request(:get, url).to_return(status: 200, body: File.new('spec/fixtures/indexes/constellation-boards-' + file + '.html'))
+        end
+
+        let(:stubbed_chapter_list) { double }
+
+        def stub_chapter_list
+          allow(handler).to receive(:chapter_list).and_return(stubbed_chapter_list)
+        end
+
+        before(:each) do
+          allow(STDOUT).to receive(:puts)
+          allow(LOG).to receive(:info)
+          stub_chapter_list
+        end
+
+        BOARDS_URL = 'https://glowfic.com/boards'
+        Obj = Struct.new(:id, :board_id)
+
+        def new_chapter(board_id=nil)
+          @i ||= 0
+          @i += 1
+          Obj.new(@i, board_id)
+        end
+
+        def test_yields(handler, expected_params, count, params={})
+          expected_chapters = [] # filled, each time board_to_block is called, with one new chapter
+          given_params = [] # stores params board_to_block is called with, to compare to actual board URLs from HTML
+          given_chapters = [] # stores chapters sent to the chapter list, to compare to chapters created
+          yielded_chapters = [] # stores chapters yielded to a block on toc_to_chapterlist, to compare to chapters created
+
+          # stub board_to_block, and yield one fake chapter for each board
+          expect(handler).to receive(:board_to_block).exactly(count).times do |params, &block|
+            given_params << params
+
+            board_url = params[:board_url]
+            board_id = board_url.split('boards/').last.split('/').first
+
+            chapter = new_chapter(board_id)
+            expected_chapters << chapter
+            block.call(chapter)
+          end
+
+          # keep track of when `chapter_list <<` is called, to check it gets all relevant chapters in the right order
+          allow(stubbed_chapter_list).to receive(:<<) do |chapter|
+            given_chapters << chapter
+          end
+
+          # keep track of when the function yields, to check it yields all relevant chapters in the right order
+          handler.toc_to_chapterlist(params.merge(fic_toc_url: BOARDS_URL)) do |chapter|
+            yielded_chapters << chapter
+          end
+
+          # and now compare expected values
+          expect(given_params).to eq(expected_params)
+          expect(given_chapters).to eq(expected_chapters)
+          expect(yielded_chapters).to eq(expected_chapters)
+        end
+
+        # short
+        it "works for single page" do
+          stub_local('short', BOARDS_URL + '/')
+
+          expected_params = [
+            { board_url: 'https://glowfic.com/boards/5/' },
+            { board_url: 'https://glowfic.com/boards/7/' },
+            { board_url: 'https://glowfic.com/boards/6/' },
+            { board_url: 'https://glowfic.com/boards/4/' }
+          ]
+
+          test_yields(handler, expected_params, 4)
+        end
+
+        # long_{1,2}
+        it "works for many pages" do
+          stub_local('long_1', BOARDS_URL + '/')
+          stub_local('long_2', BOARDS_URL + '/?page=2')
+
+          expected_params = 5.upto(30).collect do |i|
+            { board_url: "https://glowfic.com/boards/#{i}/" }
+          end
+
+          test_yields(handler, expected_params, 26)
+        end
+
+        # short
+        it "ignores boards in CONST_BOARDS constant" do
+          stub_local('short', BOARDS_URL + '/')
+
+          expected_params = [
+            { board_url: 'https://glowfic.com/boards/5/' },
+            { board_url: 'https://glowfic.com/boards/7/' },
+            { board_url: 'https://glowfic.com/boards/6/' },
+            { board_url: 'https://glowfic.com/boards/4/' }
+          ]
+
+          stub_const('GlowficIndexHandlers::CONST_BOARDS', [])
+          test_yields(handler, expected_params, 4)
+
+          stub_const('GlowficIndexHandlers::CONST_BOARDS', ['Sandboxes'])
+          test_yields(handler, expected_params[1..-1], 3)
+
+          stub_const('GlowficIndexHandlers::CONST_BOARDS', ['Board3'])
+          test_yields(handler, expected_params[0..-2], 3)
+
+          stub_const('GlowficIndexHandlers::CONST_BOARDS', ['Sandboxes', 'Board1', 'Board2', 'Board3'])
+          test_yields(handler, [], 0)
+        end
+
+        # short
+        it "ignores boards in ignore_sections param" do
+          stub_local('short', BOARDS_URL + '/')
+
+          expected_params = [
+            { board_url: 'https://glowfic.com/boards/5/' },
+            { board_url: 'https://glowfic.com/boards/7/' },
+            { board_url: 'https://glowfic.com/boards/6/' },
+            { board_url: 'https://glowfic.com/boards/4/' }
+          ]
+
+          stub_const('GlowficIndexHandlers::CONST_BOARDS', [])
+
+          test_yields(handler, expected_params, 4, ignore_sections: [])
+          test_yields(handler, expected_params[1..-1], 3, ignore_sections: ['Sandboxes'])
+          test_yields(handler, expected_params[0..-2], 3, ignore_sections: ['Board3'])
+          test_yields(handler, [], 0, ignore_sections: ['Sandboxes', 'Board1', 'Board2', 'Board3'])
+        end
+
         it "handles constellation archive"
         it "ignores archived constellation"
       end

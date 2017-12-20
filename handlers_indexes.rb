@@ -81,7 +81,7 @@ module GlowficIndexHandlers
   # constellation boards to skip in non-specific scrapes
   CONST_BOARDS = [
     'Site testing', # skip meta posts
-    'Witchlight', # ?
+    'Witchlight', # TODO: ?
     # large continuities elsewhere
     'Effulgence',
     'Incandescence',
@@ -706,8 +706,12 @@ module GlowficIndexHandlers
       @archive_time = Time.zone.local(2017)
     end
 
+    # does not work on URLs without leading slash
+    # e.g. "users" it won't append to, but "/users" it will
     def fix_url_folder(url)
-      url.sub(/(users|boards|galleries|characters)\/(\d+)(\?|#|$)/, '\1/\2/\3')
+      url
+        .sub(/\/(users|boards|galleries|characters)\/(\d+)(\?|#|$)/, '/\1/\2/\3')
+        .sub(/\/(users|boards|galleries|characters)(\?|#|$)/, '/\1/\2')
     end
     def get_absolute_url(url_path, current_url)
       if url_path.start_with?('/')
@@ -865,30 +869,44 @@ module GlowficIndexHandlers
 
       if fic_toc_url.end_with?('/boards/')
         LOG.info "TOC Page: #{fic_toc_url}"
-        fic_toc_data = get_page_data(fic_toc_url, replace: true)
-        fic_toc = Nokogiri::HTML(fic_toc_data)
 
-        boards = fic_toc.css("#content tr")
-        boards.each do |board|
-          next if board.at_css("th")
+        next_url = fic_toc_url
+        while next_url
+          page_data = get_page_data(next_url, replace: true)
+          page = Nokogiri::HTML(page_data)
+          content = page.at_css('#content')
 
-          board_link = board.at_css('a')
-          board_name = board_link.text.strip
-          next if CONST_BOARDS.include?(board_name)
-          next if ignore_sections.include?(board_name)
-          params = {}
-          params[:board_url] = get_absolute_url(board_link[:href], fic_toc_url)
-          if @group == :constarchive16
-            # Archive only has sandboxes last updated before 2017
-            next unless board_name == "Sandboxes"
-            params[:before] = @archive_time
-          elsif @group == :constellation && board_name == "Sandboxes"
-            # Regular has sandboxes after 2017 and all non-skipped non-sandboxes
-            params[:after] = @archive_time
+          boards = content.css('.board-title')
+          boards.each do |board|
+            board_link = board.at_css('a')
+            board_name = board_link.text.strip
+            next if CONST_BOARDS.include?(board_name)
+            next if ignore_sections.include?(board_name)
+
+            params = {}
+            params[:board_url] = get_absolute_url(board_link[:href], next_url)
+
+            if @group == :constarchive16
+              # Archive only has sandboxes last updated before 2017
+              next unless board_name == "Sandboxes"
+              params[:before] = @archive_time
+            elsif @group == :constellation && board_name == "Sandboxes"
+              # Regular has sandboxes after 2017 and all non-skipped non-sandboxes
+              params[:after] = @archive_time
+            end
+
+            board_to_block(params) do |chapter_details|
+              chapter_list << chapter_details
+              yield chapter_details if block_given?
+            end
           end
-          board_to_block(params) do |chapter_details|
-            chapter_list << chapter_details
-            yield chapter_details if block_given?
+
+          paginator = content.at_css('tfoot .paginator')
+          next_link = paginator&.at_css('a.next_page')
+          next_url = if next_link
+            get_absolute_url(next_link[:href], next_url)
+          else
+            nil
           end
         end
       elsif (part = fic_toc_url[/\/boards\/\d+/])
