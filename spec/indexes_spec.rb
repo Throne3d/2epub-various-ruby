@@ -135,9 +135,9 @@ RSpec.describe GlowficIndexHandlers do
 
     describe "#get_absolute_url" do
       it "handles relative root URLs" do
-        url_path = '/boards'
+        url_path = '/boards/'
         current_url = 'https://glowfic.com/replies/1234#reply-1234'
-        expect(handler.get_absolute_url(url_path, current_url)).to eq('https://glowfic.com/boards')
+        expect(handler.get_absolute_url(url_path, current_url)).to eq('https://glowfic.com/boards/')
       end
 
       it "handles relative non-root URLs" do
