@@ -3,7 +3,6 @@ class StubHandler < GlowficIndexHandlers::IndexHandler
 end
 
 RSpec.describe GlowficIndexHandlers do
-  include ScraperUtils
   describe 'get_handler_for' do
     it 'returns handler if match is found' do
       expect(GlowficIndexHandlers.get_handler_for(:constellation)).to eq(GlowficIndexHandlers::ConstellationIndexHandler)

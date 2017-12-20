@@ -3,7 +3,6 @@ class UtilModule
 end
 
 RSpec.describe ScraperUtils do
-  include ScraperUtils
   describe ScraperUtils::FileLogIO do
     it "writes to given file" do
       Dir.mktmpdir do |dir|
