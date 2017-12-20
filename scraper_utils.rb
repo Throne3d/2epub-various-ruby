@@ -5,26 +5,49 @@
   require 'logger'
 
   class FileLogIO
-    attr_reader :file
-    def initialize(defaultFile=nil)
-      return unless defaultFile
-      FileUtils::mkdir_p(File.dirname(defaultFile))
-      @file = File.open(defaultFile, 'a+')
+    DEFAULT_FILENAME = 'default.log'
+
+    attr_reader :file, :folder, :filename
+    def initialize(filename=DEFAULT_FILENAME, folder='logs')
+      @folder = folder
+      @filename = filename
+      setup_log_file
     end
 
-    def file=(filename)
-      @file.close if @file
-      FileUtils::mkdir_p(File.dirname(filename))
-      @file = File.open(filename, 'a+')
+    def path
+      File.join(folder, filename)
+    end
+
+    def filename=(filename)
+      @file&.close
+      @filename = filename
+      setup_log_file
       @file.sync = true
     end
 
-    def set_output_params(process, group=nil)
-      self.file = 'logs/' + Time.now.strftime('%Y-%m-%d %H %M ') + " #{process}" + (group.nil? ? '' : "_#{group}") + '.log'
+    def folder=(folder)
+      @file&.close
+      @folder = folder
+      setup_log_file
+      @file.sync = true
+    end
+
+    def set_file_from(process=nil, group=nil)
+      self.filename = if process
+        Time.now.strftime('%Y-%m-%d %H %M') + " #{process}#{'_'+group if group}.log"
+      else
+        DEFAULT_FILENAME
+      end
     end
 
     def write(data); @file.try(:write, data); end
     def close; @file.try(:close); end
+
+    private
+    def setup_log_file
+      FileUtils::mkdir_p(File.dirname(path))
+      @file = File.open(path, 'a+')
+    end
   end
 
   DEBUGGING = false
@@ -35,7 +58,7 @@
   }
   CONSOLE.datetime_format = "%Y-%m-%d %H:%M:%S"
 
-  OUTFILE = FileLogIO.new("logs/default.log")
+  OUTFILE = FileLogIO.new("default.log")
   FILELOG = Logger.new(OUTFILE)
   FILELOG.datetime_format = "%Y-%m-%d %H:%M:%S"
 

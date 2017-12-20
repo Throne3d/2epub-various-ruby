@@ -5,6 +5,15 @@ end
 RSpec.describe ScraperUtils do
   include ScraperUtils
   describe ScraperUtils::FileLogIO do
+    it "writes to given file" do
+      Dir.mktmpdir do |dir|
+        file_log = FileLogIO.new('file.log', dir)
+        file_log.write('text')
+        file_log.close
+        expect(File.open(File.join(dir, 'file.log'), 'r').read).to eq('text')
+      end
+    end
+
     skip "has more tests"
   end
 

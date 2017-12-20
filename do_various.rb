@@ -211,7 +211,7 @@ def main(*args)
 
   option = options.extras.join(' ').downcase
 
-  OUTFILE.set_output_params(process, (group.empty? ? nil : group))
+  OUTFILE.set_file_from(process, (group unless group.empty?))
 
   LOG.info "Option: #{args.map(&:to_s) * ' '}"
   LOG.info "Process: #{process}"
