@@ -422,6 +422,20 @@ RSpec.describe GlowficIndexHandlers do
     end
 
     describe "#toc_to_chapterlist" do
+      let(:stubbed_chapter_list) { double }
+
+      def stub_chapter_list
+        allow(handler).to receive(:chapter_list).and_return(stubbed_chapter_list)
+      end
+
+      Obj = Struct.new(:id, :board_id)
+
+      def new_chapter(board_id=nil)
+        @i ||= 0
+        @i += 1
+        Obj.new(@i, board_id)
+      end
+
       it "rejects unrecognized URLs" do
         expect do
           handler.toc_to_chapterlist(fic_toc_url: 'https://glowfic.com/')
@@ -429,22 +443,8 @@ RSpec.describe GlowficIndexHandlers do
       end
 
       context "for boards list" do
-        def check_function(url, expected, params={})
-          chapters = []
-          handler.board_to_block(params.merge(board_url: url)) do |chapter|
-            chapters << {url: chapter.url, title: chapter.title, sections: chapter.sections}
-          end
-          expect(chapters).to eq(expected)
-        end
-
         def stub_local(file, url)
           stub_request(:get, url).to_return(status: 200, body: File.new('spec/fixtures/indexes/constellation-boards-' + file + '.html'))
-        end
-
-        let(:stubbed_chapter_list) { double }
-
-        def stub_chapter_list
-          allow(handler).to receive(:chapter_list).and_return(stubbed_chapter_list)
         end
 
         before(:each) do
@@ -454,13 +454,6 @@ RSpec.describe GlowficIndexHandlers do
         end
 
         BOARDS_URL = 'https://glowfic.com/boards'
-        Obj = Struct.new(:id, :board_id)
-
-        def new_chapter(board_id=nil)
-          @i ||= 0
-          @i += 1
-          Obj.new(@i, board_id)
-        end
 
         def test_yields(handler, expected_params, count, params={})
           expected_chapters = [] # filled, each time board_to_block is called, with one new chapter
@@ -570,7 +563,42 @@ RSpec.describe GlowficIndexHandlers do
       end
 
       context "for single board" do
-        it "calls board_to_block for example boards"
+        before(:each) do
+          allow(STDOUT).to receive(:puts)
+          allow(LOG).to receive(:info)
+          stub_chapter_list
+        end
+
+        it "calls board_to_block" do
+          url = 'https://glowfic.com/boards/1/'
+
+          expected_chapters = []
+          given_chapters = [] # handed to chapter list by <<
+          yielded_chapters = [] # handed to block to toc_to_chapterlist
+
+          expect(handler).to receive(:board_to_block).with({board_url: url, reverse: false}) do |params, &block|
+            board_url = params[:board_url]
+            board_id = board_url.split('boards/').last.split('/').first
+
+            chapter = new_chapter(board_id)
+            expected_chapters << chapter
+            block.call(chapter)
+          end
+
+          # keep track of when `chapter_list <<` is called, to check it gets all relevant chapters in the right order
+          allow(stubbed_chapter_list).to receive(:<<) do |chapter|
+            given_chapters << chapter
+          end
+
+          # keep track of when the function yields, to check it yields all relevant chapters in the right order
+          handler.toc_to_chapterlist(fic_toc_url: url) do |chapter|
+            yielded_chapters << chapter
+          end
+
+          # and now compare expected values
+          expect(given_chapters).to eq(expected_chapters)
+          expect(yielded_chapters).to eq(expected_chapters)
+        end
       end
 
       context "for user page" do
