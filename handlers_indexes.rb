@@ -860,9 +860,8 @@ module GlowficIndexHandlers
     end
 
     def toc_to_chapterlist(options = {})
-      fic_toc_url = options[:fic_toc_url]
-      fic_toc_url = fix_url_folder(fic_toc_url)
-      ignore_sections = options[:ignore_sections] || []
+      fic_toc_url = fix_url_folder(options[:fic_toc_url])
+      ignore_sections = options.fetch(:ignore_sections, [])
 
       if fic_toc_url.end_with?('/boards/')
         LOG.info "TOC Page: #{fic_toc_url}"
@@ -886,7 +885,6 @@ module GlowficIndexHandlers
           elsif @group == :constellation && board_name == "Sandboxes"
             # Regular has sandboxes after 2017 and all non-skipped non-sandboxes
             params[:after] = @archive_time
-          else
           end
           board_to_block(params) do |chapter_details|
             chapter_list << chapter_details
@@ -921,7 +919,7 @@ module GlowficIndexHandlers
           yield chapter_details if block_given?
         end
       else
-        raise(ArgumentException, "URL is not an accepted format – failed")
+        raise(ArgumentError, "URL is not an accepted format – failed")
       end
       chapter_list
     end

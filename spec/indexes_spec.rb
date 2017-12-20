@@ -417,7 +417,30 @@ RSpec.describe GlowficIndexHandlers do
     describe "#userlist_to_block" do
       skip "has more tests"
     end
+
     describe "#toc_to_chapterlist" do
+      it "rejects unrecognized URLs" do
+        expect do
+          handler.toc_to_chapterlist(fic_toc_url: 'https://glowfic.com/')
+        end.to raise_error(ArgumentError, "URL is not an accepted format – failed")
+      end
+
+      context "for boards list" do
+        it "works"
+        it "ignores separated boards"
+        it "ignores specified boards"
+        it "handles constellation archive"
+        it "ignores archived constellation"
+      end
+
+      context "for single board" do
+        it "calls board_to_block for example boards"
+      end
+
+      context "for user page" do
+        it "has more tests"
+      end
+
       skip "has more tests"
     end
 
