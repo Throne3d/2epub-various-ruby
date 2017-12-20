@@ -110,3 +110,9 @@ RSpec.describe ScraperUtils do
     skip "has more tests"
   end
 end
+
+RSpec.describe GlowficEpub do
+  describe "build_moieties" do
+    skip "has more tests"
+  end
+end

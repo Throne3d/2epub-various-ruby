@@ -18,6 +18,7 @@
     attr_reader :group, :chapter_list
 
     def self.handles?(_chapter); false; end
+    def handles?(chapter); self.class.handles?(chapter); end
 
     def initialize(options = {})
       @group = options[:group]
@@ -30,7 +31,6 @@
       @giricache = {}
     end
 
-    def handles?(chapter); self.class.handles?(chapter); end
     def get_updated(_chapter); nil; end
     def message_attributes(options = {})
       return @message_attributes unless options.present?
