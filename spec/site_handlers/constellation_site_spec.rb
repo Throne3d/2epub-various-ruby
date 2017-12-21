@@ -1,6 +1,24 @@
 RSpec.describe GlowficSiteHandlers::ConstellationHandler do
   Handler = GlowficSiteHandlers::ConstellationHandler
-  let(:handler) { Handler.new }
+  let(:handler) { Handler.new(group: :example) }
+
+  def create(thing, **kwargs)
+    @post_id ||= 0
+    if thing == :chapter
+      @post_id += 1
+      kwargs[:url] = "https://glowfic.com/posts/#{@post_id}" unless kwargs.key?(:url)
+      kwargs[:title] = "Post #{@post_id}" unless kwargs.key?(:title)
+      Chapter.new(**kwargs)
+    elsif thing == :entry
+      kwargs[:chapter] = create(:chapter) unless kwargs.key?(:chapter)
+      Entry.new(**kwargs)
+    elsif thing == :comment
+      kwargs[:chapter] = create(:chapter) unless kwargs.key?(:chapter)
+      Comment.new(**kwargs)
+    else
+      abort("Unrecognized thing to create: #{thing}")
+    end
+  end
 
   describe "handles?" do
     it "does not handle nil" do
@@ -25,21 +43,13 @@ RSpec.describe GlowficSiteHandlers::ConstellationHandler do
   end
 
   describe "#get_permalink_for" do
-    def create_entry(**kwargs)
-      Entry.new(**kwargs)
-    end
-
-    def create_reply(**kwargs)
-      Comment.new(**kwargs)
-    end
-
     it "gets right URL for post" do
-      entry = create_entry(content: '', chapter: nil, id: '9876')
+      entry = create(:entry, content: '', id: '9876')
       expect(handler.get_permalink_for(entry)).to eq('https://glowfic.com/posts/9876')
     end
 
     it "gets right URL for reply" do
-      reply = create_reply(content: '', chapter: nil, id: '9876')
+      reply = create(:comment, content: '', id: '9876')
       expect(handler.get_permalink_for(reply)).to eq('https://glowfic.com/replies/9876#reply-9876')
     end
 
@@ -47,13 +57,31 @@ RSpec.describe GlowficSiteHandlers::ConstellationHandler do
   end
 
   describe "#get_full" do
-    it "uses get_some because for some reason" # TODO: why? what do these names mean?
+    it "calls get_flat_page_for" do
+      chapter = double
+      options = {thing: :other}
+      expect(handler).to receive(:get_flat_page_for).with(chapter, options)
+
+      handler.get_full(chapter, options)
+    end
+
+    it "returns flat page array" do
+      expect(handler).to receive(:get_flat_page_for).and_return('https://glowfic.com/posts/1?view=flat')
+
+      expect(handler.get_full(nil)).to eq(['https://glowfic.com/posts/1?view=flat'])
+    end
   end
 
   describe "#get_flat_page_for" do
-    it "uses flat mode" # FIXME: do this
-    it "does not proceed if it doesn't handle the chapter"
-    it "downloads each relevant page"
+    it "attempts to download flat mode" do
+      expect(handler).to receive(:giri_or_cache).with('https://glowfic.com/posts/1?view=flat', where: 'web_cache/example')
+      handler.get_flat_page_for('https://glowfic.com/posts/1')
+    end
+
+    it "does not proceed if it doesn't handle the chapter" do
+      expect(handler).not_to receive(:giri_or_cache)
+      handler.get_flat_page_for('https://dreamwidth.org/')
+    end
   end
 
   describe "#check_webpage_accords_with_disk"
@@ -61,6 +89,23 @@ RSpec.describe GlowficSiteHandlers::ConstellationHandler do
   describe "#check_cachepage_accords_with_disk"
 
   describe "#get_updated" do
+    it "downloads all pages for a new chapter" do
+      chapter = create(:chapter)
+      allow(chapter).to receive(:url=).with('https://glowfic.com/posts/1')
+
+      expect(LOG).to receive(:info).with("New: #{chapter.title}: 1 page (Got 0 pages)")
+
+      expect(handler).to receive(:get_flat_page_for).with(chapter, {}).and_return('https://glowfic.com/posts/1?view=flat')
+      allow(handler).to receive(:down_or_cache).with('https://glowfic.com/posts/1/stats', where: 'web_cache/example').and_return('data')
+
+      expect(chapter).to receive(:processed=).with(false).and_call_original
+      expect(chapter).to receive(:pages=).with(['https://glowfic.com/posts/1?view=flat']).and_call_original
+      expect(chapter).to receive(:check_page_data=).with({}).and_call_original
+      expect(chapter).to receive(:check_page_data_set).with('https://glowfic.com/posts/1/stats', 'data')
+
+      handler.get_updated(chapter)
+    end
+
     it "checks last few pages rather than using a ton of bandwidth and processing time for unchanged files"
     it "checks if chapter is out of sync with cached file is out of sync with site"
     it "downloads all relevant pages (flat mode)" # FIXME: see above

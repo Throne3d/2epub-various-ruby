@@ -857,21 +857,21 @@
     end
 
     def get_flat_page_for(chapter, options = {})
-      params = {view: flat}
+      params = {view: :flat}
       chapter_url = if chapter.is_a?(GlowficEpub::Chapter)
         chapter.url
       else
         chapter
       end
 
-      chapter_url = set_url_params(clear_url_params(chapter_url), params)
       return unless self.handles?(chapter_url)
 
-      giri_or_cache(chapter_url, where: @group_folder)
       chapter.processed = false if chapter.is_a?(GlowficEpub::Chapter)
 
-      # page_url contains all pages 1..page_count, not just start_page..page_count
-      return chapter_url
+      chapter_url = set_url_params(clear_url_params(chapter_url), params)
+      giri_or_cache(chapter_url, where: @group_folder)
+
+      chapter_url
     end
 
     def check_webpage_accords_with_disk(page)
@@ -969,6 +969,7 @@
           data_new = down_or_cache(check_page, where: 'temp')
           save_down(check_page, temp_data, where: @group_folder) # save into data_old
         end
+
         # set check_page_data for future
         chapter.check_page_data_set(check_page, down_or_cache(check_page, where: @group_folder))
       end
