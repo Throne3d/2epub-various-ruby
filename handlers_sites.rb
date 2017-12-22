@@ -1553,7 +1553,6 @@
           chapter.sections = sections
         end
 
-
         comments = page_content.css('> .post-container.post-reply')
         comments.each do |comment_element|
           reply = make_message(comment_element, message_attributes: message_attributes)
