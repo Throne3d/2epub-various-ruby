@@ -1,6 +1,9 @@
 module GlowficIndexHandlers
   require 'scraper_utils'
   require 'models'
+  require 'active_support'
+  require 'active_support/core_ext/object'
+  require 'nokogiri'
   include ScraperUtils
 
   INDEX_PRESETS = {
@@ -74,20 +77,11 @@ module GlowficIndexHandlers
       sections: ["Starlight"],
       marked_complete: true}
     ],
-    lintamande:
-    [],
-    silmaril:
-    [
-      {url: "http://lintamande.dreamwidth.org/513.html?style=site",
-      title: "don't touch me",
-      sections: ["May or may not join the main Silmaril continuity"],
-      marked_complete: true}
-    ]
   }
   # constellation boards to skip in non-specific scrapes
   CONST_BOARDS = [
     'Site testing', # skip meta posts
-    'Witchlight', # ?
+    'Witchlight', # TODO: ?
     # large continuities elsewhere
     'Effulgence',
     'Incandescence',
@@ -121,6 +115,7 @@ module GlowficIndexHandlers
   end
 
   class IndexHandler
+    include ScraperUtils
     attr_reader :group
     def initialize(options = {})
       @group = options[:group]
@@ -133,9 +128,6 @@ module GlowficIndexHandlers
     end
     def self.handles?(thing)
       @handles.try(:include?, thing)
-    end
-    def handles?(thing)
-      self.handles?(thing)
     end
 
     def chapter_list
@@ -695,15 +687,31 @@ module GlowficIndexHandlers
   end
 
   class ConstellationIndexHandler < IndexHandler
-    handles :constellation, :constarchive16, :opalescence, :zodiac, :lighthouse, :rapid_nova, :moonflower, :errant_void, :fruitflower, :ror
+    handles :constellation,
+      :constarchive16,
+      :opalescence,
+      :zodiac,
+      :lighthouse,
+      :rapid_nova,
+      :moonflower,
+      :errant_void,
+      :fruitflower,
+      :ror,
+      :lintamande,
+      :silmaril
+
     def initialize(options = {})
       super(options)
       Time.zone = 'Eastern Time (US & Canada)'
       @archive_time = Time.zone.local(2017)
     end
 
+    # does not work on URLs without leading slash
+    # e.g. "users" it won't append to, but "/users" it will
     def fix_url_folder(url)
-      url.sub(/(users|boards|galleries|characters)\/(\d+)(\?|#|$)/, '\1/\2/\3')
+      url
+        .sub(/\/(users|boards|galleries|characters)\/(\d+)(\?|#|$)/, '/\1/\2/\3')
+        .sub(/\/(users|boards|galleries|characters)(\?|#|$)/, '/\1/\2')
     end
     def get_absolute_url(url_path, current_url)
       if url_path.start_with?('/')
@@ -715,43 +723,38 @@ module GlowficIndexHandlers
       url_path
     end
 
+    # for sandboxes and other reverse-order boards, invert this order
     def board_to_block(options = {})
       board_url = fix_url_folder(options[:board_url])
       # skips boxes with a last_updated outside the relevant range (after <= time < before)
       after = options[:after]
       before = options[:before]
+      reverse = options[:reverse]
       LOG.info "TOC Page: #{board_url}"
-      LOG.info "Checking within #{after.to_s + ' < ' if after}time#{' < ' + before.to_s if before}" if after || before
+      LOG.info "Checking within #{after.to_s + ' ≤ ' if after}time#{' < ' + before.to_s if before}" if after || before
 
       board_toc_data = get_page_data(board_url, replace: true, headers: {"Accept" => "text/html"})
       board_toc = Nokogiri::HTML(board_toc_data)
 
       content = board_toc.at_css('#content')
-      board_sections = content.css('tbody tr th')
+      board_sections = content.css('.continuity-header')
 
       board_title_ele = content.at_css('tr th')
-      board_title_ele.at_css('a').try(:remove)
+      board_title_ele.css('.link-box').map(&:remove)
       board_name = board_title_ele.text.strip
 
-      pages = board_toc.at_css('.pagination')
-      last_url = board_url
-      if pages
-        pages.at_css('a.last_page').try(:remove)
-        pages.at_css('a.next_page').try(:remove)
-        last_url = get_absolute_url(pages.css('a').last[:href].strip, board_url)
-      end
+      chapter_pieces = []
 
-      previous_url = last_url
-      while previous_url
-        puts "URL: #{previous_url}"
-        board_toc_data = get_page_data(previous_url, replace: (previous_url != board_url), headers: {"Accept" => "text/html"})
+      next_url = board_url
+      while next_url
+        puts "URL: #{next_url}"
+        board_toc_data = get_page_data(next_url, replace: (next_url != board_url), headers: {"Accept" => "text/html"})
         board_toc = Nokogiri::HTML(board_toc_data)
         board_body = board_toc.at_css('tbody')
 
         chapter_sections = [board_name]
 
         chapters = board_body.css('tr')
-        chapters = chapters.reverse unless board_sections
         chapters.each do |chapter_row|
           th = chapter_row.at_css('th')
           next if th && !th.try(:[], :colspan)
@@ -792,14 +795,16 @@ module GlowficIndexHandlers
             end
           end
 
-          chapter_details = chapter_from_toc(url: chapter_url, title: chapter_title, sections: chapter_sections)
-
-          yield chapter_details if block_given?
+          chapter_pieces << {url: chapter_url, title: chapter_title, sections: chapter_sections.dup}
         end
 
-        temp_url = previous_url
-        previous_url = board_toc.at_css('.pagination a.previous_page').try(:[], :href)
-        previous_url = get_absolute_url(previous_url.strip, temp_url) if previous_url
+        next_page = board_toc.at_css('.pagination')&.at_css('a.next_page')
+        next_url = (get_absolute_url(next_page[:href].strip, next_url) if next_page)
+      end
+
+      chapter_pieces.public_send(reverse ? :reverse_each : :each) do |piece|
+        details = chapter_from_toc(piece)
+        yield details if block_given?
       end
     end
 
@@ -859,41 +864,57 @@ module GlowficIndexHandlers
     end
 
     def toc_to_chapterlist(options = {})
-      fic_toc_url = options[:fic_toc_url]
-      fic_toc_url = fix_url_folder(fic_toc_url)
-      ignore_sections = options[:ignore_sections] || []
+      fic_toc_url = fix_url_folder(options[:fic_toc_url])
+      ignore_sections = options.fetch(:ignore_sections, [])
 
       if fic_toc_url.end_with?('/boards/')
         LOG.info "TOC Page: #{fic_toc_url}"
-        fic_toc_data = get_page_data(fic_toc_url, replace: true)
-        fic_toc = Nokogiri::HTML(fic_toc_data)
 
-        boards = fic_toc.css("#content tr")
-        boards.each do |board|
-          next if board.at_css("th")
+        next_url = fic_toc_url
+        while next_url
+          page_data = get_page_data(next_url, replace: true)
+          page = Nokogiri::HTML(page_data)
+          content = page.at_css('#content')
 
-          board_link = board.at_css('a')
-          board_name = board_link.text.strip
-          next if CONST_BOARDS.include?(board_name)
-          next if ignore_sections.include?(board_name)
-          params = {}
-          params[:board_url] = get_absolute_url(board_link[:href], fic_toc_url)
-          if @group == :constarchive16
-            # Archive only has sandboxes last updated before 2017
-            next unless board_name == "Sandboxes"
-            params[:before] = @archive_time
-          elsif @group == :constellation && board_name == "Sandboxes"
-            # Regular has sandboxes after 2017 and all non-skipped non-sandboxes
-            params[:after] = @archive_time
-          else
+          boards = content.css('.board-title')
+          boards.each do |board|
+            board_link = board.at_css('a')
+            board_name = board_link.text.strip
+            next if CONST_BOARDS.include?(board_name)
+            next if ignore_sections.include?(board_name)
+
+            params = {}
+            params[:board_url] = get_absolute_url(board_link[:href], next_url)
+
+            if @group == :constarchive16
+              # Archive only has sandboxes last updated before 2017
+              next unless board_name == "Sandboxes"
+              params[:before] = @archive_time
+            elsif @group == :constellation && board_name == "Sandboxes"
+              # Regular has sandboxes after 2017 and all non-skipped non-sandboxes
+              params[:after] = @archive_time
+            end
+
+            board_to_block(params) do |chapter_details|
+              chapter_list << chapter_details
+              yield chapter_details if block_given?
+            end
           end
-          board_to_block(params) do |chapter_details|
-            chapter_list << chapter_details
-            yield chapter_details if block_given?
+
+          paginator = content.at_css('tfoot .paginator')
+          next_link = paginator&.at_css('a.next_page')
+          next_url = if next_link
+            get_absolute_url(next_link[:href], next_url)
+          else
+            nil
           end
         end
-      elsif fic_toc_url[/\/boards\/\d+/]
-        board_to_block(board_url: fic_toc_url) do |chapter_details|
+      elsif (part = fic_toc_url[/\/boards\/\d+/])
+        # figure out if it's a reversed board
+        # hardcoded for now; TODO: stop hardcoding this
+        board_id = part.sub(/^\/boards\//, '')
+        reversed = (board_id == 3)
+        board_to_block(board_url: fic_toc_url, reverse: reversed) do |chapter_details|
           chapter_list << chapter_details
           yield chapter_details if block_given?
         end
@@ -916,14 +937,14 @@ module GlowficIndexHandlers
           yield chapter_details if block_given?
         end
       else
-        raise(ArgumentException, "URL is not an accepted format – failed")
+        raise(ArgumentError, "URL is not an accepted format – failed")
       end
       chapter_list
     end
   end
 
   class TestIndexHandler < IndexHandler
-    handles :test, :temp_starlight, :lintamande, :report, :mwf_leaf, :mwf_lioncourt, :reptest, :silmaril
+    handles :test, :temp_starlight, :report, :mwf_leaf, :mwf_lioncourt, :reptest
     def initialize(options = {})
       super(options)
     end
@@ -1004,24 +1025,6 @@ module GlowficIndexHandlers
               end
             end
           end
-        end
-      elsif @group == :lintamande
-        const_handler = ConstellationIndexHandler.new(group: @group)
-        chapter_list.sort_chapters = true
-        chapter_list.get_sections = true
-        const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group], ignore_sections: ['Silmaril']) do |chapter|
-          yield chapter if block_given?
-        end
-        const_chapters.each do |chapter|
-          chapter_list << chapter
-        end
-      elsif @group == :silmaril
-        const_handler = ConstellationIndexHandler.new(group: @group)
-        const_chapters = const_handler.toc_to_chapterlist(fic_toc_url: FIC_TOCS[@group]) do |chapter|
-          yield chapter if block_given?
-        end
-        const_chapters.each do |chapter|
-          chapter_list << chapter
         end
       end
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 require 'rubygems'
 require 'bundler/setup'
-require 'logger'
 require 'date'
 require 'active_support'
 require 'active_support/core_ext/object/blank'
@@ -212,7 +211,7 @@ def main(*args)
 
   option = options.extras.join(' ').downcase
 
-  OUTFILE.set_output_params(process, (group.empty? ? nil : group))
+  OUTFILE.set_file_from(process, (group unless group.empty?))
 
   LOG.info "Option: #{args.map(&:to_s) * ' '}"
   LOG.info "Process: #{process}"

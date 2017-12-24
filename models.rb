@@ -529,7 +529,7 @@
           pages
         end
       elsif url['vast-journey-9935.herokuapp.com'] || url['glowfic.com']
-        [set_url_params(clear_url_params(url), {page: :last, per_page: 25})]
+        [File.join(clear_url_params(url), 'stats')]
       else
         pages
       end
@@ -753,6 +753,7 @@
     def self.message_serialize_ignore
       serialize_ignore :character, :chapter, :parent, :children, :face, :allowed_params, :push_title, :push_character, :post_type
     end
+    message_serialize_ignore
 
     def initialize(params={})
       @push_title = false

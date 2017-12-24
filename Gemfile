@@ -10,5 +10,7 @@ gem 'activesupport', '~> 5.1'
 gem 'mechanize', '~> 2.7'
 gem 'memory_profiler', '~> 0.9'
 gem 'oj', '~> 3.0'
-gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw]
 gem 'pry', '~> 0.10'
+gem 'rspec', '~> 3.0'
+gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw]
+gem 'webmock', '~> 3.1'

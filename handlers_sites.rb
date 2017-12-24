@@ -18,6 +18,7 @@
     attr_reader :group, :chapter_list
 
     def self.handles?(_chapter); false; end
+    def handles?(chapter); self.class.handles?(chapter); end
 
     def initialize(options = {})
       @group = options[:group]
@@ -30,7 +31,6 @@
       @giricache = {}
     end
 
-    def handles?(chapter); self.class.handles?(chapter); end
     def get_updated(_chapter); nil; end
     def message_attributes(options = {})
       return @message_attributes unless options.present?
@@ -853,48 +853,50 @@
     end
 
     def get_full(chapter, options = {})
-      get_some(chapter, options)
+      [get_flat_page_for(chapter, options)]
     end
 
-    def get_some(chapter, options = {})
-      params = {per_page: 500}
+    def get_flat_page_for(chapter, options = {})
+      params = {view: :flat}
       chapter_url = if chapter.is_a?(GlowficEpub::Chapter)
         chapter.url
       else
         chapter
       end
-      chapter_url = set_url_params(clear_url_params(chapter_url), params)
+
       return unless self.handles?(chapter_url)
-
-      page_urls = []
-      start_page = options[:start_page] || 1
-      params = params.merge(page: start_page)
-      first_page = set_url_params(clear_url_params(chapter_url), params)
-      first_page_stuff = giri_or_cache(first_page, where: @group_folder)
-      first_page_content = first_page_stuff.at_css('#content')
-
-      reply_count = first_page_content.try(:at_css, '.reply-count').try(:text).try(:strip)
-      if reply_count
-        page_count = (reply_count.to_f / params[:per_page]).ceil
-        page_count = 1 if page_count < 1
-      else
-        LOG.error "Could not find number of replies for #{chapter_url}"
-        page_count = 1
-        params[:per_page] = :all
-      end
-
-      1.upto(page_count).each do |num|
-        params[:page] = num
-        this_page = set_url_params(clear_url_params(chapter_url), params)
-        page_urls << this_page
-        next unless num >= start_page
-        down_or_cache(this_page, where: @group_folder)
-      end
 
       chapter.processed = false if chapter.is_a?(GlowficEpub::Chapter)
 
-      # page_url contains all pages 1..page_count, not just start_page..page_count
-      return page_urls
+      chapter_url = set_url_params(clear_url_params(chapter_url), params)
+      giri_or_cache(chapter_url, where: @group_folder)
+
+      chapter_url
+    end
+
+    def check_webpage_accords_with_disk(page)
+      # check the relevant data on the webpage is the same as the disk data, otherwise update disk data
+      existed_disk = File.file?(get_page_location(page, where: @group_folder))
+
+      page_web = giri_or_cache(page, where: 'temp')
+      page_disk = giri_or_cache(page, replace: false, where: @group_folder)
+
+      return false unless existed_disk
+
+      # TODO: check that the flat page timestamps are the same (i.e. don't hardcode "different")
+      return false
+    end
+
+    def check_cachepage_accords_with_disk(page, chapter)
+      page_disk = giri_or_cache(page, replace: false, where: @group_folder)
+      data_cache = chapter.check_page_data[page]
+      page_cache = Nokogiri::HTML(data_cache) if data_cache
+
+      chapter.check_page_data_set(page, page_disk)
+      return false unless data_cache
+
+      #  TODO: check that flat page timestamps are the same between cache and disk (i.e. don't hardcode "different")
+      return false
     end
 
     def get_updated(chapter, options = {})
@@ -902,7 +904,8 @@
       notify = options.fetch(:notify, true)
       chapter.url = standardize_chapter_url(chapter.url)
 
-      @download_count = 0
+      # TODO: load stats page, check last time flat page was updated, check flat page timestamp, update if necessary
+
       is_new = true
       prev_pages = chapter.pages
       check_pages = chapter.check_pages
@@ -910,63 +913,22 @@
         # check the check_pages for a difference
         is_new = false
         changed = false
-        check_pages.each_with_index do |check_page, i|
-          page_location = get_page_location(check_page, where: @group_folder)
-          existed = File.file?(page_location)
 
-          page_old_data = get_page_data(check_page, replace: false, where: @group_folder)
-          unless existed
-            LOG.debug "check page #{i}, #{check_page}, didn't exist in the group folder"
-            changed = true
-            break
-          end
+        abort("Wrong number of check pages (#{check_pages.length}) for #{chapter}; update code. Check pages: #{check_pages}") unless check_pages.length == 1
+        stats_page = check_pages.first
 
-          cache_exists = chapter.check_page_data.key?(check_page)
-
-          page_new = giri_or_cache(check_page, where: 'temp')
-          page_old = Nokogiri::HTML(page_old_data)
-          page_cache = chapter.check_page_data[check_page]
-          page_cache = Nokogiri::HTML(page_cache) if cache_exists
-          LOG.debug "nokogiri'd"
-
-          # FIXME: check necessary?
-          chapter.check_page_data_set(check_page, page_old_data) unless cache_exists
-
-          old_content = page_old.at_css('#content')
-          new_content = page_new.at_css('#content')
-          cache_content = page_cache.at_css('#content') if cache_exists
-          unless new_content
-            LOG.error "Failed to find #content for check page (#{i}, #{check_page})."
-            changed = true
-            break
-          end
-          if (cache_exists && !cache_content) || !old_content
-            LOG.info "Couldn't find #content for an old check page (#{i}, #{check_page})"
-            changed = true
-            break
-          end
-
-          # remove time_loaded so as to check just the content
-          old_content.at_css(".time-loaded").try(:remove)
-          new_content.at_css(".time-loaded").try(:remove)
-          cache_content.at_css(".time-loaded").try(:remove) if cache_exists
-
-          changed = (old_content.inner_html != new_content.inner_html)
-          if changed
-            LOG.debug "check page was difference (#{i}, #{check_page})"
-            break
-          end
-
-          if cache_exists
-            changed = (old_content.inner_html != cache_content.inner_html)
-            if changed
-              LOG.info "check page cache in JSON differed from old content, fixing (#{i}, #{check_page})"
-              break
-            end
-          end
-
-          LOG.debug "check page #{i} was not different"
+        changed = !check_webpage_accords_with_disk(stats_page)
+        if changed
+          LOG.debug "stats page doesn't accord between disk and site (#{stats_page})"
+        else
+          changed = !check_cachepage_accords_with_disk(stats_page)
+          LOG.info "check page cache in JSON differed from old content, fixing (#{stats_page})" if changed
         end
+
+        LOG.debug "check page #{stats_page} was not different" unless changed
+
+        # TODO: check the flat page timestamp concurs? store it somewhere, check it against the check page timestamp.
+        last_flat_timestamp = Time.now
 
         LOG.debug "#{'not ' unless changed}changed!"
 
@@ -978,31 +940,6 @@
           pages_exist = false
           LOG.error "Failed to find a file (page #{i}) for chapter #{chapter}. Will get again."
           break
-        end
-
-        if !pages_exist
-          start_page = 1 # start at the beginning, get them all
-        elsif changed && chapter.replies.length > 1000
-          # check the first page for a difference (large chapter) so as to get the whole thing if necessary
-          first_page = chapter.pages.first
-          page_old_data = get_page_data(first_page, replace: false, where: @group_folder)
-          page_new = giri_or_cache(first_page, where: 'temp')
-          page_old = Nokogiri::HTML(page_old_data)
-
-          old_content = page_old.at_css('#content')
-          new_content = page_new.at_css('#content')
-          # remove time_loaded to check just the content
-          old_content.at_css(".time-loaded").try(:remove)
-          new_content.at_css(".time-loaded").try(:remove)
-          # and remove the paginator to ignore reply counts (tracked by 'changed')
-          old_content.css('.paginator').each(&:remove)
-          new_content.css('.paginator').each(&:remove)
-
-          changed2 = (old_content.inner_html != new_content.inner_html)
-          if changed2
-            LOG.debug "getting whole thing again; first page was different & check pages were different & many replies"
-            start_page = 1 # instead of just last & 2nd-last pages
-          end
         end
 
         # output if different & return if appropriate
@@ -1020,27 +957,19 @@
       end
 
       # Needs to be updated / hasn't been got
-
       chapter.processed = false
 
-      # start at 2nd-last page (if page not yet picked)
-      start_page ||= (chapter.replies.count / 500.0).ceil - 1
-      start_page = 1 if start_page < 1
+      chapter.pages = get_full(chapter, options)
 
-      # get the relevant pages (and get all the page URLs, 1..page_count)
-      pages = get_some(chapter, options.merge({new: !changed, start_page: start_page}))
-
-      chapter.pages = pages
       # reset chapter cache
       chapter.check_page_data = {}
       chapter.check_pages.each do |check_page|
         # use cached data (for speed) if already gathered this session:
         if has_cache?(check_page, where: 'temp')
-          temp_data = down_or_cache(check_page, where: 'temp')
-          save_down(check_page, temp_data, where: @group_folder)
-        else
-          down_or_cache(check_page, where: @group_folder)
+          data_new = down_or_cache(check_page, where: 'temp')
+          save_down(check_page, temp_data, where: @group_folder) # save into data_old
         end
+
         # set check_page_data for future
         chapter.check_page_data_set(check_page, down_or_cache(check_page, where: @group_folder))
       end
@@ -1595,7 +1524,7 @@
         (LOG.error("No post title; probably not a post"); break) unless post_title
         @entry_title = post_title.text.strip unless @entry_title
 
-        @chapter.title_extras = page.at_css('.post-subheader').try(:text).try(:strip) if @chapter.title_extras.blank?
+        @chapter.title_extras = page.at_css('.post-subheader')&.text&.strip if @chapter.title_extras.blank?
 
         # process entry if replies blank
         if @replies.empty?
@@ -1604,6 +1533,7 @@
           chapter.entry = entry
         end
 
+        # TODO: fix automatically fetching sections.
         # automatically fetch chapter sections if appropriate
         if page_url == pages.last && chapter.get_sections? && chapter.sections.blank?
           section_links = page.at_css('.flash.subber').css('a')
@@ -1629,6 +1559,8 @@
           @replies << reply
         end
 
+        # check the page status with enders
+        # TODO: fix automatically fetching post enders
         if page_url == pages.last
           post_ender = page_content.at_css('.post-ender')
           if post_ender
@@ -1694,7 +1626,7 @@
         LOG.info msg_str
       end
       chapter.processed = message_attributes
-      chapter.replies=@replies
+      chapter.replies = @replies
     end
   end
 end
